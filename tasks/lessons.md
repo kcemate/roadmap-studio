@@ -1,0 +1,1 @@
+- Percentage fields can receive either human percent points (`50`, `50%`) or spreadsheet-style fractions (`0.5`). Normalize both paths deliberately and test totals with multiple rows, including ignored categories, before treating financial rollups as correct.

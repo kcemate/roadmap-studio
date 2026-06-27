@@ -68,6 +68,7 @@ input,select{font:inherit;color:inherit}
 .stage-head{display:flex;align-items:baseline;gap:14px;margin-bottom:18px;max-width:880px}
 .stage-head h2{font-size:22px;font-weight:600;letter-spacing:-.02em}
 .stage-head .meta{font-size:12px;color:var(--ink2)}
+#roadStage .stage-head{max-width:none;align-items:flex-start}
 
 /* ---------- structure outline ---------- */
 .outline{max-width:680px;margin:0 auto}
@@ -98,23 +99,27 @@ input,select{font:inherit;color:inherit}
 .outline-hint{max-width:680px;margin:0 auto 18px;font-size:12px;color:var(--ink3)}
 .outline-hint kbd{font-family:inherit;font-size:11px;background:rgba(0,0,0,.06);border-radius:4px;padding:1px 6px}
 
-.legend{display:flex;gap:18px;margin-left:auto;font-size:12px;color:var(--ink2);align-items:center}
+.legend{display:flex;gap:18px;margin-left:auto;font-size:12px;color:var(--ink2);align-items:center;justify-content:flex-end;flex-wrap:wrap;row-gap:8px}
 .legend span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
-.legend .impact{display:grid;grid-template-columns:auto auto;grid-template-rows:auto auto;column-gap:7px;row-gap:1px;align-items:center}
-.legend .impact i{grid-row:1 / span 2}
+.legend .impact-stack{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:7px;row-gap:2px;align-items:center}
+.legend .impact-stack i{grid-row:1 / span 2}
+.legend .impact-main,.legend .impact-realized{display:flex;align-items:baseline;gap:6px}
+.legend .impact-realized{font-size:11px;color:var(--ink3)}
+.legend .impact-realized .total{font-size:12px;font-weight:600;color:var(--ink2)}
+.legend .impact-realized .label{color:var(--ink3)}
 .legend .total{font-size:13px;font-weight:650;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:0}
 .legend .label{color:var(--ink2)}
 .legend i{display:inline-block;width:14px;height:8px;border-radius:4px}
 .tl-scroll{overflow-x:auto;border:1px solid var(--hairline);border-radius:var(--radius-card);background:var(--surface);box-shadow:var(--shadow-card)}
 svg text{user-select:none}
-.bar-grab{cursor:grab}.bar-grab:active{cursor:grabbing}.edge{cursor:ew-resize}
+.bar-grab{cursor:grab}.bar-grab:active{cursor:grabbing}.edge{cursor:ew-resize}.pillar-toggle{cursor:pointer}
 
 .tip{position:fixed;z-index:50;pointer-events:none;display:none;background:rgba(29,29,31,.96);color:#f5f5f7;
   border-radius:10px;padding:12px 14px;font-size:12px;line-height:1.55;max-width:280px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
 .tip b{font-size:13px;display:block;margin-bottom:2px}.tip .t2{color:#a1a1a6}
 
 .grid-wrap{border:1px solid var(--hairline);border-radius:var(--radius-card);background:var(--surface);box-shadow:var(--shadow-card);overflow:auto}
-table.grid{width:100%;border-collapse:collapse;font-size:13px;min-width:1300px}
+table.grid{width:100%;border-collapse:collapse;font-size:13px;min-width:1400px}
 table.grid th{position:sticky;top:0;background:var(--surface);z-index:5;text-align:left;font-size:11px;font-weight:600;
   letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);padding:12px 10px;border-bottom:1px solid var(--hairline)}
 table.grid td{border-bottom:1px solid var(--hairline);padding:4px 6px;vertical-align:middle}
@@ -208,8 +213,9 @@ body.presenting.dark{--pbg:#070708}
     <div id="roadStage" style="display:none">
       <div class="stage-head"><h2>Roadmap</h2><span class="meta" id="roadMeta"></span>
         <div class="legend">
-          <span class="impact"><i style="background:#188038"></i><b class="total" id="savingsTotal">$0</b><span class="label">Savings</span></span>
-          <span class="impact"><i style="background:#2563eb"></i><b class="total" id="avoidanceTotal">$0</b><span class="label">Avoidance</span></span>
+          <span class="impact-stack" data-impact="savings"><i style="background:#188038"></i><span class="impact-main"><b class="total" id="savingsTotal">$0</b><span class="label">Savings</span></span><span class="impact-realized"><b class="total" id="realizedSavingsTotal">$0</b><span class="label">Realized</span></span></span>
+          <span class="impact-stack" data-impact="avoidance"><i style="background:#2563eb"></i><span class="impact-main"><b class="total" id="avoidanceTotal">$0</b><span class="label">Avoidance</span></span><span class="impact-realized"><b class="total" id="realizedAvoidanceTotal">$0</b><span class="label">Realized</span></span></span>
+          <span><i style="background:#1d1d1f"></i>Not Started</span>
           <span><i style="background:#fff;border:2px solid #b45309"></i>At risk border</span>
           <span><i style="background:#1d1d1f;opacity:.5"></i>Complete fade</span>
         </div>
@@ -235,7 +241,7 @@ body.presenting.dark{--pbg:#070708}
 
 <script>
 "use strict";
-const S = { view:'start', structure:[], items:[], fyStart:6, tab:'struct',
+const S = { view:'start', structure:[], items:[], collapsedPillars:{}, fyStart:6, tab:'struct',
   history:[], future:[], presenting:false, dark:false, seq:1, fileName:null };
 const STATUSES = ['Not Started','On Track','At Risk','Complete'];
 const VALUE_TYPES = ['Savings','Avoidance'];
@@ -276,12 +282,26 @@ function parseMoney(v){ if(typeof v==='number'&&isFinite(v))return v; let s=text
   const mult=suf?({k:1e3,m:1e6,b:1e9}[suf[0].toLowerCase()]):1; if(suf)s=s.slice(0,-1);
   const n=parseFloat(s); return isFinite(n)?(neg?-n:n)*mult:''; }
 function fmtMoney(v){ const n=parseMoney(v); if(n===''||n==null)return''; return n.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}); }
-function fmtMoneyShort(v){ const n=parseMoney(v)||0, a=Math.abs(n);
-  const trim=x=>x.toFixed(x>=10?0:1).replace(/\.0$/,'');
+function fmtMoneyShort(v,precise=false){ const n=parseMoney(v)||0, a=Math.abs(n);
+  const trim=x=>x.toFixed(precise&&x%1!==0?1:(x>=10?0:1)).replace(/\.0$/,'');
   if(a>=1e9)return`${n<0?'-':''}$${trim(a/1e9)}B`;
   if(a>=1e6)return`${n<0?'-':''}$${trim(a/1e6)}M`;
   if(a>=1e3)return`${n<0?'-':''}$${trim(a/1e3)}K`;
   return n.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}); }
+function clampPercent(n){ return Math.max(0,Math.min(100,n)); }
+function parsePercent(v){ if(v==null||v==='')return'';
+  if(typeof v==='number'&&isFinite(v))return clampPercent(v>0&&v<=1?v*100:v);
+  const raw=textOf(v).trim(), hasPercent=raw.includes('%');
+  let s=raw.replace('%','').trim(); if(!s)return'';
+  const n=parseFloat(s); if(!isFinite(n))return'';
+  return clampPercent(!hasPercent&&n>0&&n<1?n*100:n); }
+function fmtPercent(v){ const n=parsePercent(v); if(n===''||n==null)return'';
+  return n.toFixed(n%1===0?0:1).replace(/\.0$/,'')+'%'; }
+function realizedValue(it,type){ const value=parseMoney(it.value), pct=parsePercent(it.realizedPct);
+  if(value===''||pct===''||normValueType(it.valueType)!==type)return 0;
+  return value*pct/100; }
+function realizedSavingsValue(it){ return realizedValue(it,'Savings'); }
+function realizedAvoidanceValue(it){ return realizedValue(it,'Avoidance'); }
 function normValueType(v){ const s=textOf(v).trim().toLowerCase();
   if(s.includes('avoid'))return'Avoidance';
   return'Savings'; }
@@ -303,18 +323,24 @@ function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 const pillarOf = id => S.structure.find(p=>p.id===id);
 const wsOf = (pid,wid)=>{ const p=pillarOf(pid); return p&&p.workstreams.find(w=>w.id===wid); };
 const itemsForWs = wid => S.items.filter(i=>i.wsId===wid);
+function isPillarCollapsed(id){ return !!S.collapsedPillars[id]; }
+function pruneCollapsedPillars(){ const ids=new Set(S.structure.map(p=>p.id));
+  Object.keys(S.collapsedPillars).forEach(id=>{ if(!ids.has(id))delete S.collapsedPillars[id]; }); }
+function togglePillarCollapsed(id){ if(S.collapsedPillars[id])delete S.collapsedPillars[id]; else S.collapsedPillars[id]=true;
+  renderAll(); }
 
 /* ---------- palette ---------- */
 function pal(){ const d=S.presenting&&S.dark;
   return d?{bg:'#070708',ink:'#f5f5f7',ink2:'#a1a1a6',hair:'rgba(255,255,255,.12)',band:'rgba(255,255,255,.05)',
     accent:'#2997ff',ontrack:'#f5f5f7',ontrackText:'#070708',risk:'#d97a2b',riskText:'#070708',
-    done:'#3a3a3c',doneText:'#a1a1a6',notFill:'#070708',notStroke:'#48484a',notText:'#a1a1a6',
+    done:'#3a3a3c',doneText:'#a1a1a6',notFill:'#000000',notStroke:'#6e6e73',notText:'#ffffff',
     savings:'#30d158',savingsText:'#071a0b',avoidance:'#64d2ff',avoidanceText:'#07151c'}
   :{bg:'#ffffff',ink:'#1d1d1f',ink2:'#6e6e73',hair:'rgba(0,0,0,.09)',band:'rgba(0,0,0,.03)',
     accent:'#0071e3',ontrack:'#1d1d1f',ontrackText:'#ffffff',risk:'#b45309',riskText:'#ffffff',
-    done:'#d8d8dc',doneText:'#515154',notFill:'#ffffff',notStroke:'#c7c7cc',notText:'#6e6e73',
+    done:'#d8d8dc',doneText:'#515154',notFill:'#1d1d1f',notStroke:'#1d1d1f',notText:'#ffffff',
     savings:'#188038',savingsText:'#ffffff',avoidance:'#2563eb',avoidanceText:'#ffffff'}; }
-function valueColor(it,P){ return normValueType(it.valueType)==='Avoidance'?[P.avoidance,P.avoidanceText]:[P.savings,P.savingsText]; }
+function valueColor(it,P){ if(it.status==='Not Started')return[P.notFill,P.notText];
+  return normValueType(it.valueType)==='Avoidance'?[P.avoidance,P.avoidanceText]:[P.savings,P.savingsText]; }
 function roadmapLabel(it){ const money=fmtMoneyShort(it.value); return money==='$0'?it.name:`${it.name} · ${money}`; }
 
 /* ---------- screens ---------- */
@@ -325,7 +351,7 @@ function show(view){ S.view=view;
 /* ---------- start actions ---------- */
 $('btnBlank').onclick = () => {
   S.structure=[{id:uid('p'),name:'New pillar',workstreams:[{id:uid('w'),name:'New workstream'}]}];
-  S.items=[]; S.fileName='Untitled roadmap'; enterStudio();
+  S.items=[]; S.collapsedPillars={}; S.fileName='Untitled roadmap'; enterStudio();
 };
 $('btnImport').onclick = () => $('fileIn').click();
 $('fileIn').onchange = e => { if(e.target.files[0]) importFile(e.target.files[0]); e.target.value=''; };
@@ -342,10 +368,11 @@ async function importFile(file){
     const find=hints=>{for(let c=0;c<head.length;c++)if(hints.some(h=>head[c].includes(h)))return c+1;return 0;};
     const valueTypeCol=find(['savings / avoidance','savings or avoidance','benefit type','value type','impact type']);
     const valueCol=find(['$ value','dollar value','amount','financial','value','impact']);
+    const realizedPctCol=find(['% realized','realized %','percentage realized','percent realized','realized percent']);
     const col={pillar:find(['pillar','theme']),ws:find(['workstream','work stream','lane','sub']),
       name:find(['initiative','name','title','item','task']),start:find(['start','begin','from']),
       end:find(['end','finish','due','to']),status:find(['status','health']),owner:find(['owner','lead','dri']),
-      valueType:valueTypeCol,value:valueCol,
+      valueType:valueTypeCol,value:valueCol,realizedPct:realizedPctCol,
       mile:find(['milestone','gate'])};
     if(!col.pillar){ return showErr('Couldn\u2019t find a Pillar column. Your sheet needs at least Pillar and Workstream columns.'); }
     const struct=[]; const items=[];
@@ -364,12 +391,12 @@ async function importFile(file){
         if(!mile&&end&&start.getTime()===end.getTime())mile=true; if(mile)end=start;
         const rawType=g('valueType'), rawValue=col.value?g('value'):rawType;
         items.push({id:uid('i'),pillarId:p.id,wsId:w.id,name:nm,start,end:end||start,
-          valueType:normValueType(rawType),value:parseMoney(rawValue),milestone:mile,
+          valueType:normValueType(rawType),value:parseMoney(rawValue),realizedPct:parsePercent(g('realizedPct')),milestone:mile,
           status:normStatus(g('status')),owner:textOf(g('owner')).trim()});
       }
     });
     if(!struct.length) return showErr('No pillars found in that sheet.');
-    S.structure=struct; S.items=items; S.fileName=file.name.replace(/\.xls[xm]$/i,''); enterStudio();
+    S.structure=struct; S.items=items; S.collapsedPillars={}; S.fileName=file.name.replace(/\.xls[xm]$/i,''); enterStudio();
   }catch(e){ console.error(e); showErr('That file couldn\u2019t be read. It may be corrupted or protected.'); }
 }
 function showErr(m){ const e=$('err'); e.textContent=m; e.style.display='block'; }
@@ -398,6 +425,7 @@ $('segRoad').onclick=()=>setTab('road');
 $('segData').onclick=()=>setTab('data');
 
 function renderAll(){ if(S.view!=='studio')return;
+  pruneCollapsedPillars();
   if(S.tab==='struct')renderOutline();
   if(S.tab==='road'||S.presenting)renderTimeline();
   if(S.tab==='data')renderGrid();
@@ -410,8 +438,11 @@ function renderAll(){ if(S.view!=='studio')return;
   scheduleSave();
 }
 function renderLegendTotals(){
-  const totals={Savings:0,Avoidance:0};
+  const totals={RealizedSavings:0,RealizedAvoidance:0,Savings:0,Avoidance:0};
   S.items.forEach(it=>{ const v=parseMoney(it.value); if(v!=='')totals[normValueType(it.valueType)]+=v; });
+  S.items.forEach(it=>{ totals.RealizedSavings+=realizedSavingsValue(it); totals.RealizedAvoidance+=realizedAvoidanceValue(it); });
+  $('realizedSavingsTotal').textContent=fmtMoneyShort(totals.RealizedSavings,true);
+  $('realizedAvoidanceTotal').textContent=fmtMoneyShort(totals.RealizedAvoidance,true);
   $('savingsTotal').textContent=fmtMoneyShort(totals.Savings);
   $('avoidanceTotal').textContent=fmtMoneyShort(totals.Avoidance);
 }
@@ -422,7 +453,7 @@ function snapshot(){ return JSON.stringify({structure:S.structure,
   items:S.items.map(i=>{ const it=cleanItem(i); return {...it,start:isoDate(i.start),end:isoDate(i.end)}; })}); }
 function restore(s){ const o=JSON.parse(s); S.structure=o.structure;
   S.items=o.items.map(i=>cleanItem({...i,start:i.start?parseAnyDate(i.start,'start',S.fyStart):null,
-    end:i.end?parseAnyDate(i.end,'end',S.fyStart):null,value:parseMoney(i.value)})); refreshOwners(); renderAll(); }
+    end:i.end?parseAnyDate(i.end,'end',S.fyStart):null,value:parseMoney(i.value),realizedPct:parsePercent(i.realizedPct)})); refreshOwners(); renderAll(); }
 function pushUndo(){ S.history.push(snapshot()); if(S.history.length>150)S.history.shift(); S.future=[]; }
 function undo(){ if(!S.history.length)return; S.future.push(snapshot()); restore(S.history.pop()); }
 function redo(){ if(!S.future.length)return; S.history.push(snapshot()); restore(S.future.pop()); }
@@ -443,9 +474,9 @@ function renderOutline(){
         <span class="pillar-num">${String(pi+1).padStart(2,'0')}</span>
         <input class="pillar-name" data-p="${p.id}" value="${esc(p.name)}" aria-label="Pillar name">
         <div class="tools">
-          <button data-act="pup" ${pi===0?'disabled':''} title="Move up">${svgIcon(ICON.up)}</button>
-          <button data-act="pdown" ${pi===S.structure.length-1?'disabled':''} title="Move down">${svgIcon(ICON.down)}</button>
-          <button data-act="pdel" title="Delete pillar">${svgIcon(ICON.del)}</button>
+          <button data-act="pup" data-p="${p.id}" ${pi===0?'disabled':''} title="Move up">${svgIcon(ICON.up)}</button>
+          <button data-act="pdown" data-p="${p.id}" ${pi===S.structure.length-1?'disabled':''} title="Move down">${svgIcon(ICON.down)}</button>
+          <button data-act="pdel" data-p="${p.id}" title="Delete pillar">${svgIcon(ICON.del)}</button>
         </div>
       </div>
       <div class="ws-list">
@@ -536,10 +567,13 @@ function renderTimeline(){
   // layout
   let H=AXIS_H; const lanes=[];
   S.structure.forEach(p=>{ const pTop=H; H+=PILLAR_H;
-    const wlanes=[]; p.workstreams.forEach(w=>{ const items=itemsForWs(w.id); const subs=packItems(items);
-      const top=H, h=subs*ROW_H+WS_PAD; H+=h; wlanes.push({w,items,top,h}); });
-    if(!p.workstreams.length)H+=ROW_H;
-    lanes.push({p,pTop,wlanes,bottom:H}); });
+    const collapsed=isPillarCollapsed(p.id), wlanes=[];
+    if(!collapsed){
+      p.workstreams.forEach(w=>{ const items=itemsForWs(w.id); const subs=packItems(items);
+        const top=H, h=subs*ROW_H+WS_PAD; H+=h; wlanes.push({w,items,top,h}); });
+      if(!p.workstreams.length)H+=ROW_H;
+    }
+    lanes.push({p,pTop,wlanes,bottom:H,collapsed}); });
 
   let svg=`<svg id="tlSvg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Inter,sans-serif" role="img" aria-label="Roadmap">`;
   svg+=`<rect width="${W}" height="${H}" fill="${P.bg}"/>`;
@@ -559,14 +593,17 @@ function renderTimeline(){
 
   lanes.forEach((lane,li)=>{
     if(li>0)svg+=`<line x1="0" y1="${lane.pTop}" x2="${W}" y2="${lane.pTop}" stroke="${P.hair}"/>`;
+    svg+=`<g class="pillar-toggle" data-pillar="${lane.p.id}" data-collapsed="${lane.collapsed?'true':'false'}">`;
     svg+=`<rect x="0" y="${lane.pTop}" width="${W}" height="${PILLAR_H}" fill="${P.band}"/>`;
-    svg+=`<text x="20" y="${lane.pTop+PILLAR_H/2+4}" font-size="12" font-weight="700" letter-spacing="0.04em" fill="${P.ink}">${esc(lane.p.name.toUpperCase())}</text>`;
+    svg+=`<text x="20" y="${lane.pTop+PILLAR_H/2+4}" text-anchor="middle" font-size="14" font-weight="700" fill="${P.ink}">${lane.collapsed?'+':'-'}</text>`;
+    svg+=`<text x="42" y="${lane.pTop+PILLAR_H/2+4}" font-size="12" font-weight="700" letter-spacing="0.04em" fill="${P.ink}">${esc(lane.p.name.toUpperCase())}</text>`;
+    svg+=`</g>`;
     lane.wlanes.forEach(wl=>{
       svg+=`<text x="36" y="${wl.top+WS_PAD/2+ (wl.h-WS_PAD)/2 +4}" font-size="12" fill="${P.ink2}">${esc(wl.w.name)}</text>`;
       wl.items.filter(i=>i.start).forEach(it=>{
         const y=wl.top+WS_PAD/2+it._sub*ROW_H+(ROW_H-BAR_H)/2;
         const col=valueColor(it,P);
-        const statusStroke=it.status==='At Risk'?` stroke="${P.risk}" stroke-width="2"`:it.status==='Not Started'?` stroke="${P.notStroke}" stroke-width="1.25"`:'';
+        const statusStroke=it.status==='At Risk'?` stroke="${P.risk}" stroke-width="2"`:'';
         const statusOpacity=it.status==='Complete'?'.62':'1';
         const label=roadmapLabel(it);
         if(it.milestone){ const sx=X(it.start),cy=y+BAR_H/2,r=7;
@@ -591,6 +628,9 @@ function renderTimeline(){
 
 let drag=null;
 function bindTimeline(){ const el=$('tlSvg'); if(!el)return; const tip=$('tip');
+  el.querySelectorAll('.pillar-toggle').forEach(g=>g.addEventListener('click',e=>{
+    e.stopPropagation(); tip.style.display='none'; togglePillarCollapsed(g.dataset.pillar);
+  }));
   el.addEventListener('pointermove',e=>{ if(drag)return; const g=e.target.closest('[data-id]');
     if(!g){tip.style.display='none';return;} const it=S.items.find(i=>i.id===g.dataset.id); if(!it){tip.style.display='none';return;}
     const p=pillarOf(it.pillarId), w=wsOf(it.pillarId,it.wsId);
@@ -642,6 +682,7 @@ function renderGrid(){
       <td><select class="cell-in" data-f="status" aria-label="Status">${STATUSES.map(s=>`<option ${s===it.status?'selected':''}>${s}</option>`).join('')}</select></td>
       <td style="min-width:150px"><select class="cell-in" data-f="valueType" aria-label="Savings or avoidance">${VALUE_TYPES.map(v=>`<option ${v===normValueType(it.valueType)?'selected':''}>${v}</option>`).join('')}</select></td>
       <td style="min-width:130px"><input class="cell-in money-in" data-f="value" inputmode="decimal" value="${esc(fmtMoney(it.value))}" aria-label="Savings or avoidance dollar value" placeholder="$0"></td>
+      <td style="min-width:110px"><input class="cell-in money-in" data-f="realizedPct" inputmode="decimal" value="${esc(fmtPercent(it.realizedPct))}" aria-label="Percentage realized" placeholder="0%"></td>
       <td style="min-width:110px"><input class="cell-in" data-f="owner" list="ownerList" value="${esc(it.owner)}" aria-label="Owner"></td>
       <td><div class="row-tools">
         <button data-act="up" title="Up">${svgIcon(ICON.up)}</button>
@@ -650,7 +691,7 @@ function renderGrid(){
       </div></td>
     </tr>`).join('');
   body.innerHTML=`<div class="grid-wrap"><table class="grid">
-    <thead><tr><th></th><th>Initiative</th><th>Pillar</th><th>Workstream</th><th>Start</th><th>End</th><th style="text-align:center">Mile&shy;stone</th><th>Status</th><th>Savings / Avoidance</th><th>$ Value</th><th>Owner</th><th></th></tr></thead>
+    <thead><tr><th></th><th>Initiative</th><th>Pillar</th><th>Workstream</th><th>Start</th><th>End</th><th style="text-align:center">Mile&shy;stone</th><th>Status</th><th>Savings / Avoidance</th><th>$ Value</th><th>% Realized</th><th>Owner</th><th></th></tr></thead>
     <tbody>${rows}</tbody></table>
     <div class="grid-foot"><button class="btn" id="addRow">Add initiative</button></div></div>`;
   body.querySelectorAll('.cell-in,input[type=checkbox]').forEach(inp=>inp.addEventListener('change',()=>{
@@ -661,6 +702,7 @@ function renderGrid(){
     else if(f==='milestone'){ it.milestone=inp.checked; if(inp.checked)it.end=it.start; }
     else if(f==='pillarId'){ it.pillarId=inp.value; const p=pillarOf(inp.value); it.wsId=p.workstreams[0]?.id; }
     else if(f==='value')it.value=parseMoney(inp.value);
+    else if(f==='realizedPct')it.realizedPct=parsePercent(inp.value);
     else it[f]=inp.value;
     if(f==='owner')refreshOwners(); renderAll();
   }));
@@ -676,7 +718,7 @@ function addRow(){ pushUndo();
   const today=new Date(),t=utc(today.getFullYear(),today.getMonth(),today.getDate());
   const p=S.structure[0]; const w=p.workstreams[0];
   S.items.push({id:uid('i'),pillarId:p.id,wsId:w.id,name:'New initiative',start:t,end:addDays(t,90),
-    valueType:'Savings',value:'',milestone:false,status:'Not Started',owner:''});
+    valueType:'Savings',value:'',realizedPct:'',milestone:false,status:'Not Started',owner:''});
   renderAll();
   $('gridBody').querySelector('tbody tr:last-child input[data-f=name]')?.focus();
 }
@@ -686,13 +728,13 @@ $('exportBtn').onclick=async()=>{
   const wb=new ExcelJS.Workbook(); const ws=wb.addWorksheet('Roadmap');
   ws.columns=[{header:'Pillar',width:34},{header:'Workstream',width:30},{header:'Initiative',width:34},
     {header:'Start',width:14},{header:'End',width:14},{header:'Status',width:13},{header:'Owner',width:14},
-    {header:'Savings / Avoidance',width:20},{header:'$ Value',width:14},{header:'Milestone',width:11}];
+    {header:'Savings / Avoidance',width:20},{header:'$ Value',width:14},{header:'% Realized',width:13},{header:'Milestone',width:11}];
   ws.getRow(1).font={bold:true};
   S.structure.forEach(p=>p.workstreams.forEach(w=>{ const items=itemsForWs(w.id);
-    if(items.length) items.forEach(it=>{ const value=parseMoney(it.value); ws.addRow([p.name,w.name,it.name,it.start,it.milestone?it.start:it.end,it.status,it.owner,normValueType(it.valueType),value===''?'':value,it.milestone]); });
-    else ws.addRow([p.name,w.name,'','','','Not Started','','Savings','',false,'']); // scaffold row for owners
+    if(items.length) items.forEach(it=>{ const value=parseMoney(it.value), pct=parsePercent(it.realizedPct); ws.addRow([p.name,w.name,it.name,it.start,it.milestone?it.start:it.end,it.status,it.owner,normValueType(it.valueType),value===''?'':value,pct===''?'':pct/100,it.milestone]); });
+    else ws.addRow([p.name,w.name,'','','','Not Started','','Savings','','',false,'']); // scaffold row for owners
   }));
-  ws.getColumn(4).numFmt='yyyy-mm-dd'; ws.getColumn(5).numFmt='yyyy-mm-dd'; ws.getColumn(9).numFmt='$#,##0';
+  ws.getColumn(4).numFmt='yyyy-mm-dd'; ws.getColumn(5).numFmt='yyyy-mm-dd'; ws.getColumn(9).numFmt='$#,##0'; ws.getColumn(10).numFmt='0%';
   ws.views=[{state:'frozen',ySplit:1}];
   const buf=await wb.xlsx.writeBuffer();
   dl(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`${S.fileName||'roadmap'} — scaffold.xlsx`);
@@ -725,15 +767,18 @@ window.addEventListener('resize',()=>{if(S.view==='studio'&&(S.tab==='road'||S.p
 /* ============ PERSISTENCE ============ */
 const LS_KEY='roadmapStudio.v1';
 function serializeState(){ return {v:1,savedAt:Date.now(),fileName:S.fileName,fyStart:S.fyStart,
+  collapsedPillars:S.collapsedPillars,
   structure:S.structure, items:S.items.map(i=>{ const it=cleanItem(i); return {...it,start:isoDate(i.start),end:isoDate(i.end)}; })}; }
 function deserializeInto(o){
   S.fileName=o.fileName||'Roadmap'; S.fyStart=(o.fyStart==null?6:o.fyStart);
+  S.collapsedPillars=(o.collapsedPillars&&typeof o.collapsedPillars==='object')?o.collapsedPillars:{};
   S.structure=Array.isArray(o.structure)?o.structure:[];
   S.items=(Array.isArray(o.items)?o.items:[]).map(i=>cleanItem({...i,
     start:i.start?parseAnyDate(i.start,'start',S.fyStart):null,
     end:i.end?parseAnyDate(i.end,'end',S.fyStart):null,
     valueType:normValueType(i.valueType),
-    value:parseMoney(i.value)}));
+    value:parseMoney(i.value),
+    realizedPct:parsePercent(i.realizedPct)}));
   let mx=0; const scan=id=>{const n=parseInt(String(id).replace(/\D/g,''),10); if(!isNaN(n)&&n>mx)mx=n;};
   S.structure.forEach(p=>{scan(p.id);(p.workstreams||[]).forEach(w=>scan(w.id));}); S.items.forEach(i=>scan(i.id));
   S.seq=mx+1;

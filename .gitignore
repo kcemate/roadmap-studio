@@ -2,3 +2,4 @@
 .herenow/
 *.xlsx
 *.roadmap.json
+tasks/test-artifacts/
