@@ -302,6 +302,13 @@ function realizedValue(it,type){ const value=parseMoney(it.value), pct=parsePerc
   return value*pct/100; }
 function realizedSavingsValue(it){ return realizedValue(it,'Savings'); }
 function realizedAvoidanceValue(it){ return realizedValue(it,'Avoidance'); }
+function pillarFinancialTotals(pillarId){ const totals={Savings:0,Avoidance:0,Realized:0};
+  S.items.filter(it=>it.pillarId===pillarId).forEach(it=>{
+    const value=parseMoney(it.value), type=normValueType(it.valueType);
+    if(value!=='')totals[type]+=value;
+    totals.Realized+=realizedSavingsValue(it)+realizedAvoidanceValue(it);
+  });
+  return totals; }
 function normValueType(v){ const s=textOf(v).trim().toLowerCase();
   if(s.includes('avoid'))return'Avoidance';
   return'Savings'; }
@@ -597,6 +604,9 @@ function renderTimeline(){
     svg+=`<rect x="0" y="${lane.pTop}" width="${W}" height="${PILLAR_H}" fill="${P.band}"/>`;
     svg+=`<text x="20" y="${lane.pTop+PILLAR_H/2+4}" text-anchor="middle" font-size="14" font-weight="700" fill="${P.ink}">${lane.collapsed?'+':'-'}</text>`;
     svg+=`<text x="42" y="${lane.pTop+PILLAR_H/2+4}" font-size="12" font-weight="700" letter-spacing="0.04em" fill="${P.ink}">${esc(lane.p.name.toUpperCase())}</text>`;
+    if(!lane.collapsed){ const ft=pillarFinancialTotals(lane.p.id), fy=lane.pTop+PILLAR_H/2+4;
+      svg+=`<text class="pillar-financials" x="${GUTTER+18}" y="${fy}" font-size="11" fill="${P.ink2}"><tspan>Savings </tspan><tspan font-weight="650" fill="${P.ink}">${esc(fmtMoneyShort(ft.Savings))}</tspan><tspan> · Avoidance </tspan><tspan font-weight="650" fill="${P.ink}">${esc(fmtMoneyShort(ft.Avoidance))}</tspan><tspan> · Realized </tspan><tspan font-weight="650" fill="${P.ink}">${esc(fmtMoneyShort(ft.Realized,true))}</tspan></text>`;
+    }
     svg+=`</g>`;
     lane.wlanes.forEach(wl=>{
       svg+=`<text x="36" y="${wl.top+WS_PAD/2+ (wl.h-WS_PAD)/2 +4}" font-size="12" fill="${P.ink2}">${esc(wl.w.name)}</text>`;

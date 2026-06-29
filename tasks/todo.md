@@ -1,13 +1,12 @@
-- [x] Move realized totals underneath their Savings and Avoidance parent totals.
-- [x] Keep the existing realized savings and realized avoidance calculations unchanged.
-- [x] Update roadmap header regression coverage for the grouped layout.
+- [x] Add per-pillar Savings, Avoidance, and Realized rollups to expanded roadmap pillar headers.
+- [x] Hide those rollups when a pillar is collapsed.
+- [x] Add feature tracker and browser regression coverage.
 - [x] Run full validation.
-- [x] Publish a new here.now site.
 
 ## Review
 
-- Roadmap header now groups `Savings` with `Realized` underneath and `Avoidance` with `Realized` underneath.
-- Removed the narrow roadmap header constraint and allowed the legend to wrap cleanly.
-- Visual check saved at `tasks/test-artifacts/roadmap-header-stacked-wide.png`.
-- Full Playwright behavior suite: 66 passed, 0 failed, 0 untested.
-- Published and verified: https://ancient-hazel-k3jv.here.now/
+- Expanded roadmap pillar headers now show pillar-level `Savings`, `Avoidance`, and total `Realized` rollups.
+- Collapsed pillars keep only the pillar title visible and hide the rollups.
+- Added tracker/test coverage as `ROAD-014`.
+- Visual check saved at `tasks/test-artifacts/roadmap-pillar-financials.png`.
+- Full Playwright behavior suite: 67 passed, 0 failed, 0 untested.

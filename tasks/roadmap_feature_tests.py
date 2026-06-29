@@ -587,7 +587,7 @@ def run_tests():
           && getComputedStyle(document.querySelector('.impact-stack')).display === 'grid'
         """)
         runner.check(
-            ["ROAD-002", "ROAD-003", "ROAD-004", "ROAD-005", "ROAD-012", "ROAD-013"],
+            ["ROAD-002", "ROAD-003", "ROAD-004", "ROAD-005", "ROAD-012", "ROAD-013", "ROAD-014"],
             "3 initiatives" in text(page, "#roadMeta")
             and "3 dated" in text(page, "#roadMeta")
             and text(page, "#realizedSavingsTotal") == "$460K"
@@ -597,9 +597,10 @@ def run_tests():
             and financial_layout_grouped
             and "Foam Cup Damage" in text(page, "#tlSvg")
             and "$920K" in text(page, "#tlSvg")
+            and "Savings $920K · Avoidance $450K · Realized $820K" in text(page, "#tlSvg")
             and "TODAY" in text(page, "#tlSvg"),
-            "Roadmap renders counts, grouped realized financial totals, fiscal/quarter layout, today marker, lanes, item labels, and money labels.",
-            "Roadmap rendering, metadata, grouped realized financial totals, totals, or money labels were wrong.",
+            "Roadmap renders counts, grouped realized financial totals, per-pillar totals, fiscal/quarter layout, today marker, lanes, item labels, and money labels.",
+            "Roadmap rendering, metadata, grouped realized financial totals, per-pillar totals, totals, or money labels were wrong.",
         )
         not_started_fill = page.locator(".bar-grab[data-id='i3'][data-kind='move']").get_attribute("fill")
         runner.check(
@@ -628,6 +629,7 @@ def run_tests():
             page.locator(".pillar-toggle[data-pillar='p1']").get_attribute("data-collapsed") == "true"
             and "PRODUCT REQUIREMENTS" in collapsed_text
             and "Foam Cup Damage" not in collapsed_text
+            and "Savings $920K · Avoidance $450K · Realized $820K" not in collapsed_text
             and collapsed_h < before_collapse_h
             and collapsed_saved
         )
@@ -636,6 +638,7 @@ def run_tests():
         expanded_ok = (
             page.locator(".pillar-toggle[data-pillar='p1']").get_attribute("data-collapsed") == "false"
             and "Foam Cup Damage" in expanded_text
+            and "Savings $920K · Avoidance $450K · Realized $820K" in expanded_text
         )
         runner.check(
             "ROAD-010",
