@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-29T11:21:27+00:00",
+  "generatedAt": "2026-07-01T14:31:11+00:00",
   "app": "/Users/giovanni/Projects/roadmap-studio/index.html",
   "tracker": "/Users/giovanni/Projects/roadmap-studio/tasks/roadmap-studio-feature-tracker.csv",
   "results": {
@@ -7,409 +7,397 @@
       "status": "Passed",
       "result": "No saved data shows the start screen, hides Resume, and shows the local-only privacy note.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:13+00:00"
+      "tested_at": "2026-07-01T14:31:03+00:00"
     },
     "PRIVACY-001": {
       "status": "Passed",
       "result": "Local-only privacy statement is present.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:13+00:00"
+      "tested_at": "2026-07-01T14:31:03+00:00"
+    },
+    "SECURITY-001": {
+      "status": "Passed",
+      "result": "External runtime URLs and Excel controls are absent; the local PowerPoint bundle loads.",
+      "issue_id": "",
+      "tested_at": "2026-07-01T14:31:03+00:00"
+    },
+    "SECURITY-002": {
+      "status": "Passed",
+      "result": "Meta CSP blocks connection APIs and external resource origins for the single-file app.",
+      "issue_id": "",
+      "tested_at": "2026-07-01T14:31:03+00:00"
     },
     "ACCESS-001": {
       "status": "Passed",
       "result": "Basic labels, roles, and visible focus styling are present.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:13+00:00"
+      "tested_at": "2026-07-01T14:31:03+00:00"
     },
     "A11Y-002": {
       "status": "Passed",
       "result": "Reduced-motion CSS guard is present.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:13+00:00"
+      "tested_at": "2026-07-01T14:31:03+00:00"
     },
     "START-004": {
       "status": "Passed",
       "result": "Blank start creates one pillar/workstream and opens Structure with tabs ordered Structure, Initiatives, Roadmap.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:14+00:00"
+      "tested_at": "2026-07-01T14:31:04+00:00"
     },
     "NAV-001": {
       "status": "Passed",
       "result": "Blank start creates one pillar/workstream and opens Structure with tabs ordered Structure, Initiatives, Roadmap.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:14+00:00"
+      "tested_at": "2026-07-01T14:31:04+00:00"
     },
     "STRUCT-001": {
       "status": "Passed",
       "result": "Blank start creates one pillar/workstream and opens Structure with tabs ordered Structure, Initiatives, Roadmap.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:14+00:00"
+      "tested_at": "2026-07-01T14:31:04+00:00"
     },
     "PERSIST-001": {
       "status": "Passed",
       "result": "Autosave writes changed roadmap state to localStorage after edits.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:15+00:00"
+      "tested_at": "2026-07-01T14:31:05+00:00"
     },
     "START-002": {
       "status": "Passed",
       "result": "Saved state auto-restores into studio and shows restore toast.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:15+00:00"
+      "tested_at": "2026-07-01T14:31:05+00:00"
     },
     "PERSIST-002": {
       "status": "Passed",
       "result": "Start fresh from restore toast returns to start while keeping saved data available.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:15+00:00"
+      "tested_at": "2026-07-01T14:31:05+00:00"
     },
     "START-005": {
       "status": "Passed",
       "result": "Brand returns to start screen while leaving the saved session resumable.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:16+00:00"
+      "tested_at": "2026-07-01T14:31:05+00:00"
     },
     "START-003": {
       "status": "Passed",
       "result": "Resume last session reloads saved roadmap data.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:16+00:00"
+      "tested_at": "2026-07-01T14:31:05+00:00"
     },
     "UNDO-001": {
       "status": "Passed",
       "result": "Toolbar undo and redo restore and reapply a pillar rename.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:17+00:00"
+      "tested_at": "2026-07-01T14:31:05+00:00"
     },
     "UNDO-002": {
       "status": "Passed",
       "result": "Keyboard undo and redo work on editable structure changes.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:17+00:00"
+      "tested_at": "2026-07-01T14:31:06+00:00"
     },
     "STRUCT-002": {
       "status": "Passed",
       "result": "Pillar name edits persist after change events.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:17+00:00"
+      "tested_at": "2026-07-01T14:31:06+00:00"
     },
     "STRUCT-003": {
       "status": "Passed",
       "result": "Add pillar appends a pillar and focuses the new name input.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:17+00:00"
+      "tested_at": "2026-07-01T14:31:06+00:00"
     },
     "STRUCT-004": {
       "status": "Passed",
       "result": "Pillar up/down controls reorder adjacent pillars.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:17+00:00"
+      "tested_at": "2026-07-01T14:31:06+00:00"
     },
     "STRUCT-005": {
       "status": "Passed",
       "result": "Deleting a pillar removes it and leaves a valid remaining outline.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:17+00:00"
+      "tested_at": "2026-07-01T14:31:06+00:00"
     },
     "STRUCT-006": {
       "status": "Passed",
       "result": "Workstream name edits persist after change events.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:17+00:00"
+      "tested_at": "2026-07-01T14:31:06+00:00"
     },
     "STRUCT-007": {
       "status": "Passed",
       "result": "Add workstream appends a focused blank workstream.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:18+00:00"
+      "tested_at": "2026-07-01T14:31:06+00:00"
     },
     "STRUCT-008": {
       "status": "Passed",
       "result": "Enter in a workstream adds a new workstream below and focuses it.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:18+00:00"
+      "tested_at": "2026-07-01T14:31:06+00:00"
     },
     "STRUCT-009": {
       "status": "Passed",
       "result": "Backspace on an empty workstream removes it when another workstream remains.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:18+00:00"
+      "tested_at": "2026-07-01T14:31:06+00:00"
     },
     "STRUCT-010": {
       "status": "Passed",
       "result": "Workstream up/down controls reorder adjacent workstreams.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:18+00:00"
+      "tested_at": "2026-07-01T14:31:06+00:00"
     },
     "STRUCT-011": {
       "status": "Passed",
       "result": "Deleting a workstream removes it and leaves a valid fallback lane when needed.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:18+00:00"
+      "tested_at": "2026-07-01T14:31:06+00:00"
     },
     "INIT-001": {
       "status": "Passed",
       "result": "Initiatives tab shows empty state and Add initiative.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:19+00:00"
+      "tested_at": "2026-07-01T14:31:07+00:00"
     },
     "INIT-002": {
       "status": "Passed",
       "result": "Add initiative creates the expected default row and values.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:19+00:00"
+      "tested_at": "2026-07-01T14:31:07+00:00"
     },
     "INIT-003": {
       "status": "Passed",
       "result": "Initiative name edit persisted.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:19+00:00"
+      "tested_at": "2026-07-01T14:31:07+00:00"
     },
     "INIT-004": {
       "status": "Passed",
       "result": "Changing pillar reassigns the initiative to the first workstream in that pillar.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:19+00:00"
+      "tested_at": "2026-07-01T14:31:07+00:00"
     },
     "INIT-005": {
       "status": "Passed",
       "result": "Changing workstream updates the selected workstream.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:20+00:00"
+      "tested_at": "2026-07-01T14:31:08+00:00"
     },
     "INIT-006": {
       "status": "Passed",
       "result": "Date edits clamp start/end to prevent negative duration.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:20+00:00"
+      "tested_at": "2026-07-01T14:31:08+00:00"
     },
     "INIT-007": {
       "status": "Passed",
       "result": "Milestone toggle sets a one-day item and disables End.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:20+00:00"
+      "tested_at": "2026-07-01T14:31:08+00:00"
     },
     "INIT-008": {
       "status": "Passed",
       "result": "Status selection persisted.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:20+00:00"
+      "tested_at": "2026-07-01T14:31:08+00:00"
     },
     "INIT-009": {
       "status": "Passed",
       "result": "Savings/Avoidance selection persisted.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:20+00:00"
+      "tested_at": "2026-07-01T14:31:08+00:00"
     },
     "INIT-010": {
       "status": "Passed",
       "result": "Dollar value parses and formats as USD.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:20+00:00"
+      "tested_at": "2026-07-01T14:31:08+00:00"
     },
     "INIT-014": {
       "status": "Passed",
       "result": "Realized percentage accepts fractional entry, stores percent points, and formats with a percent sign.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:20+00:00"
+      "tested_at": "2026-07-01T14:31:08+00:00"
     },
     "INIT-011": {
       "status": "Passed",
       "result": "Owner entry refreshes datalist suggestions.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:20+00:00"
+      "tested_at": "2026-07-01T14:31:08+00:00"
     },
     "INIT-012": {
       "status": "Passed",
       "result": "Initiative row up/down control reorders rows.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:21+00:00"
+      "tested_at": "2026-07-01T14:31:08+00:00"
     },
     "INIT-013": {
       "status": "Passed",
       "result": "Initiative row delete removes the row.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:21+00:00"
+      "tested_at": "2026-07-01T14:31:08+00:00"
     },
     "ROAD-002": {
       "status": "Passed",
       "result": "Roadmap renders counts, grouped realized financial totals, per-pillar totals, fiscal/quarter layout, today marker, lanes, item labels, and money labels.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:21+00:00"
+      "tested_at": "2026-07-01T14:31:08+00:00"
     },
     "ROAD-003": {
       "status": "Passed",
       "result": "Roadmap renders counts, grouped realized financial totals, per-pillar totals, fiscal/quarter layout, today marker, lanes, item labels, and money labels.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:21+00:00"
+      "tested_at": "2026-07-01T14:31:08+00:00"
     },
     "ROAD-004": {
       "status": "Passed",
       "result": "Roadmap renders counts, grouped realized financial totals, per-pillar totals, fiscal/quarter layout, today marker, lanes, item labels, and money labels.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:21+00:00"
+      "tested_at": "2026-07-01T14:31:08+00:00"
     },
     "ROAD-005": {
       "status": "Passed",
       "result": "Roadmap renders counts, grouped realized financial totals, per-pillar totals, fiscal/quarter layout, today marker, lanes, item labels, and money labels.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:21+00:00"
+      "tested_at": "2026-07-01T14:31:08+00:00"
     },
     "ROAD-012": {
       "status": "Passed",
       "result": "Realized financial totals sum their own value types precisely and ignore the other value type.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:22+00:00"
+      "tested_at": "2026-07-01T14:31:09+00:00"
     },
     "ROAD-013": {
       "status": "Passed",
       "result": "Realized financial totals sum their own value types precisely and ignore the other value type.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:22+00:00"
+      "tested_at": "2026-07-01T14:31:09+00:00"
     },
     "ROAD-014": {
       "status": "Passed",
       "result": "Roadmap renders counts, grouped realized financial totals, per-pillar totals, fiscal/quarter layout, today marker, lanes, item labels, and money labels.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:21+00:00"
+      "tested_at": "2026-07-01T14:31:08+00:00"
     },
     "ROAD-011": {
       "status": "Passed",
       "result": "Not Started roadmap items render black and the legend includes Not Started.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:21+00:00"
+      "tested_at": "2026-07-01T14:31:08+00:00"
     },
     "ROAD-006": {
       "status": "Passed",
       "result": "Roadmap tooltip shows item metadata, full money, status, and owner.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:21+00:00"
+      "tested_at": "2026-07-01T14:31:08+00:00"
     },
     "ROAD-010": {
       "status": "Passed",
       "result": "Roadmap pillar bands collapse, persist collapsed state, and expand back to show hidden lanes.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:22+00:00"
+      "tested_at": "2026-07-01T14:31:09+00:00"
     },
     "ROAD-007": {
       "status": "Passed",
       "result": "Dragging a roadmap item moves its dates.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:22+00:00"
+      "tested_at": "2026-07-01T14:31:09+00:00"
     },
     "ROAD-008": {
       "status": "Passed",
       "result": "Dragging an end edge changes the item end date.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:22+00:00"
+      "tested_at": "2026-07-01T14:31:09+00:00"
     },
     "ROAD-009": {
       "status": "Passed",
       "result": "Roadmap rerenders with different SVG width after viewport resize.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:22+00:00"
+      "tested_at": "2026-07-01T14:31:09+00:00"
     },
     "ROAD-001": {
       "status": "Passed",
       "result": "Empty structure timeline fallback message renders.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:22+00:00"
+      "tested_at": "2026-07-01T14:31:09+00:00"
     },
     "FY-001": {
       "status": "Passed",
       "result": "Fiscal year selector updates the selected month and rerenders quarter/FY labels.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:22+00:00"
+      "tested_at": "2026-07-01T14:31:10+00:00"
     },
     "PROJECT-001": {
       "status": "Passed",
       "result": "Save downloads a JSON project file with serialized roadmap state.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:23+00:00"
+      "tested_at": "2026-07-01T14:31:10+00:00"
     },
     "PROJECT-002": {
       "status": "Passed",
       "result": "Opening a valid project JSON restores the roadmap.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:23+00:00"
+      "tested_at": "2026-07-01T14:31:10+00:00"
     },
     "PROJECT-003": {
       "status": "Passed",
       "result": "Invalid project JSON is rejected with a visible error.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:23+00:00"
-    },
-    "IMPORT-001": {
-      "status": "Passed",
-      "result": "Excel import parsed structure, initiatives, quarter/date/status/value fields.",
-      "issue_id": "",
-      "tested_at": "2026-06-29T11:21:23+00:00"
-    },
-    "IMPORT-004": {
-      "status": "Passed",
-      "result": "Excel import parsed structure, initiatives, quarter/date/status/value fields.",
-      "issue_id": "",
-      "tested_at": "2026-06-29T11:21:23+00:00"
-    },
-    "IMPORT-002": {
-      "status": "Passed",
-      "result": "Non-Excel import is rejected with the expected error.",
-      "issue_id": "",
-      "tested_at": "2026-06-29T11:21:23+00:00"
-    },
-    "IMPORT-003": {
-      "status": "Passed",
-      "result": "Workbook missing Pillar column is rejected with a helpful error.",
-      "issue_id": "",
-      "tested_at": "2026-06-29T11:21:24+00:00"
-    },
-    "EXPORT-001": {
-      "status": "Passed",
-      "result": "Export Excel downloaded Seed roadmap \u2014 scaffold.xlsx with worksheet dimension A1:K4.",
-      "issue_id": "",
-      "tested_at": "2026-06-29T11:21:24+00:00"
+      "tested_at": "2026-07-01T14:31:10+00:00"
     },
     "EXPORT-003": {
       "status": "Passed",
       "result": "PNG outside Roadmap shows the expected alert.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:26+00:00"
+      "tested_at": "2026-07-01T14:31:10+00:00"
     },
     "EXPORT-002": {
       "status": "Passed",
       "result": "PNG export downloads a non-empty roadmap.png.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:26+00:00"
+      "tested_at": "2026-07-01T14:31:11+00:00"
+    },
+    "EXPORT-004": {
+      "status": "Passed",
+      "result": "PowerPoint export downloads a deck with one human-readable slide per pillar.",
+      "issue_id": "",
+      "tested_at": "2026-07-01T14:31:11+00:00"
     },
     "PRESENT-001": {
       "status": "Passed",
       "result": "Present mode hides editing chrome and shows presentation state.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:26+00:00"
+      "tested_at": "2026-07-01T14:31:11+00:00"
     },
     "PRESENT-002": {
       "status": "Passed",
       "result": "Dark presentation toggle changes palette state and button label.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:26+00:00"
+      "tested_at": "2026-07-01T14:31:11+00:00"
     },
     "PRESENT-003": {
       "status": "Passed",
       "result": "Exit presentation clears presentation state.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:26+00:00"
+      "tested_at": "2026-07-01T14:31:11+00:00"
     },
     "STRUCT-012": {
       "status": "Passed",
       "result": "Structure workstreams show initiative counts for populated lanes.",
       "issue_id": "",
-      "tested_at": "2026-06-29T11:21:27+00:00"
+      "tested_at": "2026-07-01T14:31:11+00:00"
     }
   },
   "issues": [],
   "untested": [],
   "summary": {
-    "passed": 67,
+    "passed": 65,
     "failed": 0,
     "untested": 0
   }

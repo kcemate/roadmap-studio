@@ -1,12 +1,18 @@
-- [x] Add per-pillar Savings, Avoidance, and Realized rollups to expanded roadmap pillar headers.
-- [x] Hide those rollups when a pillar is collapsed.
-- [x] Add feature tracker and browser regression coverage.
+- [x] Remove ExcelJS and Excel import/export surfaces.
+- [x] Preserve JSON project save/open workflow.
+- [x] Add no-egress CSP and security regression coverage.
+- [x] Add browser-local PowerPoint export with one slide per pillar.
 - [x] Run full validation.
 
 ## Review
 
-- Expanded roadmap pillar headers now show pillar-level `Savings`, `Avoidance`, and total `Realized` rollups.
-- Collapsed pillars keep only the pillar title visible and hide the rollups.
-- Added tracker/test coverage as `ROAD-014`.
-- Visual check saved at `tasks/test-artifacts/roadmap-pillar-financials.png`.
-- Full Playwright behavior suite: 67 passed, 0 failed, 0 untested.
+- Removed the external ExcelJS CDN script.
+- Removed Excel import and Excel export controls/code.
+- Kept JSON project save/open and PNG export.
+- Added a meta CSP with `connect-src 'none'` and no external origins.
+- Added security tracker/test coverage as `SECURITY-001` and `SECURITY-002`.
+- Added a local vendored PowerPoint writer in `vendor/pptxgen.bundle.js`.
+- Added a `PowerPoint` export button that creates one readable slide per pillar.
+- Added tracker/test coverage as `EXPORT-004`.
+- Rendered the generated PPTX through headless Office and visually checked the first slide.
+- Full Playwright behavior suite: 65 passed, 0 failed, 0 untested.

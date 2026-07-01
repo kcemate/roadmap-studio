@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 import csv
 import json
-import re
 import shutil
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
-from xml.etree import ElementTree as ET
 
-from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
 
@@ -217,52 +214,6 @@ def safe_click(locator):
     locator.click(timeout=5000, force=True)
 
 
-def make_excel_fixture(page, path, rows):
-    make_excel_fixture_with_headers(
-        page,
-        path,
-        ['Pillar', 'Workstream', 'Initiative', 'Start', 'End', 'Status', 'Owner', 'Savings / Avoidance', '$ Value', '% Realized', 'Milestone'],
-        rows,
-    )
-
-
-def make_excel_fixture_with_headers(page, path, headers, rows):
-    page.wait_for_function("window.ExcelJS !== undefined", timeout=20000)
-    data = page.evaluate(
-        """async ({headers, rows}) => {
-            const wb = new ExcelJS.Workbook();
-            const ws = wb.addWorksheet('Roadmap');
-            ws.addRow(headers);
-            rows.forEach(row => ws.addRow(row));
-            const buf = await wb.xlsx.writeBuffer();
-            return Array.from(new Uint8Array(buf));
-        }""",
-        {"headers": headers, "rows": rows},
-    )
-    path.write_bytes(bytes(data))
-
-
-def xlsx_dimension(path):
-    with zipfile.ZipFile(path) as zf:
-        xml = zf.read("xl/worksheets/sheet1.xml")
-    root = ET.fromstring(xml)
-    ns = {"x": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
-    dim = root.find("x:dimension", ns)
-    return dim.attrib.get("ref", "") if dim is not None else ""
-
-
-def max_col_from_dimension(ref):
-    if ":" in ref:
-        ref = ref.split(":")[-1]
-    match = re.match(r"([A-Z]+)", ref)
-    if not match:
-        return 0
-    col = 0
-    for ch in match.group(1):
-        col = col * 26 + ord(ch) - 64
-    return col
-
-
 def visible_texts(page, selector):
     return [item.strip() for item in page.locator(selector).all_inner_texts() if item.strip()]
 
@@ -290,6 +241,31 @@ def run_tests():
             "Everything stays in this browser. Nothing is uploaded anywhere." in html,
             "Local-only privacy statement is present.",
             "Local-only privacy statement was missing.",
+        )
+        runner.check(
+            "SECURITY-001",
+            "cdnjs.cloudflare.com" not in html
+            and "ExcelJS" not in html
+            and "https://" not in html
+            and page.locator("script[src='vendor/pptxgen.bundle.js']").count() == 1
+            and page.evaluate("typeof PptxGenJS") == "function"
+            and page.locator("#btnImport").count() == 0
+            and page.locator("#fileIn").count() == 0
+            and page.locator("#exportBtn").count() == 0,
+            "External runtime URLs and Excel controls are absent; the local PowerPoint bundle loads.",
+            "External runtime URL, missing local PowerPoint bundle, or Excel controls were detected.",
+        )
+        csp = page.locator("meta[http-equiv='Content-Security-Policy']").get_attribute("content") or ""
+        runner.check(
+            "SECURITY-002",
+            "connect-src 'none'" in csp
+            and "default-src 'none'" in csp
+            and "script-src 'self' 'unsafe-inline'" in csp
+            and "form-action 'none'" in csp
+            and "object-src 'none'" in csp
+            and "https:" not in csp,
+            "Meta CSP blocks connection APIs and external resource origins for the single-file app.",
+            "Expected no-egress CSP was missing or allowed external origins.",
         )
         runner.check(
             "ACCESS-001",
@@ -767,92 +743,6 @@ def run_tests():
         )
         ctx.close()
 
-        # Excel import and export.
-        ctx, page = new_context(browser)
-        excel_fixture = ARTIFACTS / "import-fixture.xlsx"
-        missing_pillar_fixture = ARTIFACTS / "missing-pillar.xlsx"
-        try:
-            make_excel_fixture(
-                page,
-                excel_fixture,
-                [
-                    ["Product Requirements", "Damage Reduction", "Foam Cup Damage", "Q4 FY2026", "Q2 FY2027", "On Track", "B. Berry", "Savings", "$920,000", "50%", False],
-                    ["Product Requirements", "Transportation", "Carrier Risk", "9/1/2026", "9/1/2026", "red", "A. Adams", "Avoidance", "450K", 0.8, "x"],
-                ],
-            )
-            make_excel_fixture_with_headers(
-                page,
-                missing_pillar_fixture,
-                ["Workstream", "Initiative", "Start", "End"],
-                [["Damage Reduction", "No Pillar Initiative", "2026-01-01", "2026-02-01"]],
-            )
-            excel_ready = True
-        except Exception as exc:
-            excel_ready = False
-            excel_error = str(exc)
-        if excel_ready:
-            page.set_input_files("#fileIn", str(excel_fixture))
-            page.wait_for_selector("#studio")
-            page.click("#segRoad")
-            import_ok = (
-                "2 initiatives" in text(page, "#roadMeta")
-                and text(page, "#realizedSavingsTotal") == "$460K"
-                and text(page, "#savingsTotal") == "$920K"
-                and text(page, "#realizedAvoidanceTotal") == "$360K"
-                and text(page, "#avoidanceTotal") == "$450K"
-                and "Foam Cup Damage" in text(page, "#tlSvg")
-            )
-            runner.record(["IMPORT-001", "IMPORT-004"], import_ok, "Excel import parsed structure, initiatives, quarter/date/status/value fields." if import_ok else "Excel import did not produce expected roadmap.", "" if import_ok else "Excel import output was wrong.")
-        else:
-            runner.record(["IMPORT-001", "IMPORT-004"], False, f"ExcelJS was unavailable for fixture generation: {excel_error}", f"ExcelJS unavailable: {excel_error}")
-        ctx.close()
-
-        ctx, page = new_context(browser)
-        txt_file = ARTIFACTS / "not-excel.txt"
-        txt_file.write_text("not excel")
-        page.set_input_files("#fileIn", str(txt_file))
-        runner.check(
-            "IMPORT-002",
-            "Excel workbook" in text(page, "#err"),
-            "Non-Excel import is rejected with the expected error.",
-            "Non-Excel import did not show the expected error.",
-        )
-        ctx.close()
-
-        if excel_ready:
-            ctx, page = new_context(browser)
-            page.set_input_files("#fileIn", str(missing_pillar_fixture))
-            page.wait_for_selector("#err", state="visible", timeout=5000)
-            runner.check(
-                "IMPORT-003",
-                "Pillar column" in text(page, "#err"),
-                "Workbook missing Pillar column is rejected with a helpful error.",
-                "Workbook missing Pillar column was not rejected as expected.",
-            )
-            ctx.close()
-        else:
-            runner.record("IMPORT-003", False, "Skipped because ExcelJS fixture generation failed.", "ExcelJS fixture generation failed.")
-
-        ctx, page = new_context(browser, seed_state())
-        try:
-            page.wait_for_function("window.ExcelJS !== undefined", timeout=20000)
-            with page.expect_download() as dl_info:
-                page.click("#exportBtn")
-            export_download = dl_info.value
-            export_path = ARTIFACTS / "downloads" / export_download.suggested_filename
-            export_download.save_as(export_path)
-            dim = xlsx_dimension(export_path)
-            export_ok = export_path.exists() and max_col_from_dimension(dim) <= 11 and "scaffold" in export_download.suggested_filename
-            runner.record(
-                "EXPORT-001",
-                export_ok,
-                f"Export Excel downloaded {export_download.suggested_filename} with worksheet dimension {dim}.",
-                f"Export Excel created an unexpected worksheet dimension {dim}.",
-            )
-        except Exception as exc:
-            runner.record("EXPORT-001", False, f"Export Excel failed: {exc}", f"Export Excel failed: {exc}")
-        ctx.close()
-
         # PNG export.
         ctx, page = new_context(browser)
         page.click("#btnBlank")
@@ -887,6 +777,30 @@ def run_tests():
             png_path.exists() and png_path.stat().st_size > 1000 and png_download.suggested_filename == "roadmap.png",
             "PNG export downloads a non-empty roadmap.png.",
             "PNG export did not produce a valid roadmap.png.",
+        )
+
+        with page.expect_download() as dl_info:
+            page.click("#pptBtn")
+        ppt_download = dl_info.value
+        ppt_path = ARTIFACTS / "downloads" / ppt_download.suggested_filename
+        ppt_download.save_as(ppt_path)
+        with zipfile.ZipFile(ppt_path) as zf:
+            slide_names = sorted(name for name in zf.namelist() if name.startswith("ppt/slides/slide") and name.endswith(".xml"))
+            slide_xml = "\n".join(zf.read(name).decode("utf-8", "ignore") for name in slide_names)
+        runner.check(
+            "EXPORT-004",
+            ppt_path.exists()
+            and ppt_path.stat().st_size > 1000
+            and ppt_download.suggested_filename.endswith(".pptx")
+            and len(slide_names) == 2
+            and "Product Requirements" in slide_xml
+            and "Vertical Integration" in slide_xml
+            and "Foam Cup Damage" in slide_xml
+            and "Savings" in slide_xml
+            and "Avoidance" in slide_xml
+            and "Realized" in slide_xml,
+            "PowerPoint export downloads a deck with one human-readable slide per pillar.",
+            "PowerPoint export did not produce the expected pillar slides.",
         )
 
         # Presentation mode.
