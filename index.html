@@ -709,42 +709,58 @@ function pptPillarAxis(items){ const dated=items.filter(i=>i.start), today=new D
   else { start=fyStartOf(todayU,S.fyStart); end=start; }
   const quarters=[]; while(quarters.length<4||quarters[quarters.length-1]<end){ quarters.push(quarters.length?nextQuarter(quarters[quarters.length-1]):start); }
   end=nextQuarter(quarters[quarters.length-1]); return{start,end,quarters,todayU}; }
+function addPptMetric(slide,label,value,x,color){ slide.addShape('roundRect',{x,y:1.06,w:1.88,h:.52,fill:{color:'FFFFFF'},line:{color:'ECECF0',width:.7}});
+  slide.addShape('roundRect',{x:x+.16,y:1.22,w:.22,h:.08,fill:{color},line:{color}});
+  slide.addText(value,{x:x+.48,y:1.14,w:.95,h:.18,fontSize:14,bold:true,color:'1D1D1F',margin:0,fit:'shrink'});
+  slide.addText(label,{x:x+.48,y:1.34,w:1.1,h:.11,fontSize:6.8,bold:true,color:'8E8E93',margin:0,fit:'shrink'}); }
+function pptFiscalBands(axis,X){ const bands=[]; let fy=fqOf(axis.quarters[0],S.fyStart).fy, start=axis.quarters[0];
+  axis.quarters.forEach((q,i)=>{ const qFy=fqOf(q,S.fyStart).fy; if(qFy!==fy){ bands.push({fy,start,end:q}); fy=qFy; start=q; }
+    if(i===axis.quarters.length-1)bands.push({fy,start,end:axis.end}); });
+  return bands.map(b=>({...b,x:X(b.start),w:X(b.end)-X(b.start)})); }
 function addPptPillarSlide(pptx,p,idx,total){ const slide=pptx.addSlide(), totals=pillarFinancialTotals(p.id);
-  const ink='1D1D1F', ink2='6E6E73', hair='D9D9DE', band='F4F4F6';
-  slide.background={color:'FFFFFF'};
-  slide.addText(p.name,{x:.45,y:.28,w:8.4,h:.34,fontFace:'Aptos Display',fontSize:21,bold:true,color:ink,margin:0});
-  slide.addText(`Savings ${fmtMoneyShort(totals.Savings)}   Avoidance ${fmtMoneyShort(totals.Avoidance)}   Realized ${fmtMoneyShort(totals.Realized,true)}`,
-    {x:.47,y:.72,w:8.8,h:.22,fontSize:9.5,color:ink2,margin:0,breakLine:false});
-  slide.addText(`${idx+1} / ${total}`,{x:12.2,y:.35,w:.65,h:.18,fontSize:8,color:'A1A1A6',align:'right',margin:0});
-  const allItems=S.items.filter(i=>i.pillarId===p.id), axis=pptPillarAxis(allItems), labelX=.5, timeX=2.75, timeW=10.05, top=1.28, bodyTop=1.78, bodyH=5.25;
+  const ink='1D1D1F', ink2='6E6E73', ink3='A1A1A6', hair='DADAE0', band='F6F6F8', bg='FBFBFD', surface='FFFFFF';
+  slide.background={color:bg};
+  slide.addText('ROADMAP STUDIO',{x:.58,y:.18,w:1.55,h:.09,fontSize:6.4,bold:true,color:ink3,margin:0});
+  slide.addText(p.name,{x:.55,y:.38,w:8.2,h:.4,fontFace:'Aptos Display',fontSize:27,bold:true,color:ink,margin:0,fit:'shrink'});
+  slide.addText(`${idx+1} / ${total}`,{x:12.18,y:.36,w:.62,h:.16,fontSize:8,color:ink3,align:'right',margin:0});
+  addPptMetric(slide,'SAVINGS',fmtMoneyShort(totals.Savings),.58,'188038');
+  addPptMetric(slide,'AVOIDANCE',fmtMoneyShort(totals.Avoidance),2.58,'2563EB');
+  addPptMetric(slide,'REALIZED',fmtMoneyShort(totals.Realized,true),4.58,'0F766E');
+
+  const allItems=S.items.filter(i=>i.pillarId===p.id), axis=pptPillarAxis(allItems);
+  const canvasX=.42, canvasY=1.83, canvasW=12.48, canvasH=5.28, labelX=.74, labelW=2.0, timeX=3.04, timeW=9.55, fyY=2.02, qY=2.32, bodyTop=2.68, bodyH=4.04;
   const X=d=>timeX+((d-axis.start)/(axis.end-axis.start))*timeW;
-  slide.addShape('rect',{x:.28,y:1.1,w:12.78,h:6.05,fill:{color:'FFFFFF'},line:{color:'FFFFFF',transparency:100}});
+  slide.addShape('rect',{x:canvasX,y:canvasY,w:canvasW,h:canvasH,fill:{color:surface},line:{color:'E6E6EB',width:.65}});
+  pptFiscalBands(axis,X).forEach((b,i)=>{ if(i%2===1)slide.addShape('rect',{x:b.x,y:canvasY,w:b.w,h:canvasH,fill:{color:'F8F8FA'},line:{color:'F8F8FA',transparency:100}});
+    slide.addText(`FY${b.fy}`,{x:b.x,y:fyY,w:b.w,h:.14,fontSize:8.2,bold:true,color:ink,align:'center',margin:0,fit:'shrink'}); });
   axis.quarters.forEach(q=>{ const x=X(q),fq=fqOf(q,S.fyStart);
-    slide.addShape('line',{x,y:top,w:0,h:bodyH+.35,line:{color:hair,width:.65}});
-    slide.addText(`Q${fq.q}`,{x:x+.02,y:top-.26,w:.48,h:.14,fontSize:7.5,color:ink2,margin:0});
-  });
-  const todayX=X(axis.todayU); if(todayX>=timeX&&todayX<=timeX+timeW){ slide.addShape('line',{x:todayX,y:top-.08,w:0,h:bodyH+.52,line:{color:'2563EB',width:1.1}});
-    slide.addShape('rect',{x:todayX-.23,y:top-.42,w:.48,h:.18,rectRadius:.05,fill:{color:'2563EB'},line:{color:'2563EB'}});
-    slide.addText('TODAY',{x:todayX-.2,y:top-.39,w:.4,h:.08,fontSize:6.5,bold:true,color:'FFFFFF',align:'center',margin:0}); }
+    slide.addShape('line',{x,y:fyY+.24,w:0,h:canvasH-.42,line:{color:hair,width:.55}});
+    slide.addText(`Q${fq.q}`,{x:x+.03,y:qY,w:.55,h:.12,fontSize:7.2,color:ink2,margin:0}); });
+  slide.addShape('line',{x:canvasX,y:bodyTop-.1,w:canvasW,h:0,line:{color:'ECECF0',width:.7}});
+  const todayX=X(axis.todayU); if(todayX>=timeX&&todayX<=timeX+timeW){ slide.addShape('line',{x:todayX,y:fyY+.05,w:0,h:canvasH-.25,line:{color:'2563EB',width:1.15}});
+    slide.addShape('roundRect',{x:todayX-.27,y:fyY-.25,w:.54,h:.18,fill:{color:'2563EB'},line:{color:'2563EB'}});
+    slide.addText('TODAY',{x:todayX-.22,y:fyY-.215,w:.44,h:.08,fontSize:6.2,bold:true,color:'FFFFFF',align:'center',margin:0}); }
+
   const infos=(p.workstreams||[]).map(w=>{ const pack=pptPackItems(allItems.filter(i=>i.wsId===w.id)); return{w,...pack}; });
-  const base=infos.reduce((sum,info)=>sum+info.subs*.34+.24,0)||1, scale=Math.min(1,bodyH/base);
-  const rowH=Math.max(.22,.34*scale), wsPad=Math.max(.1,.18*scale), barH=Math.max(.14,.22*scale), font=Math.max(6.6,8.4*scale);
-  let y=bodyTop; infos.forEach((info,wi)=>{ const wsH=info.subs*rowH+wsPad+.08;
-    if(wi%2===0)slide.addShape('rect',{x:.28,y:y-.04,w:12.78,h:wsH,fill:{color:band,transparency:35},line:{color:band,transparency:100}});
-    slide.addText(info.w.name,{x:labelX,y:y+wsH/2-.08,w:2.0,h:.16,fontSize:8,color:ink2,margin:0,fit:'shrink'});
-    info.items.forEach(it=>{ const sub=info.sub.get(it.id)||0, yy=y+wsPad/2+sub*rowH, col=pptItemColor(it), label=roadmapLabel(it);
+  const base=infos.reduce((sum,info)=>sum+info.subs*.44+.26,0)||1, scale=Math.min(1,bodyH/base);
+  const rowH=Math.max(.27,.44*scale), wsPad=Math.max(.11,.18*scale), barH=Math.max(.18,.26*scale), font=Math.max(7.1,9.2*scale);
+  let y=bodyTop; infos.forEach((info,wi)=>{ const wsH=info.subs*rowH+wsPad+.14;
+    if(wi%2===0)slide.addShape('rect',{x:canvasX,y:y-.06,w:canvasW,h:wsH,fill:{color:band},line:{color:band,transparency:100}});
+    if(wi>0)slide.addShape('line',{x:canvasX+.16,y:y-.06,w:canvasW-.32,h:0,line:{color:'EFEFF3',width:.55}});
+    slide.addText(info.w.name,{x:labelX,y:y+wsH/2-.09,w:labelW,h:.16,fontSize:8.5,color:ink2,margin:0,fit:'shrink'});
+    info.items.forEach(it=>{ const sub=info.sub.get(it.id)||0, yy=y+wsPad/2+sub*rowH+.02, col=pptItemColor(it), label=roadmapLabel(it);
       if(it.milestone){ const sx=X(it.start);
-        slide.addShape('diamond',{x:sx-.07,y:yy+.02,w:.14,h:.14,fill:{color:col[0]},line:{color:it.status==='At Risk'?'B45309':col[0],width:1}});
-        slide.addText(label,{x:sx+.12,y:yy-.02,w:Math.max(.2,timeX+timeW-sx-.15),h:.16,fontSize:font,color:ink,margin:0,fit:'shrink'});
-      } else { const sx=X(it.start), ex=X(addDays(it.end||it.start,1)), bw=Math.max(ex-sx,.08), outsideW=Math.max(.2,timeX+timeW-ex-.05);
-        slide.addShape('rect',{x:sx,y:yy,w:bw,h:barH,rectRadius:.04,fill:{color:it.status==='Complete'?'D8D8DC':col[0],transparency:it.status==='Complete'?15:0},line:{color:it.status==='At Risk'?'B45309':(it.status==='Complete'?'D8D8DC':col[0]),width:it.status==='At Risk'?1.3:.6}});
-        const fits=label.length*(font*.0065)<bw-.08;
-        slide.addText(label,{x:fits?sx+.05:ex+.06,y:yy+.025,w:fits?Math.max(.1,bw-.1):outsideW,h:.12,fontSize:font,color:fits?col[1]:ink,margin:0,fit:'shrink'});
+        slide.addShape('diamond',{x:sx-.075,y:yy+.035,w:.15,h:.15,fill:{color:col[0]},line:{color:it.status==='At Risk'?'B45309':col[0],width:1.05}});
+        slide.addText(label,{x:sx+.13,y:yy+.005,w:Math.max(.25,timeX+timeW-sx-.18),h:.14,fontSize:font,color:ink,margin:0,fit:'shrink'});
+      } else { const sx=X(it.start), ex=X(addDays(it.end||it.start,1)), bw=Math.max(ex-sx,.11), outsideW=Math.max(.25,timeX+timeW-ex-.08);
+        slide.addShape('roundRect',{x:sx,y:yy,w:bw,h:barH,fill:{color:it.status==='Complete'?'D8D8DC':col[0],transparency:it.status==='Complete'?12:0},line:{color:it.status==='At Risk'?'B45309':(it.status==='Complete'?'D8D8DC':col[0]),width:it.status==='At Risk'?1.25:.55}});
+        const fits=label.length*(font*.0062)<bw-.12;
+        slide.addText(label,{x:fits?sx+.07:ex+.08,y:yy+.04,w:fits?Math.max(.15,bw-.14):outsideW,h:.12,fontSize:font,color:fits?col[1]:ink,margin:0,fit:'shrink'});
       }
     });
     y+=wsH;
   });
-  if(!infos.length||!allItems.some(i=>i.start))slide.addText('No dated initiatives in this pillar.',{x:timeX,y:bodyTop+.35,w:4,h:.25,fontSize:10,color:ink2,margin:0});
+  if(!infos.length||!allItems.some(i=>i.start))slide.addText('No dated initiatives in this pillar.',{x:timeX,y:bodyTop+.35,w:4,h:.25,fontSize:11,color:ink2,margin:0});
 }
 async function exportPowerPoint(){ if(typeof PptxGenJS!=='function'){alert('PowerPoint export is unavailable.');return;}
   const btn=$('pptBtn'); btn.disabled=true; try{ const pptx=new PptxGenJS(); pptx.layout='LAYOUT_WIDE'; pptx.author='Roadmap Studio'; pptx.subject='Roadmap export'; pptx.title=S.fileName||'Roadmap';

@@ -796,10 +796,12 @@ def run_tests():
             and "Product Requirements" in slide_xml
             and "Vertical Integration" in slide_xml
             and "Foam Cup Damage" in slide_xml
-            and "Savings" in slide_xml
-            and "Avoidance" in slide_xml
-            and "Realized" in slide_xml,
-            "PowerPoint export downloads a deck with one human-readable slide per pillar.",
+            and "SAVINGS" in slide_xml
+            and "AVOIDANCE" in slide_xml
+            and "REALIZED" in slide_xml
+            and "FY2026" in slide_xml
+            and "FY2027" in slide_xml,
+            "PowerPoint export downloads a deck with one human-readable slide per pillar, including fiscal years.",
             "PowerPoint export did not produce the expected pillar slides.",
         )
 

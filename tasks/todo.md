@@ -1,18 +1,13 @@
-- [x] Remove ExcelJS and Excel import/export surfaces.
-- [x] Preserve JSON project save/open workflow.
-- [x] Add no-egress CSP and security regression coverage.
-- [x] Add browser-local PowerPoint export with one slide per pillar.
+- [x] Redesign PowerPoint slides with a more presentation-ready visual hierarchy.
+- [x] Add fiscal year labels above quarter markers.
+- [x] Keep one readable roadmap slide per pillar.
+- [x] Render the generated deck for visual inspection.
 - [x] Run full validation.
 
 ## Review
 
-- Removed the external ExcelJS CDN script.
-- Removed Excel import and Excel export controls/code.
-- Kept JSON project save/open and PNG export.
-- Added a meta CSP with `connect-src 'none'` and no external origins.
-- Added security tracker/test coverage as `SECURITY-001` and `SECURITY-002`.
-- Added a local vendored PowerPoint writer in `vendor/pptxgen.bundle.js`.
-- Added a `PowerPoint` export button that creates one readable slide per pillar.
-- Added tracker/test coverage as `EXPORT-004`.
-- Rendered the generated PPTX through headless Office and visually checked the first slide.
+- Redesigned the PowerPoint export around a large pillar title, metric cards, fiscal-year bands, quarter labels, and a cleaner roadmap canvas.
+- Added explicit FY labels to the PPT axis so years are not missing.
+- Rendered both sample slides through headless Office to PNG for visual inspection.
+- Updated `EXPORT-004` coverage to require fiscal years in the generated deck.
 - Full Playwright behavior suite: 65 passed, 0 failed, 0 untested.
