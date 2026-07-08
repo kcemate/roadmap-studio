@@ -2,3 +2,4 @@
 - PowerPoint roadmap labels need bounded text boxes. When a bar reaches the right edge, do not push labels into a tiny outside column; keep labels inside the bar or give them enough measured room, and test overlapping same-workstream initiatives.
 - When a user asks for savings visualization and the app already distinguishes Savings from Avoidance, do not assume one metric is enough. Confirm whether the view needs Savings-only, Savings + Avoidance, or both, and test both paths with multi-pillar data.
 - PowerPoint export tests must validate OOXML repair safety, not just visible text markers. Rising diagonal lines can produce negative `cx`/`cy` extents if written as raw `w`/`h` deltas; normalize to positive extents and use flips before exporting.
+- When pushing feature work for recruiter/GitHub review, update the README and repo-facing description too. A branch can be technically current while the default GitHub page still tells the old product story.
