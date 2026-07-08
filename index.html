@@ -69,7 +69,7 @@ input,select{font:inherit;color:inherit}
 .stage-head{display:flex;align-items:baseline;gap:14px;margin-bottom:18px;max-width:880px}
 .stage-head h2{font-size:22px;font-weight:600;letter-spacing:-.02em}
 .stage-head .meta{font-size:12px;color:var(--ink2)}
-#roadStage .stage-head{max-width:none;align-items:flex-start}
+#roadStage .stage-head,#projStage .stage-head,#stackStage .stage-head{max-width:none;align-items:flex-start}
 
 /* ---------- structure outline ---------- */
 .outline{max-width:680px;margin:0 auto}
@@ -114,6 +114,70 @@ input,select{font:inherit;color:inherit}
 .tl-scroll{overflow-x:auto;border:1px solid var(--hairline);border-radius:var(--radius-card);background:var(--surface);box-shadow:var(--shadow-card)}
 svg text{user-select:none}
 .bar-grab{cursor:grab}.bar-grab:active{cursor:grabbing}.edge{cursor:ew-resize}.pillar-toggle{cursor:pointer}
+
+.projection-head{justify-content:space-between;gap:20px;margin-bottom:14px}
+.projection-title{display:flex;align-items:baseline;gap:14px;min-width:0}
+.projection-controls{display:flex;align-items:center;gap:12px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.projection-control{display:flex;align-items:center;gap:9px;color:var(--ink2);font-size:12px;white-space:nowrap}
+.projection-control input{border:1px solid var(--hairline);border-radius:7px;background:var(--surface);padding:6px 9px;color:var(--ink);font-size:13px}
+.projection-control input[type=checkbox]{width:15px;height:15px;padding:0;accent-color:var(--accent)}
+.projection-control .money-in{width:124px;text-align:right}
+.projection-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:end;margin-bottom:14px}
+.projection-hero h3{font-size:44px;font-weight:650;letter-spacing:-.03em;line-height:1.05}
+.projection-hero p{color:var(--ink2);font-size:15px;margin-top:8px}
+.projection-target-status{justify-self:end;text-align:right;font-size:13px;color:var(--ink2);font-weight:600;white-space:nowrap}
+.projection-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.projection-card{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:16px 18px;min-height:92px}
+.projection-card .kicker{display:flex;align-items:center;gap:7px;color:var(--ink2);font-size:11px;font-weight:650;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.projection-card .swatch{width:20px;height:7px;border-radius:4px;display:inline-block}
+.projection-card .value{font-size:28px;font-weight:650;letter-spacing:-.02em;line-height:1.05;font-variant-numeric:tabular-nums}
+.projection-card .note{font-size:12px;color:var(--ink2);margin-top:6px}
+.projection-chart-wrap{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius-card);box-shadow:var(--shadow-card);overflow:hidden}
+.projection-empty{padding:64px 24px;text-align:center;color:var(--ink2)}
+.projection-empty b{display:block;color:var(--ink);font-size:17px;font-weight:600;margin-bottom:4px}
+.projection-legend{display:flex;align-items:center;justify-content:flex-end;gap:18px;padding:12px 18px 0;color:var(--ink2);font-size:12px}
+.projection-legend span{display:inline-flex;align-items:center;gap:7px}
+.projection-legend i{width:22px;height:3px;border-radius:2px;display:inline-block}
+.projection-svg{display:block;width:100%;height:auto}
+.projection-main{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:14px;align-items:start}
+.projection-panel{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:18px}
+.projection-panel h3{font-size:13px;font-weight:650;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin-bottom:12px}
+.driver-row{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px 0;border-top:1px solid var(--hairline)}
+.driver-row:first-of-type{border-top:none;padding-top:0}
+.driver-name{font-size:13px;font-weight:600;color:var(--ink);line-height:1.25}
+.driver-meta{font-size:11px;color:var(--ink2);margin-top:3px}
+.driver-value{font-size:13px;font-weight:650;font-variant-numeric:tabular-nums}
+.projection-inspect{border-top:1px solid var(--hairline);margin-top:14px;padding-top:14px;color:var(--ink2);font-size:12px;line-height:1.5}
+.projection-inspect b{display:block;color:var(--ink);font-size:15px;margin-bottom:2px}
+
+.stack-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.stack-card{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius-card);box-shadow:var(--shadow-card);overflow:hidden}
+.stack-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid var(--hairline)}
+.stack-card h3{font-size:18px;font-weight:650;letter-spacing:-.02em}
+.stack-card p{font-size:12px;color:var(--ink2);margin-top:3px}
+.stack-total{text-align:right;font-size:30px;font-weight:650;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+.stack-total span{display:block;font-size:11px;font-weight:650;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin-top:6px}
+.stack-chart-body{display:grid;grid-template-columns:minmax(220px,310px) minmax(0,1fr);gap:18px;padding:18px 20px 20px;align-items:center}
+.stack-svg{width:100%;height:auto;display:block}
+.stack-detail{display:flex;flex-direction:column;border-top:1px solid var(--hairline)}
+.stack-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:9px;align-items:center;padding:10px 0;border-bottom:1px solid var(--hairline)}
+.stack-swatch{width:13px;height:13px;border-radius:4px;display:inline-block}
+.stack-name{font-size:13px;font-weight:600;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stack-value{font-size:12px;color:var(--ink2);margin-top:2px}
+.stack-share{font-size:14px;font-weight:650;font-variant-numeric:tabular-nums}
+.stack-empty{padding:72px 24px;text-align:center;color:var(--ink2);background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius-card);box-shadow:var(--shadow-card)}
+.stack-empty b{display:block;color:var(--ink);font-size:17px;font-weight:600;margin-bottom:4px}
+@media (max-width:860px){
+  .projection-head{flex-direction:column;align-items:flex-start}
+  .projection-controls{margin-left:0;justify-content:flex-start}
+  .projection-hero{grid-template-columns:1fr}
+  .projection-hero h3{font-size:34px}
+  .projection-target-status{justify-self:start;text-align:left}
+  .projection-summary{grid-template-columns:1fr}
+  .projection-main{grid-template-columns:1fr}
+  .stack-layout{grid-template-columns:1fr}
+  .stack-chart-body{grid-template-columns:1fr}
+}
 
 .tip{position:fixed;z-index:50;pointer-events:none;display:none;background:rgba(29,29,31,.96);color:#f5f5f7;
   border-radius:10px;padding:12px 14px;font-size:12px;line-height:1.55;max-width:280px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
@@ -192,6 +256,8 @@ body.presenting.dark{--pbg:#070708}
       <button id="segStruct" class="on" role="tab">Structure</button>
       <button id="segData" role="tab">Initiatives</button>
       <button id="segRoad" role="tab">Roadmap</button>
+      <button id="segProj" role="tab">Projected Savings</button>
+      <button id="segStack" role="tab">Stacked Bar Chart</button>
     </div>
     <div class="spacer"></div>
     <button class="icon-btn" id="undoBtn" title="Undo (⌘Z)" aria-label="Undo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
@@ -223,6 +289,67 @@ body.presenting.dark{--pbg:#070708}
       </div>
       <div class="tl-scroll" id="tlScroll"><div id="tlBox"></div></div>
     </div>
+    <!-- PROJECTION -->
+    <div id="projStage" style="display:none">
+      <div class="stage-head projection-head">
+        <div class="projection-title"><h2>Projected Savings</h2><span class="meta" id="projMeta"></span></div>
+        <div class="projection-controls">
+          <label class="projection-control">Project to <input type="date" id="projectionEndDate" aria-label="Projection end date"></label>
+          <label class="projection-control">Target <input class="money-in" id="projectionTarget" inputmode="decimal" placeholder="$0" aria-label="Projection target"></label>
+          <label class="projection-control"><input type="checkbox" id="projectionRealizedToggle" checked aria-label="Show realized projection">Show realized</label>
+        </div>
+      </div>
+      <div class="projection-hero">
+        <div><h3 id="projectionHeadline">$0 projected</h3><p id="projectionSubhead">$0 Savings · $0 Avoidance</p></div>
+        <div class="projection-target-status" id="projectionTargetStatus"></div>
+      </div>
+      <div class="projection-summary" aria-label="Projected financial totals">
+        <div class="projection-card">
+          <div class="kicker"><i class="swatch" style="background:#188038"></i>Savings</div>
+          <div class="value" id="projSavings">$0</div>
+          <div class="note">Projected planned savings</div>
+        </div>
+        <div class="projection-card">
+          <div class="kicker"><i class="swatch" style="background:#2563eb"></i>Avoidance</div>
+          <div class="value" id="projAvoidance">$0</div>
+          <div class="note">Projected planned avoidance</div>
+        </div>
+        <div class="projection-card">
+          <div class="kicker"><i class="swatch" style="background:#2563eb"></i>Savings + Avoidance</div>
+          <div class="value" id="projCombined">$0</div>
+          <div class="note">Projected total impact</div>
+        </div>
+      </div>
+      <div class="projection-main">
+        <div class="projection-chart-wrap" id="projectionBody"></div>
+        <div class="projection-panel">
+          <h3>Top Drivers</h3>
+          <div id="projectionDrivers"></div>
+          <div class="projection-inspect" id="projectionInspect"></div>
+        </div>
+      </div>
+    </div>
+    <!-- STACKED BAR CHART -->
+    <div id="stackStage" style="display:none">
+      <div class="stage-head"><h2>Stacked Bar Chart</h2><span class="meta" id="stackMeta"></span></div>
+      <div id="stackEmpty" class="stack-empty" style="display:none"><b>No financial values</b>Add Savings or Avoidance dollar values to see pillar share of impact.</div>
+      <div class="stack-layout" id="stackBody">
+        <div class="stack-card" id="stackSavingsChart">
+          <div class="stack-card-head">
+            <div><h3>Savings only</h3><p>Each segment shows that pillar's share of total planned savings.</p></div>
+            <div class="stack-total" id="stackSavingsTotal">$0<span>Total Savings</span></div>
+          </div>
+          <div class="stack-chart-body" id="stackSavingsBody"></div>
+        </div>
+        <div class="stack-card" id="stackCombinedChart">
+          <div class="stack-card-head">
+            <div><h3>Savings + Avoidance</h3><p>Each segment shows that pillar's share of total planned impact.</p></div>
+            <div class="stack-total" id="stackCombinedTotal">$0<span>Total Impact</span></div>
+          </div>
+          <div class="stack-chart-body" id="stackCombinedBody"></div>
+        </div>
+      </div>
+    </div>
     <!-- GRID -->
     <div id="gridStage" style="display:none">
       <div class="stage-head"><h2>Initiatives</h2><span class="meta">Add the dated work that lives under each workstream. This is the part owners fill in.</span></div>
@@ -242,7 +369,7 @@ body.presenting.dark{--pbg:#070708}
 
 <script>
 "use strict";
-const S = { view:'start', structure:[], items:[], collapsedPillars:{}, fyStart:6, tab:'struct',
+const S = { view:'start', structure:[], items:[], collapsedPillars:{}, fyStart:6, tab:'struct', projectionEnd:null, projectionTarget:'', projectionShowRealized:true,
   history:[], future:[], presenting:false, dark:false, seq:1, fileName:null };
 const STATUSES = ['Not Started','On Track','At Risk','Complete'];
 const VALUE_TYPES = ['Savings','Avoidance'];
@@ -358,7 +485,7 @@ function show(view){ S.view=view;
 /* ---------- start actions ---------- */
 $('btnBlank').onclick = () => {
   S.structure=[{id:uid('p'),name:'New pillar',workstreams:[{id:uid('w'),name:'New workstream'}]}];
-  S.items=[]; S.collapsedPillars={}; S.fileName='Untitled roadmap'; enterStudio();
+  S.items=[]; S.collapsedPillars={}; S.projectionEnd=null; S.projectionTarget=''; S.projectionShowRealized=true; S.fileName='Untitled roadmap'; enterStudio();
 };
 function showErr(m){ const e=$('err'); e.textContent=m; e.style.display='block'; }
 
@@ -376,20 +503,28 @@ function setTab(t){ S.tab=t;
   $('segStruct').classList.toggle('on',t==='struct');
   $('segRoad').classList.toggle('on',t==='road');
   $('segData').classList.toggle('on',t==='data');
+  $('segProj').classList.toggle('on',t==='proj');
+  $('segStack').classList.toggle('on',t==='stack');
   $('structStage').style.display=t==='struct'?'':'none';
   $('roadStage').style.display=t==='road'?'':'none';
   $('gridStage').style.display=t==='data'?'':'none';
+  $('projStage').style.display=t==='proj'?'':'none';
+  $('stackStage').style.display=t==='stack'?'':'none';
   renderAll();
 }
 $('segStruct').onclick=()=>setTab('struct');
 $('segRoad').onclick=()=>setTab('road');
 $('segData').onclick=()=>setTab('data');
+$('segProj').onclick=()=>setTab('proj');
+$('segStack').onclick=()=>setTab('stack');
 
 function renderAll(){ if(S.view!=='studio')return;
   pruneCollapsedPillars();
   if(S.tab==='struct')renderOutline();
   if(S.tab==='road'||S.presenting)renderTimeline();
   if(S.tab==='data')renderGrid();
+  if(S.tab==='proj')renderProjection();
+  if(S.tab==='stack')renderStackedCharts();
   $('undoBtn').disabled=!S.history.length; $('redoBtn').disabled=!S.future.length;
   const nw=S.structure.reduce((a,p)=>a+p.workstreams.length,0);
   $('structMeta').textContent=`${S.structure.length} ${S.structure.length===1?'pillar':'pillars'} · ${nw} ${nw===1?'workstream':'workstreams'}`;
@@ -406,6 +541,220 @@ function renderLegendTotals(){
   $('realizedAvoidanceTotal').textContent=fmtMoneyShort(totals.RealizedAvoidance,true);
   $('savingsTotal').textContent=fmtMoneyShort(totals.Savings);
   $('avoidanceTotal').textContent=fmtMoneyShort(totals.Avoidance);
+}
+
+/* ============ PROJECTED SAVINGS ============ */
+function todayUtc(){ const t=new Date(); return utc(t.getFullYear(),t.getMonth(),t.getDate()); }
+function projectionDateOf(it,field){ const v=it[field]; return v instanceof Date?v:parseAnyDate(v,field,S.fyStart); }
+function projectionFinancialItems(){
+  return S.items.map(it=>{
+    const value=parseMoney(it.value), start=projectionDateOf(it,'start'), milestone=!!it.milestone;
+    const end=milestone?start:projectionDateOf(it,'end');
+    if(value===''||!start||!end||(!milestone&&end<start))return null;
+    return{source:it,type:normValueType(it.valueType),value,start,end,milestone};
+  }).filter(Boolean);
+}
+function projectionDefaultEnd(){
+  const items=projectionFinancialItems();
+  if(items.length)return new Date(Math.max(...items.map(it=>it.end.getTime())));
+  let end=fyStartOf(todayUtc(),S.fyStart); for(let i=0;i<4;i++)end=nextQuarter(end);
+  return addDays(end,-1);
+}
+function selectedProjectionEnd(){
+  const saved=S.projectionEnd?parseAnyDate(S.projectionEnd,'end',S.fyStart):null;
+  return saved||projectionDefaultEnd();
+}
+function projectedValueAt(item,date){
+  const t=date.getTime(), s=item.start.getTime(), e=item.end.getTime();
+  if(item.milestone||e<=s)return t>=s?item.value:0;
+  if(t<s)return 0;
+  if(t>=e)return item.value;
+  return item.value*((t-s)/(e-s));
+}
+function projectedRealizedAt(item,date){ const pct=parsePercent(item.source.realizedPct);
+  if(pct===''||pct==null)return 0;
+  return projectedValueAt(item,date)*pct/100; }
+function projectionTotalsAt(items,date){
+  const totals={Savings:0,Avoidance:0,Combined:0,Realized:0};
+  items.forEach(it=>{
+    const v=projectedValueAt(it,date);
+    totals[it.type]+=v; totals.Combined+=v; totals.Realized+=projectedRealizedAt(it,date);
+  });
+  return totals;
+}
+function projectionTargetValue(){ return parseMoney(S.projectionTarget); }
+function projectionDrivers(items,date){ return items.map(it=>{
+    const value=projectedValueAt(it,date), realized=projectedRealizedAt(it,date);
+    return{item:it.source,type:it.type,value,realized};
+  }).filter(d=>d.value>0).sort((a,b)=>b.value-a.value).slice(0,3); }
+function projectionAxis(items,endDate){
+  const starts=items.map(it=>it.start.getTime());
+  const min=starts.length?Math.min(...starts,endDate.getTime()):Math.min(todayUtc().getTime(),endDate.getTime());
+  let start=quarterStart(new Date(min),S.fyStart), end=endDate;
+  if(end<=start)end=addDays(start,90);
+  return{start,end};
+}
+function projectionPointDates(items,axis,endDate){
+  const points=new Map(), add=d=>points.set(isoDate(d),d);
+  add(axis.start); add(endDate);
+  for(let q=quarterStart(axis.start,S.fyStart); q<=axis.end; q=nextQuarter(q))add(q);
+  items.forEach(it=>{ if(it.start>=axis.start&&it.start<=endDate)add(it.start); if(it.end>=axis.start&&it.end<=endDate)add(it.end); });
+  return[...points.values()].sort((a,b)=>a-b);
+}
+function projectionPoints(endDate=selectedProjectionEnd()){
+  const items=projectionFinancialItems(), axis=projectionAxis(items,endDate);
+  const points=projectionPointDates(items,axis,endDate).map(date=>({date,...projectionTotalsAt(items,date)}));
+  return{items,axis,points};
+}
+function niceProjectionMax(v){
+  if(v<=0)return 1;
+  const top=v*1.12, exp=Math.pow(10,Math.floor(Math.log10(top))), base=top/exp;
+  const step=[1,1.2,1.5,1.6,2,2.5,3,4,5,6,8,10].find(s=>base<=s)||10;
+  return step*exp;
+}
+function projectionPath(points,key,X,Y){ return points.map((p,i)=>`${i?'L':'M'} ${X(p.date).toFixed(1)} ${Y(p[key]).toFixed(1)}`).join(' '); }
+function projectionBandPath(points,X,Y){
+  if(!points.length)return'';
+  const top=points.map((p,i)=>`${i?'L':'M'} ${X(p.date).toFixed(1)} ${Y(p.Combined).toFixed(1)}`).join(' ');
+  const bottom=[...points].reverse().map(p=>`L ${X(p.date).toFixed(1)} ${Y(p.Savings).toFixed(1)}`).join(' ');
+  return`${top} ${bottom} Z`;
+}
+function projectionInspectHtml(point,items){
+  const active=items.filter(it=>projectedValueAt(it,point.date)>0).length;
+  const realized=S.projectionShowRealized?` · Realized ${fmtMoneyShort(point.Realized,true)}`:'';
+  return`<b>${esc(fmtDate(point.date))}</b>Savings ${esc(fmtMoneyShort(point.Savings,true))} · Avoidance ${esc(fmtMoneyShort(point.Avoidance,true))}<br>Projected ${esc(fmtMoneyShort(point.Combined,true))}${realized} · ${active} active`;
+}
+function bindProjectionInspect(svg,data,X,Y){
+  const inspect=$('projectionInspect'); if(!svg||!inspect||!data.points.length)return;
+  const setPoint=pt=>{ inspect.innerHTML=projectionInspectHtml(pt,data.items);
+    svg.querySelector('#projectionHoverLine')?.setAttribute('x1',X(pt.date));
+    svg.querySelector('#projectionHoverLine')?.setAttribute('x2',X(pt.date));
+    const combined=svg.querySelector('#projectionHoverCombined'); if(combined){combined.setAttribute('cx',X(pt.date));combined.setAttribute('cy',Y(pt.Combined));}
+    const savings=svg.querySelector('#projectionHoverSavings'); if(savings){savings.setAttribute('cx',X(pt.date));savings.setAttribute('cy',Y(pt.Savings));}
+    const realized=svg.querySelector('#projectionHoverRealized'); if(realized){realized.setAttribute('cx',X(pt.date));realized.setAttribute('cy',Y(pt.Realized));}
+  };
+  setPoint(data.points[data.points.length-1]);
+  const move=e=>{ const r=svg.getBoundingClientRect(), viewX=(e.clientX-r.left)*(svg.viewBox.baseVal.width/r.width);
+    const nearest=data.points.reduce((best,pt)=>Math.abs(X(pt.date)-viewX)<Math.abs(X(best.date)-viewX)?pt:best,data.points[0]);
+    setPoint(nearest); };
+  svg.addEventListener('mousemove',move); svg.addEventListener('click',move);
+}
+function renderProjection(){
+  const end=selectedProjectionEnd(), data=projectionPoints(end), totals=projectionTotalsAt(data.items,end), target=projectionTargetValue();
+  $('projectionEndDate').value=isoDate(end);
+  $('projectionEndDate').onchange=()=>{ S.projectionEnd=$('projectionEndDate').value||null; renderProjection(); scheduleSave(); };
+  $('projectionTarget').value=target===''?'':fmtMoney(target);
+  $('projectionTarget').onchange=()=>{ const v=parseMoney($('projectionTarget').value); S.projectionTarget=v===''?'':v; renderProjection(); scheduleSave(); };
+  $('projectionRealizedToggle').checked=S.projectionShowRealized!==false;
+  $('projectionRealizedToggle').onchange=()=>{ S.projectionShowRealized=$('projectionRealizedToggle').checked; renderProjection(); scheduleSave(); };
+  $('projSavings').textContent=fmtMoneyShort(totals.Savings,true);
+  $('projAvoidance').textContent=fmtMoneyShort(totals.Avoidance,true);
+  $('projCombined').textContent=fmtMoneyShort(totals.Combined,true);
+  $('projectionHeadline').textContent=`${fmtMoneyShort(totals.Combined,true)} projected by ${fmtDate(end)}`;
+  $('projectionSubhead').innerHTML=`${esc(fmtMoneyShort(totals.Savings,true))} Savings · ${esc(fmtMoneyShort(totals.Avoidance,true))} Avoidance${S.projectionShowRealized!==false?` · <span id="projectionRealizedValue">${esc(fmtMoneyShort(totals.Realized,true))}</span> realized`:''}`;
+  $('projectionTargetStatus').textContent=target===''?'':`${totals.Combined>=target?'Above':'Below'} target by ${fmtMoneyShort(Math.abs(totals.Combined-target),true)}`;
+  $('projMeta').textContent=`${data.items.length} ${data.items.length===1?'financial initiative':'financial initiatives'} · through ${fmtDate(end)}`;
+  const drivers=projectionDrivers(data.items,end);
+  $('projectionDrivers').innerHTML=drivers.length?drivers.map(d=>`<div class="driver-row"><div><div class="driver-name">${esc(d.item.name)}</div><div class="driver-meta">${esc(d.type)}${d.realized?` · Realized ${esc(fmtMoneyShort(d.realized,true))}`:''}</div></div><div class="driver-value">${esc(fmtMoneyShort(d.value,true))}</div></div>`).join(''):`<div class="empty-note" style="padding:20px 0">No active drivers by this date.</div>`;
+  $('projectionInspect').innerHTML='';
+  const body=$('projectionBody');
+  if(!data.items.length){
+    body.innerHTML=`<div id="projectionEmpty" class="projection-empty"><b>No dated financial initiatives</b>Add initiatives with a Savings or Avoidance value and valid dates to see the projection.</div>`;
+    return;
+  }
+
+  const W=Math.max(body.clientWidth||980,760), H=392, L=78, R=30, T=34, B=58, PW=W-L-R, PH=H-T-B;
+  const maxY=niceProjectionMax(Math.max(...data.points.map(p=>Math.max(p.Combined,p.Realized)),totals.Combined,target===''?0:target));
+  const span=Math.max(1,data.axis.end-data.axis.start);
+  const X=d=>L+((d-data.axis.start)/span)*PW;
+  const Y=v=>T+PH-(v/maxY)*PH;
+  const yTicks=[0,.25,.5,.75,1].map(f=>f*maxY);
+  let svg=`<div class="projection-legend"><span><i style="background:#188038"></i>Savings only</span><span><i style="background:#2563eb"></i>Savings + Avoidance</span><span><i style="background:rgba(37,99,235,.18);height:8px"></i>Avoidance lift</span>${S.projectionShowRealized!==false?'<span><i style="background:#8e8e93"></i>Realized</span>':''}${target!==''?'<span><i style="background:#d97706"></i>Target</span>':''}</div>`;
+  svg+=`<svg id="projectionSvg" class="projection-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected savings chart" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Inter,sans-serif">`;
+  svg+=`<rect width="${W}" height="${H}" fill="#fff"/>`;
+  yTicks.forEach(v=>{ const y=Y(v); svg+=`<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="rgba(0,0,0,.07)"/>`;
+    svg+=`<text x="${L-12}" y="${y+4}" text-anchor="end" font-size="11" fill="#6e6e73">${esc(fmtMoneyShort(v,true))}</text>`; });
+  for(let q=quarterStart(data.axis.start,S.fyStart); q<=data.axis.end; q=nextQuarter(q)){
+    const x=X(q), fq=fqOf(q,S.fyStart);
+    const annual=fq.q===1||q.getTime()===quarterStart(data.axis.start,S.fyStart).getTime();
+    svg+=`<line x1="${x}" y1="${annual?T:T+PH-7}" x2="${x}" y2="${T+PH}" stroke="rgba(0,0,0,${annual?'.055':'.08'})"/>`;
+    if(annual){ svg+=`<text x="${x+4}" y="${H-28}" font-size="11" fill="#6e6e73">Q${fq.q}</text>`;
+      svg+=`<text x="${x+4}" y="${H-13}" font-size="10" font-weight="600" fill="#aeaeb2">${S.fyStart===0?fq.fy:'FY'+fq.fy}</text>`; }
+  }
+  svg+=`<line x1="${L}" y1="${T+PH}" x2="${W-R}" y2="${T+PH}" stroke="rgba(0,0,0,.18)"/>`;
+  if(target!==''){ const ty=Y(target); svg+=`<line id="projectionTargetLine" x1="${L}" y1="${ty}" x2="${W-R}" y2="${ty}" stroke="#d97706" stroke-width="1.5" stroke-dasharray="7 7"/><text x="${W-R}" y="${ty-6}" text-anchor="end" font-size="11" font-weight="650" fill="#b45309">Target ${esc(fmtMoneyShort(target,true))}</text>`; }
+  svg+=`<path data-series="avoidance-band" d="${projectionBandPath(data.points,X,Y)}" fill="rgba(37,99,235,.12)" stroke="none"/>`;
+  svg+=`<path data-series="combined" d="${projectionPath(data.points,'Combined',X,Y)}" fill="none" stroke="#2563eb" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
+  svg+=`<path data-series="savings" d="${projectionPath(data.points,'Savings',X,Y)}" fill="none" stroke="#188038" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+  if(S.projectionShowRealized!==false)svg+=`<path data-series="realized" d="${projectionPath(data.points,'Realized',X,Y)}" fill="none" stroke="#8e8e93" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 7"/>`;
+  const last=data.points[data.points.length-1];
+  svg+=`<circle cx="${X(last.date)}" cy="${Y(last.Combined)}" r="4.5" fill="#2563eb"/><circle cx="${X(last.date)}" cy="${Y(last.Savings)}" r="4" fill="#188038"/>`;
+  svg+=`<line id="projectionHoverLine" x1="${X(last.date)}" y1="${T}" x2="${X(last.date)}" y2="${T+PH}" stroke="rgba(0,0,0,.18)" stroke-width="1"/><circle id="projectionHoverCombined" cx="${X(last.date)}" cy="${Y(last.Combined)}" r="5.5" fill="#fff" stroke="#2563eb" stroke-width="2"/><circle id="projectionHoverSavings" cx="${X(last.date)}" cy="${Y(last.Savings)}" r="5" fill="#fff" stroke="#188038" stroke-width="2"/>`;
+  if(S.projectionShowRealized!==false)svg+=`<circle id="projectionHoverRealized" cx="${X(last.date)}" cy="${Y(last.Realized)}" r="4.5" fill="#fff" stroke="#8e8e93" stroke-width="2"/>`;
+  svg+=`<text x="${W-R}" y="${Y(last.Combined)-10}" text-anchor="end" font-size="12" font-weight="650" fill="#2563eb">${esc(fmtMoneyShort(last.Combined,true))}</text>`;
+  svg+=`<text x="${W-R}" y="${Y(last.Savings)+18}" text-anchor="end" font-size="12" font-weight="650" fill="#188038">${esc(fmtMoneyShort(last.Savings,true))}</text>`;
+  svg+=`<text x="${W-R}" y="${H-13}" text-anchor="end" font-size="10" font-weight="600" fill="#aeaeb2">${esc(fmtDate(end))}</text>`;
+  svg+=`</svg>`;
+  body.innerHTML=svg;
+  bindProjectionInspect($('projectionSvg'),data,X,Y);
+}
+
+/* ============ STACKED BAR CHARTS ============ */
+const STACK_COLORS=['5E6AD2','30B0C7','F2C94C','F97066','34C759','AF52DE','FF9F0A','8E8E93','0F766E','B45309'];
+function fmtShare(pct){ const n=Math.round((isFinite(pct)?pct:0)*10)/10;
+  return `${Math.abs(n-Math.round(n))<.05?String(Math.round(n)):n.toFixed(1)}%`; }
+function stackedPillarRows(){
+  return S.structure.map((p,idx)=>{
+    let savings=0, avoidance=0;
+    S.items.filter(it=>it.pillarId===p.id).forEach(it=>{
+      const value=parseMoney(it.value); if(value===''||value<=0)return;
+      if(normValueType(it.valueType)==='Avoidance')avoidance+=value; else savings+=value;
+    });
+    return{p,color:STACK_COLORS[idx%STACK_COLORS.length],Savings:savings,Avoidance:avoidance,Combined:savings+avoidance};
+  });
+}
+function stackedBreakdown(kind){
+  const key=kind==='combined'?'Combined':'Savings';
+  const rows=stackedPillarRows(), total=rows.reduce((sum,row)=>sum+row[key],0);
+  return{key,total,segments:rows.filter(row=>row[key]>0).map(row=>({...row,value:row[key],pct:total?row[key]/total*100:0}))};
+}
+function stackSegmentLabel(seg){ return `${seg.p.name} · ${fmtMoneyShort(seg.value,true)} · ${fmtShare(seg.pct)}`; }
+function renderStackedChart(bodyId,svgId,series,data,emptyTitle){
+  const body=$(bodyId);
+  if(!data.total){
+    body.innerHTML=`<div class="projection-empty"><b>${esc(emptyTitle)}</b>Add dollar values to initiatives to build this stacked view.</div>`;
+    return;
+  }
+  const W=300,H=430,T=32,B=40,barX=98,barW=104,barH=H-T-B;
+  let y=T+barH, svg=`<svg id="${svgId}" class="stack-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${series==='savings'?'Savings only':'Savings plus avoidance'} pillar stacked bar chart" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Inter,sans-serif">`;
+  svg+=`<rect width="${W}" height="${H}" fill="#fff"/>`;
+  svg+=`<line x1="${barX-22}" y1="${T+barH}" x2="${barX+barW+22}" y2="${T+barH}" stroke="rgba(0,0,0,.14)"/>`;
+  data.segments.forEach((seg,i)=>{
+    const h=Math.max(.5,barH*seg.value/data.total), sy=y-h, isTop=i===data.segments.length-1, isBottom=i===0;
+    svg+=`<rect class="stack-segment" data-series="${series}" data-pillar="${esc(seg.p.id)}" x="${barX}" y="${sy}" width="${barW}" height="${h}" fill="#${seg.color}" rx="${isTop||isBottom?7:0}"><title>${esc(stackSegmentLabel(seg))}</title></rect>`;
+    if(h>=29){
+      const ink=['F2C94C','34C759'].includes(seg.color)?'1D1D1F':'FFFFFF';
+      svg+=`<text x="${barX+barW/2}" y="${sy+h/2+4}" text-anchor="middle" font-size="13" font-weight="700" fill="#${ink}">${esc(fmtShare(seg.pct))}</text>`;
+    }
+    y=sy;
+  });
+  svg+=`<text x="${barX+barW/2}" y="18" text-anchor="middle" font-size="13" font-weight="700" fill="#1d1d1f">${esc(fmtMoneyShort(data.total,true))}</text>`;
+  svg+=`<text x="${barX+barW/2}" y="${H-10}" text-anchor="middle" font-size="12" fill="#6e6e73">${series==='savings'?'Savings only':'Savings + Avoidance'}</text>`;
+  svg+=`</svg>`;
+  const rows=`<div class="stack-detail">${data.segments.map(seg=>`<div class="stack-row"><i class="stack-swatch" style="background:#${seg.color}"></i><div><div class="stack-name">${esc(seg.p.name)}</div><div class="stack-value">${esc(fmtMoneyShort(seg.value,true))}</div></div><div class="stack-share">${esc(fmtShare(seg.pct))}</div></div>`).join('')}</div>`;
+  body.innerHTML=svg+rows;
+}
+function renderStackedCharts(){
+  const savings=stackedBreakdown('savings'), combined=stackedBreakdown('combined');
+  $('stackSavingsTotal').textContent=fmtMoneyShort(savings.total,true);
+  $('stackCombinedTotal').textContent=fmtMoneyShort(combined.total,true);
+  $('stackMeta').textContent=`${S.structure.length} ${S.structure.length===1?'pillar':'pillars'} · ${fmtMoneyShort(savings.total,true)} Savings · ${fmtMoneyShort(combined.total,true)} Savings + Avoidance`;
+  const empty=!savings.total&&!combined.total;
+  $('stackEmpty').style.display=empty?'':'none';
+  $('stackBody').style.display=empty?'none':'grid';
+  if(empty)return;
+  renderStackedChart('stackSavingsBody','stackSavingsSvg','savings',savings,'No Savings values');
+  renderStackedChart('stackCombinedBody','stackCombinedSvg','combined',combined,'No Savings or Avoidance values');
 }
 
 /* ---------- undo ---------- */
@@ -713,10 +1062,28 @@ function addPptMetric(slide,label,value,x,color){ slide.addShape('roundRect',{x,
   slide.addShape('roundRect',{x:x+.16,y:1.22,w:.22,h:.08,fill:{color},line:{color}});
   slide.addText(value,{x:x+.48,y:1.14,w:.95,h:.18,fontSize:14,bold:true,color:'1D1D1F',margin:0,fit:'shrink'});
   slide.addText(label,{x:x+.48,y:1.34,w:1.1,h:.11,fontSize:6.8,bold:true,color:'8E8E93',margin:0,fit:'shrink'}); }
+function addPptSafeLine(slide,x1,y1,x2,y2,color,width=1,opts={}){
+  const dx=x2-x1, dy=y2-y1;
+  const shape={x:Math.min(x1,x2),y:Math.min(y1,y2),w:Math.abs(dx),h:Math.abs(dy),line:{color,width,transparency:opts.transparency||0}};
+  if(opts.dashType)shape.line.dashType=opts.dashType;
+  if(shape.w>0&&shape.h>0&&dx*dy<0)shape.flipV=true;
+  slide.addShape('line',shape);
+}
 function pptFiscalBands(axis,X){ const bands=[]; let fy=fqOf(axis.quarters[0],S.fyStart).fy, start=axis.quarters[0];
   axis.quarters.forEach((q,i)=>{ const qFy=fqOf(q,S.fyStart).fy; if(qFy!==fy){ bands.push({fy,start,end:q}); fy=qFy; start=q; }
     if(i===axis.quarters.length-1)bands.push({fy,start,end:axis.end}); });
   return bands.map(b=>({...b,x:X(b.start),w:X(b.end)-X(b.start)})); }
+function pptBarLabelBox(label,font,sx,ex,bw,timeX,timeW){
+  const desired=Math.min(3.15,Math.max(2.05,label.length*(font*.006)+.18));
+  const insideW=Math.max(.15,bw-.14), insideFits=label.length*(font*.0062)<insideW-.04;
+  if(insideFits||insideW>=desired*.72)return{x:sx+.07,w:insideW,inside:true,align:'left'};
+  const rightW=timeX+timeW-ex-.08;
+  if(rightW>=desired)return{x:ex+.08,w:Math.min(desired,rightW),inside:false,align:'left'};
+  const leftW=sx-timeX-.12;
+  if(leftW>=1.2){ const w=Math.min(desired,leftW); return{x:sx-.08-w,w,inside:false,align:'right'}; }
+  const w=Math.min(desired,timeW);
+  return{x:Math.max(timeX,Math.min(sx+.07,timeX+timeW-w)),w,inside:false,align:'left'};
+}
 function addPptPillarSlide(pptx,p,idx,total){ const slide=pptx.addSlide(), totals=pillarFinancialTotals(p.id);
   const ink='1D1D1F', ink2='6E6E73', ink3='A1A1A6', hair='DADAE0', band='F6F6F8', bg='FBFBFD', surface='FFFFFF';
   slide.background={color:bg};
@@ -752,19 +1119,141 @@ function addPptPillarSlide(pptx,p,idx,total){ const slide=pptx.addSlide(), total
       if(it.milestone){ const sx=X(it.start);
         slide.addShape('diamond',{x:sx-.075,y:yy+.035,w:.15,h:.15,fill:{color:col[0]},line:{color:it.status==='At Risk'?'B45309':col[0],width:1.05}});
         slide.addText(label,{x:sx+.13,y:yy+.005,w:Math.max(.25,timeX+timeW-sx-.18),h:.14,fontSize:font,color:ink,margin:0,fit:'shrink'});
-      } else { const sx=X(it.start), ex=X(addDays(it.end||it.start,1)), bw=Math.max(ex-sx,.11), outsideW=Math.max(.25,timeX+timeW-ex-.08);
+      } else { const sx=X(it.start), ex=X(addDays(it.end||it.start,1)), bw=Math.max(ex-sx,.11);
         slide.addShape('roundRect',{x:sx,y:yy,w:bw,h:barH,fill:{color:it.status==='Complete'?'D8D8DC':col[0],transparency:it.status==='Complete'?12:0},line:{color:it.status==='At Risk'?'B45309':(it.status==='Complete'?'D8D8DC':col[0]),width:it.status==='At Risk'?1.25:.55}});
-        const fits=label.length*(font*.0062)<bw-.12;
-        slide.addText(label,{x:fits?sx+.07:ex+.08,y:yy+.04,w:fits?Math.max(.15,bw-.14):outsideW,h:.12,fontSize:font,color:fits?col[1]:ink,margin:0,fit:'shrink'});
+        const lb=pptBarLabelBox(label,font,sx,ex,bw,timeX,timeW);
+        slide.addText(label,{x:lb.x,y:yy+.04,w:lb.w,h:.12,fontSize:font,color:lb.inside?col[1]:ink,align:lb.align,margin:0,fit:'shrink'});
       }
     });
     y+=wsH;
   });
   if(!infos.length||!allItems.some(i=>i.start))slide.addText('No dated initiatives in this pillar.',{x:timeX,y:bodyTop+.35,w:4,h:.25,fontSize:11,color:ink2,margin:0});
 }
+function addPptProjectionSlide(pptx){ const slide=pptx.addSlide(), end=selectedProjectionEnd(), data=projectionPoints(end), totals=projectionTotalsAt(data.items,end);
+  const ink='1D1D1F', ink2='6E6E73', ink3='A1A1A6', hair='DADAE0', bg='FBFBFD', surface='FFFFFF';
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+  slide.background={color:bg};
+  slide.addText('ROADMAP STUDIO',{x:.58,y:.18,w:1.55,h:.09,fontSize:6.4,bold:true,color:ink3,margin:0});
+  slide.addText('Projected savings trajectory',{x:.58,y:.38,w:2.25,h:.11,fontSize:6.4,bold:true,color:ink3,margin:0,fit:'shrink'});
+  slide.addText(`Projected by ${fmtDate(end)}`,{x:.55,y:.55,w:6.8,h:.42,fontFace:'Aptos Display',fontSize:29,bold:true,color:ink,margin:0,fit:'shrink'});
+  slide.addText(`${fmtMoneyShort(totals.Savings,true)} Savings + ${fmtMoneyShort(totals.Avoidance,true)} Avoidance`,{x:.58,y:1.02,w:4.8,h:.14,fontSize:9.2,color:ink2,margin:0,fit:'shrink'});
+  slide.addText(`${fmtMoneyShort(totals.Combined,true)}`,{x:10.15,y:.5,w:2.12,h:.32,fontSize:25,bold:true,color:'1D4ED8',align:'right',margin:0,fit:'shrink'});
+  slide.addText('TOTAL PROJECTED IMPACT',{x:10.15,y:.9,w:2.12,h:.09,fontSize:6.3,bold:true,color:ink3,align:'right',margin:0,fit:'shrink'});
+  const addStat=(label,value,x,color)=>{ slide.addShape('roundRect',{x,y:1.22,w:2.18,h:.46,fill:{color:surface},line:{color:'ECECF0',width:.55}});
+    slide.addShape('roundRect',{x:x+.16,y:1.39,w:.22,h:.07,fill:{color},line:{color}});
+    slide.addText(value,{x:x+.48,y:1.31,w:.98,h:.16,fontSize:12.8,bold:true,color:ink,margin:0,fit:'shrink'});
+    slide.addText(label,{x:x+.48,y:1.5,w:1.1,h:.08,fontSize:5.8,bold:true,color:ink3,margin:0,fit:'shrink'}); };
+  addStat('SAVINGS',fmtMoneyShort(totals.Savings,true),.58,'188038');
+  addStat('AVOIDANCE',fmtMoneyShort(totals.Avoidance,true),2.92,'2563EB');
+  addStat('REALIZED',fmtMoneyShort(totals.Realized,true),5.26,'8E8E93');
+
+  const x0=.62,y0=1.9,w=12.08,h=4.72,L=.72,R=.42,T=.34,B=.58;
+  slide.addShape('rect',{x:x0,y:y0,w,h,fill:{color:surface},line:{color:'E8E8ED',width:.55}});
+  if(!data.items.length){ slide.addText('No dated financial initiatives.',{x:x0+.35,y:y0+1.95,w:3.8,h:.22,fontSize:14,color:ink2,margin:0}); }
+  else{
+    const plotX=x0+L, plotY=y0+T, plotW=w-L-R, plotH=h-T-B;
+    const maxY=niceProjectionMax(Math.max(...data.points.map(p=>Math.max(p.Combined,p.Realized)),totals.Combined));
+    const span=Math.max(1,data.axis.end-data.axis.start);
+    const X=d=>plotX+((d-data.axis.start)/span)*plotW, Y=v=>plotY+plotH-(v/maxY)*plotH;
+    [0,.25,.5,.75,1].forEach(f=>{ const val=f*maxY, y=Y(val);
+      addPptSafeLine(slide,plotX,y,plotX+plotW,y,f?'E9E9EE':'DADAE0',f?.42:.62,{transparency:f?4:0});
+      slide.addText(fmtMoneyShort(val,true),{x:x0+.15,y:y-.055,w:.48,h:.1,fontSize:5.7,color:ink2,align:'right',margin:0,fit:'shrink'}); });
+    const firstQuarter=quarterStart(data.axis.start,S.fyStart);
+    for(let q=firstQuarter; q<=data.axis.end; q=nextQuarter(q)){ const x=X(q),fq=fqOf(q,S.fyStart), annual=fq.q===1||q.getTime()===firstQuarter.getTime();
+      addPptSafeLine(slide,x,annual?plotY:plotY+plotH-.08,x,annual?plotY+plotH:plotY+plotH,annual?'EFEFF3':'DADAE0',annual?.38:.42,{transparency:annual?18:0});
+      if(annual){ slide.addText(`Q${fq.q}`,{x:x+.03,y:y0+h-.4,w:.34,h:.08,fontSize:5.6,color:ink2,margin:0});
+        slide.addText(`${S.fyStart===0?fq.fy:'FY'+fq.fy}`,{x:x+.03,y:y0+h-.24,w:.55,h:.08,fontSize:5.3,bold:true,color:ink3,margin:0,fit:'shrink'}); } }
+    for(let i=1;i<data.points.length;i++){ const a=data.points[i-1],b=data.points[i], x=X(a.date), width=Math.max(.01,X(b.date)-X(a.date));
+      const yTop=Math.min(Y(a.Combined),Y(b.Combined)), yBottom=Math.max(Y(a.Savings),Y(b.Savings)), bandH=Math.max(.01,yBottom-yTop);
+      slide.addShape('rect',{x,y:yTop,w:width,h:bandH,fill:{color:'2563EB',transparency:88},line:{color:'2563EB',transparency:100}}); }
+    const addLine=(key,color,width,transparency=0)=>{ for(let i=1;i<data.points.length;i++){ const a=data.points[i-1],b=data.points[i];
+        addPptSafeLine(slide,X(a.date),Y(a[key]),X(b.date),Y(b[key]),color,width,{transparency}); } };
+    addLine('Combined','2563EB',2.55); addLine('Savings','188038',1.65);
+    if(S.projectionShowRealized!==false)addLine('Realized','8E8E93',1.05,10);
+    const last=data.points[data.points.length-1], lift=Math.max(0,last.Combined-last.Savings);
+    slide.addShape('ellipse',{x:X(last.date)-.055,y:Y(last.Combined)-.055,w:.11,h:.11,fill:{color:'2563EB'},line:{color:'FFFFFF',width:.65}});
+    slide.addShape('ellipse',{x:X(last.date)-.045,y:Y(last.Savings)-.045,w:.09,h:.09,fill:{color:'188038'},line:{color:'FFFFFF',width:.55}});
+    const labelX=Math.min(X(last.date)-.62,plotX+plotW-.88);
+    slide.addText(fmtMoneyShort(last.Combined,true),{x:labelX,y:clamp(Y(last.Combined)-.22,plotY+.02,plotY+plotH-.18),w:.86,h:.11,fontSize:7.2,bold:true,color:'2563EB',align:'right',margin:0,fit:'shrink'});
+    slide.addText(fmtMoneyShort(last.Savings,true),{x:labelX,y:clamp(Y(last.Savings)+.08,plotY+.08,plotY+plotH-.08),w:.86,h:.11,fontSize:7,bold:true,color:'188038',align:'right',margin:0,fit:'shrink'});
+    const callX=plotX+plotW-2.28, callY=plotY+.18;
+    slide.addShape('roundRect',{x:callX,y:callY,w:1.95,h:.62,fill:{color:surface},line:{color:'E8E8ED',width:.5}});
+    slide.addText('Value added by Avoidance',{x:callX+.16,y:callY+.13,w:1.48,h:.09,fontSize:6.1,bold:true,color:ink3,margin:0,fit:'shrink'});
+    slide.addText(fmtMoneyShort(lift,true),{x:callX+.16,y:callY+.31,w:.88,h:.16,fontSize:12.2,bold:true,color:'2563EB',margin:0,fit:'shrink'});
+    slide.addText('Avoidance lift',{x:callX+1.05,y:callY+.35,w:.68,h:.08,fontSize:5.7,bold:true,color:'2563EB',align:'right',margin:0,fit:'shrink'});
+    const drivers=projectionDrivers(data.items,end);
+    if(drivers.length){ slide.addText(`Largest driver: ${drivers[0].item.name} · ${drivers[0].type} ${fmtMoneyShort(drivers[0].value,true)}`,{x:plotX,y:y0+h+.14,w:5.5,h:.1,fontSize:6.3,color:ink2,margin:0,fit:'shrink'}); }
+  }
+  const legend=[['188038','Savings only'],['2563EB','Savings + Avoidance'],['DCE8FF','Avoidance lift'],['8E8E93','Realized']];
+  legend.forEach((l,i)=>{ const x=7.72+i*1.28, y=1.4;
+    if(l[1]==='Avoidance lift')slide.addShape('rect',{x,y:y+.035,w:.3,h:.07,fill:{color:'2563EB',transparency:86},line:{color:'2563EB',transparency:100}});
+    else addPptSafeLine(slide,x,y+.07,x+.3,y+.07,l[0],l[1]==='Savings + Avoidance'?2:1.45);
+    slide.addText(l[1],{x:x+.36,y,w:.88,h:.1,fontSize:5.9,color:ink2,margin:0,fit:'shrink'}); });
+}
+function pptStackRows(){
+  const savings=stackedBreakdown('savings'), combined=stackedBreakdown('combined');
+  const rowMap=new Map(stackedPillarRows().map(row=>[row.p.id,row]));
+  const rows=[...rowMap.values()].filter(row=>row.Savings>0||row.Combined>0).sort((a,b)=>b.Combined-a.Combined);
+  const leader=rows.find(row=>row.Combined>0)||rows[0]||null;
+  const support=['6D7890','36A3A9','E06A5F','C6A24A','8E8E93','A071B8','5F8E6D'];
+  const colors={}; rows.forEach((row,i)=>{ colors[row.p.id]=leader&&row.p.id===leader.p.id?'2563EB':support[i%support.length]; });
+  return{savings,combined,rows,leader,colors};
+}
+function pptStackSegments(data,colors){
+  return [...data.segments].sort((a,b)=>b.value-a.value).map(seg=>({...seg,color:colors[seg.p.id]||seg.color}));
+}
+function addPptExecutiveStackBar(slide,data,colors,x,title,totalLabel){
+  const ink='1D1D1F', ink2='6E6E73', ink3='A1A1A6', barX=x+.34, barY=2.35, barW=.94, barH=3.62;
+  slide.addText(totalLabel,{x:x-.15,y:1.5,w:1.92,h:.12,fontSize:7.2,bold:true,color:ink3,align:'center',margin:0,fit:'shrink'});
+  slide.addText(fmtMoneyShort(data.total,true),{x:x-.15,y:1.68,w:1.92,h:.2,fontSize:16.2,bold:true,color:ink,align:'center',margin:0,fit:'shrink'});
+  slide.addText(title,{x:x-.15,y:6.18,w:1.92,h:.14,fontSize:8.4,bold:true,color:ink2,align:'center',margin:0,fit:'shrink'});
+  if(!data.total){ slide.addText('No financial values',{x:x-.2,y:3.6,w:2.1,h:.14,fontSize:9,color:ink2,align:'center',margin:0}); return; }
+  slide.addShape('line',{x:barX-.22,y:barY+barH,w:barW+.44,h:0,line:{color:'D6D6DD',width:.65}});
+  let y=barY+barH;
+  pptStackSegments(data,colors).forEach(seg=>{ const h=Math.max(.025,barH*seg.value/data.total), sy=y-h;
+    slide.addShape('rect',{x:barX,y:sy,w:barW,h,fill:{color:seg.color},line:{color:'FFFFFF',width:.28,transparency:20}});
+    if(seg.pct>=8)slide.addText(fmtShare(seg.pct),{x:barX+.08,y:sy+h/2-.055,w:barW-.16,h:.1,fontSize:7.4,bold:true,color:'FFFFFF',align:'center',margin:0,fit:'shrink'});
+    y=sy; });
+}
+function addPptStackedSlide(pptx){ const slide=pptx.addSlide(), stack=pptStackRows(), savings=stack.savings, combined=stack.combined;
+  const ink='1D1D1F', ink2='6E6E73', ink3='A1A1A6', bg='FBFBFD', hair='E8E8ED';
+  const top=combined.segments.length?[...combined.segments].sort((a,b)=>b.value-a.value)[0]:null;
+  const title=top?`${top.p.name} carries ${fmtShare(top.pct)} of total value`:'Pillar value concentration';
+  slide.background={color:bg};
+  slide.addText('ROADMAP STUDIO',{x:.58,y:.18,w:1.55,h:.09,fontSize:6.4,bold:true,color:ink3,margin:0});
+  slide.addText(title,{x:.55,y:.44,w:7.85,h:.35,fontFace:'Aptos Display',fontSize:24.5,bold:true,color:ink,margin:0,fit:'shrink'});
+  slide.addText('Pillar value concentration compares Savings-only with total impact after Avoidance.',{x:.58,y:.88,w:5.2,h:.14,fontSize:8.8,color:ink2,margin:0,fit:'shrink'});
+  addPptExecutiveStackBar(slide,savings,stack.colors,1.18,'Savings-only','TOTAL SAVINGS');
+  addPptExecutiveStackBar(slide,combined,stack.colors,3.72,'Savings + Avoidance','TOTAL IMPACT');
+  slide.addShape('line',{x:3.2,y:2.34,w:0,h:3.72,line:{color:'ECECF0',width:.65}});
+  slide.addText('Same pillar colors across both bars',{x:1.1,y:6.48,w:3.95,h:.1,fontSize:6.2,color:ink3,align:'center',margin:0,fit:'shrink'});
+
+  const leader=top, lx=6.35;
+  slide.addShape('roundRect',{x:lx,y:1.36,w:2.58,h:.9,rectRadius:.08,fill:{color:'EEF4FF'},line:{color:'D8E5FF',width:.55}});
+  slide.addText('Dominant pillar',{x:lx+.22,y:1.56,w:1.1,h:.09,fontSize:6.3,bold:true,color:'2563EB',margin:0,fit:'shrink'});
+  slide.addText(leader?leader.p.name:'No financial value',{x:lx+.22,y:1.76,w:1.55,h:.13,fontSize:9.3,bold:true,color:ink,margin:0,fit:'shrink'});
+  slide.addText(leader?`${fmtMoneyShort(leader.value,true)} · ${fmtShare(leader.pct)}`:'Add values to initiatives',{x:lx+.22,y:1.97,w:1.55,h:.1,fontSize:6.6,color:ink2,margin:0,fit:'shrink'});
+
+  const tx=6.35, ty=2.62;
+  slide.addText('Ranked contribution',{x:tx,y:ty,w:2.0,h:.13,fontSize:8.2,bold:true,color:ink,margin:0,fit:'shrink'});
+  slide.addText('Savings-only',{x:tx+2.75,y:ty,w:.8,h:.09,fontSize:6.1,bold:true,color:ink3,align:'right',margin:0,fit:'shrink'});
+  slide.addText('Total impact',{x:tx+3.78,y:ty,w:.82,h:.09,fontSize:6.1,bold:true,color:ink3,align:'right',margin:0,fit:'shrink'});
+  slide.addShape('line',{x:tx,y:ty+.24,w:4.62,h:0,line:{color:hair,width:.6}});
+  const maxRows=Math.min(7,stack.rows.length);
+  for(let i=0;i<maxRows;i++){ const row=stack.rows[i], y=ty+.42+i*.43, sPct=savings.total?row.Savings/savings.total*100:0, cPct=combined.total?row.Combined/combined.total*100:0;
+    slide.addShape('rect',{x:tx,y:y+.02,w:.09,h:.09,fill:{color:stack.colors[row.p.id]},line:{color:stack.colors[row.p.id]}});
+    slide.addText(row.p.name,{x:tx+.16,y,w:1.75,h:.11,fontSize:6.9,bold:true,color:ink,margin:0,fit:'shrink'});
+    slide.addText(`${fmtMoneyShort(row.Savings,true)} · ${fmtShare(sPct)}`,{x:tx+2.52,y,w:1.04,h:.1,fontSize:6.4,color:ink2,align:'right',margin:0,fit:'shrink'});
+    slide.addText(`${fmtMoneyShort(row.Combined,true)} · ${fmtShare(cPct)}`,{x:tx+3.58,y,w:1.04,h:.1,fontSize:6.4,bold:true,color:ink,align:'right',margin:0,fit:'shrink'});
+    slide.addShape('line',{x:tx,y:y+.27,w:4.62,h:0,line:{color:'EFEFF3',width:.45}});
+  }
+  if(stack.rows.length>maxRows)slide.addText(`+${stack.rows.length-maxRows} more pillars`,{x:tx,y:ty+.42+maxRows*.43,w:1.2,h:.1,fontSize:6.2,color:ink3,margin:0});
+}
 async function exportPowerPoint(){ if(typeof PptxGenJS!=='function'){alert('PowerPoint export is unavailable.');return;}
   const btn=$('pptBtn'); btn.disabled=true; try{ const pptx=new PptxGenJS(); pptx.layout='LAYOUT_WIDE'; pptx.author='Roadmap Studio'; pptx.subject='Roadmap export'; pptx.title=S.fileName||'Roadmap';
     S.structure.forEach((p,i)=>addPptPillarSlide(pptx,p,i,S.structure.length));
+    addPptProjectionSlide(pptx);
+    addPptStackedSlide(pptx);
     const blob=await pptx.write({outputType:'blob'}); dl(blob,`${S.fileName||'roadmap'} — roadmap.pptx`);
   }catch(e){ console.error(e); alert('PowerPoint export failed.'); } finally{ btn.disabled=false; } }
 $('pptBtn').onclick=exportPowerPoint;
@@ -783,16 +1272,24 @@ function fitPresentation(){ if(!S.presenting)return; const el=$('tlSvg'); if(!el
   const w=el.width.baseVal.value,h=el.height.baseVal.value;
   const scale=Math.min((innerWidth-96)/w,(innerHeight-120)/h,2.2);
   const box=$('tlBox'); box.style.transformOrigin='center center'; box.style.transform=`scale(${scale})`; box.style.width=w+'px'; }
-window.addEventListener('resize',()=>{if(S.view==='studio'&&(S.tab==='road'||S.presenting))renderTimeline();});
+window.addEventListener('resize',()=>{if(S.view==='studio'&&(S.tab==='road'||S.presenting))renderTimeline(); if(S.view==='studio'&&S.tab==='proj')renderProjection(); if(S.view==='studio'&&S.tab==='stack')renderStackedCharts();});
 
 /* ============ PERSISTENCE ============ */
 const LS_KEY='roadmapStudio.v1';
 function serializeState(){ return {v:1,savedAt:Date.now(),fileName:S.fileName,fyStart:S.fyStart,
   collapsedPillars:S.collapsedPillars,
+  projectionEnd:S.projectionEnd||null,
+  projectionTarget:S.projectionTarget===''?'':parseMoney(S.projectionTarget),
+  projectionShowRealized:S.projectionShowRealized!==false,
   structure:S.structure, items:S.items.map(i=>{ const it=cleanItem(i); return {...it,start:isoDate(i.start),end:isoDate(i.end)}; })}; }
 function deserializeInto(o){
   S.fileName=o.fileName||'Roadmap'; S.fyStart=(o.fyStart==null?6:o.fyStart);
   S.collapsedPillars=(o.collapsedPillars&&typeof o.collapsedPillars==='object')?o.collapsedPillars:{};
+  const projected=o.projectionEnd?parseAnyDate(o.projectionEnd,'end',S.fyStart):null;
+  S.projectionEnd=projected?isoDate(projected):null;
+  const target=parseMoney(o.projectionTarget);
+  S.projectionTarget=target===''?'':target;
+  S.projectionShowRealized=o.projectionShowRealized===false?false:true;
   S.structure=Array.isArray(o.structure)?o.structure:[];
   S.items=(Array.isArray(o.items)?o.items:[]).map(i=>cleanItem({...i,
     start:i.start?parseAnyDate(i.start,'start',S.fyStart):null,

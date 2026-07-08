@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import csv
 import json
+import re
 import shutil
+import xml.etree.ElementTree as ET
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -102,6 +104,216 @@ def seed_state():
     }
 
 
+def projection_state():
+    state = seed_state()
+    state["fileName"] = "Projection roadmap"
+    state["items"] = [
+        {
+            "id": "ps1",
+            "pillarId": "p1",
+            "wsId": "w1",
+            "name": "Linear Savings",
+            "start": "2026-01-01",
+            "end": "2026-01-31",
+            "valueType": "Savings",
+            "value": 31000,
+            "realizedPct": 50,
+            "milestone": False,
+            "status": "On Track",
+            "owner": "",
+        },
+        {
+            "id": "ps2",
+            "pillarId": "p1",
+            "wsId": "w1",
+            "name": "Milestone Savings",
+            "start": "2026-02-15",
+            "end": "2026-02-15",
+            "valueType": "Savings",
+            "value": 20000,
+            "realizedPct": 25,
+            "milestone": True,
+            "status": "On Track",
+            "owner": "",
+        },
+        {
+            "id": "pa1",
+            "pillarId": "p1",
+            "wsId": "w2",
+            "name": "Linear Avoidance",
+            "start": "2026-01-16",
+            "end": "2026-02-14",
+            "valueType": "Avoidance",
+            "value": 30000,
+            "realizedPct": 100,
+            "milestone": False,
+            "status": "On Track",
+            "owner": "",
+        },
+        {
+            "id": "pa2",
+            "pillarId": "p2",
+            "wsId": "w3",
+            "name": "Milestone Avoidance",
+            "start": "2026-03-01",
+            "end": "2026-03-01",
+            "valueType": "Avoidance",
+            "value": 40000,
+            "realizedPct": 50,
+            "milestone": True,
+            "status": "On Track",
+            "owner": "",
+        },
+        {
+            "id": "bad1",
+            "pillarId": "p2",
+            "wsId": "w3",
+            "name": "Ignored Blank Value",
+            "start": "2026-04-01",
+            "end": "2026-04-30",
+            "valueType": "Savings",
+            "value": "",
+            "realizedPct": "",
+            "milestone": False,
+            "status": "On Track",
+            "owner": "",
+        },
+    ]
+    return state
+
+
+def stacked_chart_state():
+    return {
+        "v": 1,
+        "savedAt": 1893456000000,
+        "fileName": "Stacked chart roadmap",
+        "fyStart": 6,
+        "structure": [
+            {"id": "p1", "name": "Product Requirements", "workstreams": [{"id": "w1", "name": "Packaging"}]},
+            {"id": "p2", "name": "Vertical Integration", "workstreams": [{"id": "w2", "name": "Commodities"}]},
+            {"id": "p3", "name": "Network Design", "workstreams": [{"id": "w3", "name": "Freight"}]},
+        ],
+        "items": [
+            {
+                "id": "st1",
+                "pillarId": "p1",
+                "wsId": "w1",
+                "name": "Packaging savings",
+                "start": "2026-01-01",
+                "end": "2026-03-31",
+                "valueType": "Savings",
+                "value": 600000,
+                "realizedPct": "",
+                "milestone": False,
+                "status": "On Track",
+                "owner": "",
+            },
+            {
+                "id": "st2",
+                "pillarId": "p1",
+                "wsId": "w1",
+                "name": "Packaging avoidance",
+                "start": "2026-04-01",
+                "end": "2026-06-30",
+                "valueType": "Avoidance",
+                "value": 400000,
+                "realizedPct": "",
+                "milestone": False,
+                "status": "On Track",
+                "owner": "",
+            },
+            {
+                "id": "st3",
+                "pillarId": "p2",
+                "wsId": "w2",
+                "name": "Commodity savings",
+                "start": "2026-01-01",
+                "end": "2026-03-31",
+                "valueType": "Savings",
+                "value": 300000,
+                "realizedPct": "",
+                "milestone": False,
+                "status": "On Track",
+                "owner": "",
+            },
+            {
+                "id": "st4",
+                "pillarId": "p3",
+                "wsId": "w3",
+                "name": "Network savings",
+                "start": "2026-07-01",
+                "end": "2026-09-30",
+                "valueType": "Savings",
+                "value": 100000,
+                "realizedPct": "",
+                "milestone": False,
+                "status": "On Track",
+                "owner": "",
+            },
+            {
+                "id": "st5",
+                "pillarId": "p3",
+                "wsId": "w3",
+                "name": "Network avoidance",
+                "start": "2026-07-01",
+                "end": "2026-09-30",
+                "valueType": "Avoidance",
+                "value": 100000,
+                "realizedPct": "",
+                "milestone": False,
+                "status": "On Track",
+                "owner": "",
+            },
+        ],
+    }
+
+
+def ppt_same_workstream_state():
+    return {
+        "v": 1,
+        "savedAt": 1893456000000,
+        "fileName": "Same workstream PPT",
+        "fyStart": 6,
+        "structure": [
+            {
+                "id": "p1",
+                "name": "Supply Chain",
+                "workstreams": [{"id": "w1", "name": "Packaging"}],
+            }
+        ],
+        "items": [
+            {
+                "id": "sw1",
+                "pillarId": "p1",
+                "wsId": "w1",
+                "name": "Future Price Renewal Playbook A",
+                "start": "2030-07-01",
+                "end": "2030-12-31",
+                "valueType": "Savings",
+                "value": 97000000,
+                "realizedPct": "",
+                "milestone": False,
+                "status": "Not Started",
+                "owner": "",
+            },
+            {
+                "id": "sw2",
+                "pillarId": "p1",
+                "wsId": "w1",
+                "name": "Future Price Renewal Playbook B",
+                "start": "2030-07-01",
+                "end": "2030-12-31",
+                "valueType": "Avoidance",
+                "value": 65000000,
+                "realizedPct": "",
+                "milestone": False,
+                "status": "Not Started",
+                "owner": "",
+            },
+        ],
+    }
+
+
 class Runner:
     def __init__(self):
         self.results = {}
@@ -144,7 +356,7 @@ class Runner:
             if row["ID"] in KNOWN_FIXES:
                 row.update(KNOWN_FIXES[row["ID"]])
         with TRACKER.open("w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=fields)
+            writer = csv.DictWriter(f, fieldnames=fields, lineterminator="\n")
             writer.writeheader()
             writer.writerows(rows)
         RESULTS_JSON.write_text(
@@ -197,6 +409,10 @@ def text(page, selector):
     return page.locator(selector).text_content(timeout=5000) or ""
 
 
+def maybe_text(page, selector):
+    return text(page, selector) if page.locator(selector).count() else ""
+
+
 def attr(page, selector, name):
     return page.locator(selector).get_attribute(name, timeout=5000)
 
@@ -216,6 +432,47 @@ def safe_click(locator):
 
 def visible_texts(page, selector):
     return [item.strip() for item in page.locator(selector).all_inner_texts() if item.strip()]
+
+
+def pptx_negative_extents(path):
+    issues = []
+    pattern = re.compile(r'\b(?:cx|cy)="-\d+')
+    with zipfile.ZipFile(path) as zf:
+        for name in zf.namelist():
+            if not name.endswith(".xml"):
+                continue
+            xml = zf.read(name).decode("utf-8", "ignore")
+            matches = pattern.findall(xml)
+            if matches:
+                issues.append(f"{name}: {', '.join(matches[:4])}")
+    return issues
+
+
+def ppt_text_boxes(slide_xml, needle):
+    ns = {
+        "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
+        "p": "http://schemas.openxmlformats.org/presentationml/2006/main",
+    }
+    root = ET.fromstring(slide_xml)
+    boxes = []
+    for shape in root.findall(".//p:sp", ns):
+        text_value = "".join(t.text or "" for t in shape.findall(".//a:t", ns))
+        if needle not in text_value:
+            continue
+        off = shape.find(".//a:xfrm/a:off", ns)
+        ext = shape.find(".//a:xfrm/a:ext", ns)
+        if off is None or ext is None:
+            continue
+        boxes.append(
+            {
+                "text": text_value,
+                "x": int(off.attrib["x"]) / 914400,
+                "y": int(off.attrib["y"]) / 914400,
+                "w": int(ext.attrib["cx"]) / 914400,
+                "h": int(ext.attrib["cy"]) / 914400,
+            }
+        )
+    return boxes
 
 
 def run_tests():
@@ -284,10 +541,10 @@ def run_tests():
             ["START-004", "NAV-001", "STRUCT-001"],
             page.locator("#studio").is_visible()
             and page.locator("#segStruct.on").is_visible()
-            and visible_texts(page, ".seg button") == ["Structure", "Initiatives", "Roadmap"]
+            and visible_texts(page, ".seg button") == ["Structure", "Initiatives", "Roadmap", "Projected Savings", "Stacked Bar Chart"]
             and "1 pillar" in text(page, "#structMeta")
             and "1 workstream" in text(page, "#structMeta"),
-            "Blank start creates one pillar/workstream and opens Structure with tabs ordered Structure, Initiatives, Roadmap.",
+            "Blank start creates one pillar/workstream and opens Structure with tabs ordered Structure, Initiatives, Roadmap, Projected Savings, Stacked Bar Chart.",
             "Blank start or tab order did not match expected behavior.",
         )
         page.locator(".pillar-name").first.fill("Autosaved Outline")
@@ -705,6 +962,252 @@ def run_tests():
         )
         ctx.close()
 
+        # Projected savings tab and calculations.
+        ctx, page = new_context(browser, projection_state())
+        tabs = visible_texts(page, ".seg button")
+        has_projection_tab = page.locator("#segProj").count() == 1
+        if has_projection_tab:
+            page.click("#segProj")
+        projection_visible = has_projection_tab and page.locator("#projStage").is_visible()
+        default_projection_date = page.locator("#projectionEndDate").input_value() if page.locator("#projectionEndDate").count() else ""
+        default_savings = maybe_text(page, "#projSavings")
+        default_avoidance = maybe_text(page, "#projAvoidance")
+        default_combined = maybe_text(page, "#projCombined")
+        runner.check(
+            "PROJ-001",
+            tabs == ["Structure", "Initiatives", "Roadmap", "Projected Savings", "Stacked Bar Chart"]
+            and projection_visible
+            and page.locator("#segProj.on").count() == 1
+            and not page.locator("#roadStage").is_visible()
+            and not page.locator("#gridStage").is_visible(),
+            "Projected Savings tab renders immediately after Roadmap and displays only the projection stage.",
+            "Projected Savings tab was missing, out of order, or did not display the projection stage.",
+        )
+        if page.locator("#projectionEndDate").count():
+            page.locator("#projectionEndDate").fill("2026-02-15")
+            page.locator("#projectionEndDate").dispatch_event("change")
+        selected_projection_date = page.locator("#projectionEndDate").input_value() if page.locator("#projectionEndDate").count() else ""
+        selected_projection_savings = maybe_text(page, "#projSavings")
+        if page.locator("#projectionEndDate").count():
+            page.locator("#projectionEndDate").fill("2025-12-15")
+            page.locator("#projectionEndDate").dispatch_event("change")
+        before_all_projection_ok = (
+            page.locator("#projectionSvg").count() == 1
+            and maybe_text(page, "#projSavings") == "$0"
+            and maybe_text(page, "#projAvoidance") == "$0"
+            and maybe_text(page, "#projCombined") == "$0"
+        )
+        runner.check(
+            "PROJ-002",
+            default_projection_date == "2026-03-01"
+            and selected_projection_date == "2026-02-15"
+            and selected_projection_savings == "$51K"
+            and before_all_projection_ok,
+            "Projection end date defaults to the latest valid initiative date, can be changed by the user, and still renders zero values before all initiatives.",
+            "Projection end date did not default or rerender correctly.",
+        )
+        runner.check(
+            "PROJ-003",
+            default_savings == "$51K"
+            and page.locator("#projectionSvg [data-series='savings']").count() == 1,
+            "Savings-only projection sums only Savings initiatives.",
+            "Savings-only projection included wrong values or did not render its trajectory.",
+        )
+        runner.check(
+            "PROJ-004",
+            default_avoidance == "$70K"
+            and default_combined == "$121K"
+            and page.locator("#projectionSvg [data-series='combined']").count() == 1,
+            "Savings + Avoidance projection includes both Savings and Avoidance initiatives.",
+            "Combined projection did not include the expected savings and avoidance values.",
+        )
+        if page.locator("#projectionEndDate").count():
+            page.locator("#projectionEndDate").fill("2026-02-14")
+            page.locator("#projectionEndDate").dispatch_event("change")
+        savings_before_milestone = maybe_text(page, "#projSavings")
+        if page.locator("#projectionEndDate").count():
+            page.locator("#projectionEndDate").fill("2026-02-15")
+            page.locator("#projectionEndDate").dispatch_event("change")
+        savings_on_milestone = maybe_text(page, "#projSavings")
+        runner.check(
+            "PROJ-005",
+            savings_before_milestone == "$31K" and savings_on_milestone == "$51K",
+            "Milestone values contribute their full value on the milestone date.",
+            "Milestone values did not accrue on the expected date.",
+        )
+        if page.locator("#projectionEndDate").count():
+            page.locator("#projectionEndDate").fill("2026-01-16")
+            page.locator("#projectionEndDate").dispatch_event("change")
+        runner.check(
+            "PROJ-006",
+            maybe_text(page, "#projSavings") == "$15.5K"
+            and maybe_text(page, "#projAvoidance") == "$0"
+            and maybe_text(page, "#projCombined") == "$15.5K",
+            "Ranged values accrue linearly over the initiative duration.",
+            "Ranged values did not accrue linearly at the midpoint date.",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser)
+        page.click("#btnBlank")
+        if page.locator("#segProj").count():
+            page.click("#segProj")
+        runner.check(
+            "PROJ-007",
+            "No dated financial initiatives" in maybe_text(page, "#projectionEmpty")
+            and maybe_text(page, "#projSavings") == "$0"
+            and maybe_text(page, "#projAvoidance") == "$0"
+            and maybe_text(page, "#projCombined") == "$0",
+            "Projection tab shows a helpful empty state and zero summaries when no dated financial initiatives exist.",
+            "Projection empty state or zero summaries were missing.",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser, projection_state())
+        page.click("#segProj")
+        headline_ok = (
+            maybe_text(page, "#projectionHeadline") == "$121K projected by Mar 1, 2026"
+            and "$51K Savings" in maybe_text(page, "#projectionSubhead")
+            and "$70K Avoidance" in maybe_text(page, "#projectionSubhead")
+        )
+        runner.check(
+            "PROJ-008",
+            headline_ok,
+            "Projection headline leads with the selected-date combined total and Savings/Avoidance subhead.",
+            "Projection executive headline or subhead was missing or incorrect.",
+        )
+        if page.locator("#projectionTarget").count():
+            page.locator("#projectionTarget").fill("$100,000")
+            page.locator("#projectionTarget").dispatch_event("change")
+        target_ok = (
+            page.locator("#projectionTargetLine").count() == 1
+            and page.locator("#projectionTarget").input_value() == "$100,000"
+            and "Above target by $21K" in maybe_text(page, "#projectionTargetStatus")
+        )
+        runner.check(
+            "PROJ-009",
+            target_ok,
+            "Projection target input renders a target line and above/below target status.",
+            "Projection target input, target line, or target status failed.",
+        )
+        realized_default = (
+            page.locator("#projectionRealizedToggle").count() == 1
+            and page.locator("#projectionRealizedToggle").is_checked()
+            and page.locator("#projectionSvg [data-series='realized']").count() == 1
+            and maybe_text(page, "#projectionRealizedValue") == "$70.5K"
+        )
+        if page.locator("#projectionRealizedToggle").count():
+            page.locator("#projectionRealizedToggle").uncheck()
+        realized_removed = page.locator("#projectionSvg [data-series='realized']").count() == 0
+        runner.check(
+            "PROJ-010",
+            realized_default and realized_removed,
+            "Projection realized toggle renders and hides the realized trajectory.",
+            "Projection realized overlay toggle did not behave as expected.",
+        )
+        drivers = visible_texts(page, "#projectionDrivers .driver-row")
+        runner.check(
+            "PROJ-011",
+            len(drivers) >= 3
+            and "Milestone Avoidance" in drivers[0]
+            and "$40K" in drivers[0]
+            and "Linear Savings" in " ".join(drivers),
+            "Projection top drivers rank the leading initiatives by selected-date contribution.",
+            f"Projection top drivers were missing or wrong: {drivers}",
+        )
+        default_inspect = maybe_text(page, "#projectionInspect")
+        if page.locator("#projectionSvg").count():
+            page.evaluate(
+                """() => {
+                    const svg = document.querySelector('#projectionSvg');
+                    const r = svg.getBoundingClientRect();
+                    svg.dispatchEvent(new MouseEvent('mousemove', {
+                        clientX: r.left + 1,
+                        clientY: r.top + r.height / 2,
+                        bubbles: true
+                    }));
+                }"""
+            )
+        hover_inspect = maybe_text(page, "#projectionInspect")
+        runner.check(
+            "PROJ-012",
+            "Mar 1, 2026" in default_inspect
+            and "Jan 1, 2026" in hover_inspect
+            and "$0" in hover_inspect
+            and "active" in hover_inspect,
+            "Projection chart hover updates the date-level inspection readout.",
+            "Projection chart inspection did not update on hover.",
+        )
+        runner.check(
+            "PROJ-013",
+            page.locator("#projectionSvg [data-series='avoidance-band']").count() == 1
+            and "Avoidance lift" in maybe_text(page, ".projection-legend"),
+            "Projection chart renders a soft Avoidance lift band between Savings-only and combined trajectories.",
+            "Projection chart did not render the Avoidance lift band or legend label.",
+        )
+        ctx.close()
+
+        # Stacked bar chart tab and pillar concentration calculations.
+        ctx, page = new_context(browser, stacked_chart_state())
+        tabs = visible_texts(page, ".seg button")
+        has_stack_tab = page.locator("#segStack").count() == 1
+        if has_stack_tab:
+            page.click("#segStack")
+        stack_visible = has_stack_tab and page.locator("#stackStage").is_visible()
+        stack_stage_text = maybe_text(page, "#stackStage")
+        runner.check(
+            "STACK-001",
+            tabs == ["Structure", "Initiatives", "Roadmap", "Projected Savings", "Stacked Bar Chart"]
+            and stack_visible
+            and page.locator("#segStack.on").count() == 1
+            and not page.locator("#projStage").is_visible()
+            and not page.locator("#roadStage").is_visible(),
+            "Stacked Bar Chart tab renders after Projected Savings and displays only the stacked chart stage.",
+            "Stacked Bar Chart tab was missing, out of order, or did not display its stage.",
+        )
+        runner.check(
+            "STACK-002",
+            maybe_text(page, "#stackSavingsTotal") == "$1M"
+            and page.locator("#stackSavingsSvg [data-series='savings'][data-pillar='p1']").count() == 1
+            and page.locator("#stackSavingsSvg [data-series='savings'][data-pillar='p2']").count() == 1
+            and page.locator("#stackSavingsSvg [data-series='savings'][data-pillar='p3']").count() == 1
+            and "Product Requirements" in stack_stage_text
+            and "$600K" in stack_stage_text
+            and "60%" in stack_stage_text
+            and "$300K" in stack_stage_text
+            and "30%" in stack_stage_text
+            and "$100K" in stack_stage_text
+            and "10%" in stack_stage_text,
+            "Savings-only stacked bar calculates each pillar share of total Savings.",
+            "Savings-only stacked bar totals, segments, or percentages were wrong.",
+        )
+        runner.check(
+            "STACK-003",
+            maybe_text(page, "#stackCombinedTotal") == "$1.5M"
+            and page.locator("#stackCombinedSvg [data-series='combined'][data-pillar='p1']").count() == 1
+            and page.locator("#stackCombinedSvg [data-series='combined'][data-pillar='p2']").count() == 1
+            and page.locator("#stackCombinedSvg [data-series='combined'][data-pillar='p3']").count() == 1
+            and "$1M" in stack_stage_text
+            and "66.7%" in stack_stage_text
+            and "20%" in stack_stage_text
+            and "13.3%" in stack_stage_text,
+            "Savings + Avoidance stacked bar calculates each pillar share of total combined impact.",
+            "Savings + Avoidance stacked bar totals, segments, or percentages were wrong.",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser)
+        page.click("#btnBlank")
+        if page.locator("#segStack").count():
+            page.click("#segStack")
+        runner.check(
+            "STACK-004",
+            "No financial values" in maybe_text(page, "#stackEmpty"),
+            "Stacked bar tab shows a useful empty state when there are no positive financial values.",
+            "Stacked bar empty state was missing.",
+        )
+        ctx.close()
+
         # Project JSON save/open and invalid project.
         ctx, page = new_context(browser, seed_state())
         with page.expect_download() as dl_info:
@@ -787,12 +1290,15 @@ def run_tests():
         with zipfile.ZipFile(ppt_path) as zf:
             slide_names = sorted(name for name in zf.namelist() if name.startswith("ppt/slides/slide") and name.endswith(".xml"))
             slide_xml = "\n".join(zf.read(name).decode("utf-8", "ignore") for name in slide_names)
+            projection_slide_xml = zf.read("ppt/slides/slide3.xml").decode("utf-8", "ignore")
+            stacked_slide_xml = zf.read("ppt/slides/slide4.xml").decode("utf-8", "ignore")
+        repair_extents = pptx_negative_extents(ppt_path)
         runner.check(
             "EXPORT-004",
             ppt_path.exists()
             and ppt_path.stat().st_size > 1000
             and ppt_download.suggested_filename.endswith(".pptx")
-            and len(slide_names) == 2
+            and len(slide_names) == 4
             and "Product Requirements" in slide_xml
             and "Vertical Integration" in slide_xml
             and "Foam Cup Damage" in slide_xml
@@ -803,6 +1309,76 @@ def run_tests():
             and "FY2027" in slide_xml,
             "PowerPoint export downloads a deck with one human-readable slide per pillar, including fiscal years.",
             "PowerPoint export did not produce the expected pillar slides.",
+        )
+        runner.check(
+            "EXPORT-006",
+            len(slide_names) == 4
+            and "Projected savings trajectory" in slide_xml
+            and "Savings only" in slide_xml
+            and "Savings + Avoidance" in slide_xml
+            and "Pillar value concentration" in slide_xml
+            and "Product Requirements" in slide_xml,
+            "PowerPoint export includes Projected Savings and Stacked Bar Chart slides after the pillar roadmap slides.",
+            "PowerPoint export did not include readable projection and stacked chart slides.",
+        )
+        runner.check(
+            "EXPORT-007",
+            "Projected by" in projection_slide_xml
+            and "Avoidance lift" in projection_slide_xml
+            and "Value added by Avoidance" in projection_slide_xml
+            and "$1.6M" in projection_slide_xml
+            and "$2M" not in projection_slide_xml,
+            "PowerPoint projection slide uses a tighter axis, endpoint headline, and Avoidance lift story label.",
+            "PowerPoint projection slide did not include the redesigned executive chart story.",
+        )
+        runner.check(
+            "EXPORT-009",
+            not repair_extents,
+            "PowerPoint export avoids negative XML extents that trigger file repair.",
+            f"PowerPoint export contains repair-prone negative XML extents: {repair_extents[:3]}",
+        )
+        runner.check(
+            "EXPORT-008",
+            "carries" in stacked_slide_xml
+            and "Ranked contribution" in stacked_slide_xml
+            and "Dominant pillar" in stacked_slide_xml
+            and "Savings-only" in stacked_slide_xml
+            and "Total impact" in stacked_slide_xml
+            and "Pillar value concentration" in stacked_slide_xml,
+            "PowerPoint stacked chart slide uses an insight title, dominant-pillar callout, and shared ranked table.",
+            "PowerPoint stacked chart slide did not include the redesigned executive comparison story.",
+        )
+
+        page.evaluate(
+            """state => {
+                deserializeInto(state);
+                enterStudio();
+                setTab('road');
+            }""",
+            ppt_same_workstream_state(),
+        )
+        page.wait_for_selector("#tlSvg")
+        with page.expect_download() as dl_info:
+            page.click("#pptBtn")
+        same_download = dl_info.value
+        same_path = ARTIFACTS / "downloads" / same_download.suggested_filename
+        same_download.save_as(same_path)
+        with zipfile.ZipFile(same_path) as zf:
+            same_slide_xml = zf.read("ppt/slides/slide1.xml").decode("utf-8", "ignore")
+        same_boxes = ppt_text_boxes(same_slide_xml, "Future Price Renewal Playbook")
+        readable_same_workstream_labels = (
+            len(same_boxes) == 2
+            and len({round(box["y"], 2) for box in same_boxes}) == 2
+            and all(box["w"] >= 2.0 for box in same_boxes)
+            and all(box["x"] < 11.0 for box in same_boxes)
+        )
+        runner.check(
+            "EXPORT-005",
+            same_path.exists()
+            and same_path.stat().st_size > 1000
+            and readable_same_workstream_labels,
+            "PowerPoint export keeps two same-workstream initiative labels in readable stacked lanes.",
+            f"Same-workstream PowerPoint labels were not readable; observed boxes: {same_boxes}",
         )
 
         # Presentation mode.
