@@ -1,22 +1,24 @@
-- [x] Inspect the current README and GitHub branch/PR state.
-- [x] Replace stale README content with the latest Roadmap Studio feature set.
-- [x] Remove obsolete ExcelJS/Excel import-export references from repo-facing docs.
-- [x] Call out local-only/no-egress behavior, save/open JSON, PowerPoint, PNG, projection, and stacked chart features.
-- [x] Run the full test suite and README sanity checks.
-- [x] Commit and push the documentation update to GitHub.
+# Feature build: P0/P1 product upgrades
 
-## Planned Spec
-
-- The GitHub landing page should describe what Roadmap Studio does today, not the older Excel-focused version.
-- The README should be suitable for a recruiter/reviewer: concise product summary, feature list, privacy/security posture, export capabilities, testing status, and local run instructions.
-- Avoid adding screenshots or generated assets unless needed; keep this docs-only pass focused and low-risk.
+## Scope
+- [x] Initiative filters + search
+- [x] Resizable / denser initiatives table
+- [x] Click roadmap bar → edit drawer
+- [x] Scenario / baseline snapshots
+- [x] Time-phased realization
+- [x] Owner swimlane view
+- [x] Health / risk summary panel
+- [x] Run-rate & annualization
+- [x] Confidence / probability weighting
+- [x] Drag-and-drop structure
 
 ## Review
+- Implemented in `index.html` (schema v2, backward compatible open of v1 files).
+- Manual Playwright walkthrough of all 10 features with no page errors.
+- Regression suite: `87 passed`, `0 failed`.
+- README updated to describe the new capabilities.
 
-- Replaced stale Excel-focused README content with a current Roadmap Studio overview.
-- Documented the latest Structure, Initiatives, Roadmap, Projected Savings, Stacked Bar Chart, PNG, save/open, and PowerPoint export features.
-- Added repo-facing privacy/security notes covering local-only storage, no backend, no external runtime scripts, local PowerPoint vendor bundle, and browser CSP/no-egress posture.
-- Confirmed the README no longer claims Excel import/export support.
-- Final validation before commit: `python3 tasks/roadmap_feature_tests.py` returned 87 passed, 0 failed, 0 untested; `git diff --check` passed.
-- Pushed the updated app and README to `main`; remote `main` now points at the latest Roadmap Studio commit.
-- Updated the GitHub repository description to mention local-first roadmap analytics, projection, stacked bars, and PowerPoint exports.
+## Notes
+- Grouping control uses `.road-seg` (not `.seg`) so main tab order tests stay stable.
+- Time-phased phases are cumulative % of full value; empty phases fall back to single `% Realized`.
+- Baseline is a frozen plan payload; projection can overlay it when present.

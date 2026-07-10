@@ -51,9 +51,10 @@ input,select{font:inherit;color:inherit}
 .err{margin-top:14px;font-size:13px;color:var(--risk);display:none}
 
 #studio{display:none;min-height:100vh;flex-direction:column}
-.toolbar{display:flex;align-items:center;gap:14px;height:54px;padding:0 20px;
+.toolbar{display:flex;align-items:center;gap:10px;height:54px;padding:0 16px 0 20px;
   background:rgba(251,251,253,.85);backdrop-filter:saturate(180%) blur(12px);
-  border-bottom:1px solid var(--hairline);position:sticky;top:0;z-index:20}
+  border-bottom:1px solid var(--hairline);position:sticky;top:0;z-index:20;
+  flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 .brand{font-size:14px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
 .spacer{flex:1}
 .seg{display:flex;background:rgba(0,0,0,.05);border-radius:9px;padding:2px}
@@ -202,7 +203,7 @@ tr:hover .row-tools{opacity:1}
 .empty-note{padding:64px;text-align:center;color:var(--ink2)}
 
 body.presenting{background:var(--pbg,#fbfbfd)}
-body.presenting .toolbar,body.presenting .stage-head{display:none!important}
+body.presenting .toolbar,body.presenting .stage-head,body.presenting .health-panel,body.presenting .drawer,body.presenting .drawer-backdrop,body.presenting .scenario-bar{display:none!important}
 body.presenting .stage{padding:0;overflow:hidden;display:flex;align-items:center;justify-content:center;height:100vh}
 body.presenting .tl-scroll{border:none;box-shadow:none;background:transparent;overflow:visible}
 .pres-controls{position:fixed;bottom:24px;right:24px;z-index:60;display:none;gap:8px;opacity:.2;transition:opacity .25s}
@@ -217,6 +218,93 @@ body.presenting.dark{--pbg:#070708}
   opacity:0;pointer-events:none;transition:opacity .3s,transform .3s}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
 .toast button{color:#2997ff;font-weight:600;font-size:13px}
+
+/* ---------- filters / table density ---------- */
+.grid-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.grid-toolbar .search{flex:1;min-width:180px;max-width:280px;border:1px solid var(--hairline);border-radius:8px;padding:7px 12px;background:var(--surface)}
+.grid-toolbar select,.grid-toolbar .density{border:1px solid var(--hairline);border-radius:8px;padding:7px 10px;background:var(--surface);font-size:13px;color:var(--ink2)}
+.grid-toolbar .chip{font-size:12px;color:var(--ink2)}
+.grid-toolbar .chip b{color:var(--ink);font-weight:650}
+table.grid.compact{font-size:12px;min-width:1200px}
+table.grid.compact th{padding:8px 6px}
+table.grid.compact .cell-in{padding:4px 6px}
+table.grid th{position:relative;user-select:none}
+table.grid th .col-resizer{position:absolute;right:0;top:0;width:6px;height:100%;cursor:col-resize;user-select:none}
+table.grid th .col-resizer:hover{background:rgba(0,113,227,.25)}
+table.grid th.sticky-col,table.grid td.sticky-col{position:sticky;left:0;background:var(--surface);z-index:4;box-shadow:1px 0 0 var(--hairline)}
+table.grid th.sticky-col{z-index:6}
+.grid-meta-row{display:flex;align-items:baseline;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.grid-meta-row h2{font-size:22px;font-weight:600;letter-spacing:-.02em}
+#gridStage .stage-head{max-width:none}
+
+/* ---------- health panel ---------- */
+.health-panel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.health-card{background:var(--surface);border:1px solid var(--hairline);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow-card);min-width:0}
+.health-card .hk{font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.health-card .hk i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.health-card .hv{font-size:20px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.health-card .hm{font-size:11px;color:var(--ink2);margin-top:2px}
+.road-controls{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap}
+.road-seg{display:flex;background:rgba(0,0,0,.05);border-radius:9px;padding:2px;margin:0}
+.road-seg button{padding:5px 12px;border-radius:7px;font-size:12px;font-weight:500;color:var(--ink2);transition:all .18s var(--spring)}
+.road-seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+#roadStage .stage-head{flex-wrap:wrap;gap:12px}
+@media (max-width:900px){.health-panel{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ---------- drawer ---------- */
+.drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:80;opacity:0;pointer-events:none;transition:opacity .2s}
+.drawer-backdrop.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100vh;width:min(420px,100vw);background:var(--surface);z-index:90;
+  box-shadow:-12px 0 40px rgba(0,0,0,.12);transform:translateX(100%);transition:transform .24s var(--spring);
+  display:flex;flex-direction:column}
+.drawer.on{transform:none}
+.drawer-head{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--hairline)}
+.drawer-head h3{flex:1;font-size:16px;font-weight:650;letter-spacing:-.01em}
+.drawer-body{flex:1;overflow:auto;padding:16px 18px 32px}
+.drawer-field{margin-bottom:12px}
+.drawer-field label{display:block;font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin-bottom:5px}
+.drawer-field input,.drawer-field select,.drawer-field textarea{width:100%;border:1px solid var(--hairline);border-radius:8px;padding:8px 10px;background:var(--paper)}
+.drawer-field textarea{min-height:64px;resize:vertical}
+.drawer-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.drawer-phases{border:1px solid var(--hairline);border-radius:10px;overflow:hidden}
+.drawer-phases table{width:100%;border-collapse:collapse;font-size:12px}
+.drawer-phases th,.drawer-phases td{padding:6px 8px;border-bottom:1px solid var(--hairline);text-align:left}
+.drawer-phases th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2);background:var(--paper)}
+.drawer-phases input{width:100%;border:1px solid transparent;border-radius:6px;padding:4px 6px;background:transparent}
+.drawer-phases input:focus{border-color:var(--accent);outline:none;background:#fff}
+.phase-add{width:100%;padding:8px;font-size:12px;color:var(--accent);font-weight:500}
+.phase-add:hover{background:#f0f7ff}
+.drawer-foot{padding:12px 18px;border-top:1px solid var(--hairline);display:flex;gap:8px;justify-content:flex-end}
+
+/* ---------- scenarios (compact toolbar cluster) ---------- */
+.scenario-bar{display:inline-flex;align-items:stretch;flex:none;flex-wrap:nowrap;height:32px;
+  border:1px solid var(--hairline);border-radius:8px;background:var(--surface);overflow:hidden}
+.scenario-bar select,.scenario-bar .scenario-action,.scenario-bar .baseline-pill{
+  height:100%;border:none;border-radius:0;background:transparent;font-size:12px;line-height:1;
+  white-space:nowrap;box-shadow:none}
+.scenario-bar select{padding:0 10px;color:var(--ink2);max-width:118px;min-width:96px;cursor:pointer}
+.scenario-bar select:hover,.scenario-bar .scenario-action:hover{background:rgba(0,0,0,.04);color:var(--ink)}
+.scenario-bar select:focus-visible,.scenario-bar .scenario-action:focus-visible,.scenario-bar .baseline-pill:focus-visible{
+  outline:2px solid var(--accent);outline-offset:-2px;z-index:1}
+.scenario-bar .scenario-action{padding:0 10px;font-weight:500;color:var(--ink2);border-left:1px solid var(--hairline)}
+.scenario-bar .baseline-pill{display:inline-flex;align-items:center;padding:0 10px;font-weight:600;
+  color:#0f766e;background:#ecfdf5;border-left:1px solid #a7f3d0;cursor:pointer;user-select:none}
+.scenario-bar .baseline-pill.off{color:var(--ink3);background:transparent;border-left-color:var(--hairline);cursor:default}
+.scenario-bar .baseline-pill:not(.off):hover{background:#d1fae5}
+
+/* ---------- structure dnd ---------- */
+.pillar.dragging,.ws-row.dragging{opacity:.45}
+.pillar.drag-over{outline:2px solid var(--accent);outline-offset:2px}
+.ws-row.drag-over{background:#f0f7ff;border-radius:8px}
+.drag-handle{cursor:grab;color:var(--ink3);padding:4px 2px;display:inline-flex;user-select:none;touch-action:none}
+.drag-handle:active{cursor:grabbing}
+.pillar-head .drag-handle,.ws-row .drag-handle{opacity:.5}
+.pillar-head:hover .drag-handle,.ws-row:hover .drag-handle{opacity:1}
+
+/* ---------- projection extras ---------- */
+.projection-summary.cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media (max-width:1100px){.projection-summary.cols-5{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.proj-toggles{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -263,6 +351,12 @@ body.presenting.dark{--pbg:#070708}
     <button class="icon-btn" id="undoBtn" title="Undo (⌘Z)" aria-label="Undo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
     <button class="icon-btn" id="redoBtn" title="Redo (⇧⌘Z)" aria-label="Redo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
     <select class="fy-select" id="fySelect" title="Fiscal year start"></select>
+    <div class="scenario-bar" role="group" aria-label="Scenarios and baseline">
+      <select id="scenarioSelect" aria-label="Load scenario" title="Load a saved scenario"><option value="">Scenarios</option></select>
+      <button type="button" class="scenario-action" id="scenarioSaveBtn" title="Save current plan as a named scenario">Save</button>
+      <button type="button" class="scenario-action" id="baselineBtn" title="Freeze current plan as baseline for comparison">Baseline</button>
+      <span class="baseline-pill off" id="baselinePill" title="No baseline set" tabindex="0">Off</span>
+    </div>
     <button class="btn" id="saveBtn" title="Download a project file you can reopen on any machine">Save</button>
     <button class="btn" id="pngBtn">PNG</button>
     <button class="btn" id="pptBtn">PowerPoint</button>
@@ -279,14 +373,21 @@ body.presenting.dark{--pbg:#070708}
     <!-- ROADMAP -->
     <div id="roadStage" style="display:none">
       <div class="stage-head"><h2>Roadmap</h2><span class="meta" id="roadMeta"></span>
-        <div class="legend">
-          <span class="impact-stack" data-impact="savings"><i style="background:#188038"></i><span class="impact-main"><b class="total" id="savingsTotal">$0</b><span class="label">Savings</span></span><span class="impact-realized"><b class="total" id="realizedSavingsTotal">$0</b><span class="label">Realized</span></span></span>
-          <span class="impact-stack" data-impact="avoidance"><i style="background:#2563eb"></i><span class="impact-main"><b class="total" id="avoidanceTotal">$0</b><span class="label">Avoidance</span></span><span class="impact-realized"><b class="total" id="realizedAvoidanceTotal">$0</b><span class="label">Realized</span></span></span>
-          <span><i style="background:#1d1d1f"></i>Not Started</span>
-          <span><i style="background:#fff;border:2px solid #b45309"></i>At risk border</span>
-          <span><i style="background:#1d1d1f;opacity:.5"></i>Complete fade</span>
+        <div class="road-controls">
+          <div class="road-seg" role="group" aria-label="Roadmap grouping">
+            <button type="button" id="groupStruct" class="on">By structure</button>
+            <button type="button" id="groupOwner">By owner</button>
+          </div>
+          <div class="legend">
+            <span class="impact-stack" data-impact="savings"><i style="background:#188038"></i><span class="impact-main"><b class="total" id="savingsTotal">$0</b><span class="label">Savings</span></span><span class="impact-realized"><b class="total" id="realizedSavingsTotal">$0</b><span class="label">Realized</span></span></span>
+            <span class="impact-stack" data-impact="avoidance"><i style="background:#2563eb"></i><span class="impact-main"><b class="total" id="avoidanceTotal">$0</b><span class="label">Avoidance</span></span><span class="impact-realized"><b class="total" id="realizedAvoidanceTotal">$0</b><span class="label">Realized</span></span></span>
+            <span><i style="background:#1d1d1f"></i>Not Started</span>
+            <span><i style="background:#fff;border:2px solid #b45309"></i>At risk border</span>
+            <span><i style="background:#1d1d1f;opacity:.5"></i>Complete fade</span>
+          </div>
         </div>
       </div>
+      <div class="health-panel" id="healthPanel" aria-label="Health and risk summary"></div>
       <div class="tl-scroll" id="tlScroll"><div id="tlBox"></div></div>
     </div>
     <!-- PROJECTION -->
@@ -296,14 +397,18 @@ body.presenting.dark{--pbg:#070708}
         <div class="projection-controls">
           <label class="projection-control">Project to <input type="date" id="projectionEndDate" aria-label="Projection end date"></label>
           <label class="projection-control">Target <input class="money-in" id="projectionTarget" inputmode="decimal" placeholder="$0" aria-label="Projection target"></label>
-          <label class="projection-control"><input type="checkbox" id="projectionRealizedToggle" checked aria-label="Show realized projection">Show realized</label>
+          <div class="proj-toggles">
+            <label class="projection-control"><input type="checkbox" id="projectionRealizedToggle" checked aria-label="Show realized projection">Show realized</label>
+            <label class="projection-control"><input type="checkbox" id="projectionConfidenceToggle" checked aria-label="Weight by confidence">Weight confidence</label>
+            <label class="projection-control"><input type="checkbox" id="projectionBaselineToggle" checked aria-label="Show baseline comparison">Show baseline</label>
+          </div>
         </div>
       </div>
       <div class="projection-hero">
         <div><h3 id="projectionHeadline">$0 projected</h3><p id="projectionSubhead">$0 Savings · $0 Avoidance</p></div>
         <div class="projection-target-status" id="projectionTargetStatus"></div>
       </div>
-      <div class="projection-summary" aria-label="Projected financial totals">
+      <div class="projection-summary cols-5" aria-label="Projected financial totals">
         <div class="projection-card">
           <div class="kicker"><i class="swatch" style="background:#188038"></i>Savings</div>
           <div class="value" id="projSavings">$0</div>
@@ -318,6 +423,16 @@ body.presenting.dark{--pbg:#070708}
           <div class="kicker"><i class="swatch" style="background:#2563eb"></i>Savings + Avoidance</div>
           <div class="value" id="projCombined">$0</div>
           <div class="note">Projected total impact</div>
+        </div>
+        <div class="projection-card">
+          <div class="kicker"><i class="swatch" style="background:#0f766e"></i>Expected</div>
+          <div class="value" id="projExpected">$0</div>
+          <div class="note">Confidence-weighted total</div>
+        </div>
+        <div class="projection-card">
+          <div class="kicker"><i class="swatch" style="background:#d97706"></i>Annualized</div>
+          <div class="value" id="projAnnualized">$0</div>
+          <div class="note">Run-rate of ranged work</div>
         </div>
       </div>
       <div class="projection-main">
@@ -352,10 +467,33 @@ body.presenting.dark{--pbg:#070708}
     </div>
     <!-- GRID -->
     <div id="gridStage" style="display:none">
-      <div class="stage-head"><h2>Initiatives</h2><span class="meta">Add the dated work that lives under each workstream. This is the part owners fill in.</span></div>
+      <div class="grid-meta-row"><h2>Initiatives</h2><span class="meta" id="gridMeta">Add the dated work that lives under each workstream. This is the part owners fill in.</span></div>
+      <div class="grid-toolbar" id="gridToolbar">
+        <input class="search" id="filterSearch" type="search" placeholder="Search initiatives…" aria-label="Search initiatives">
+        <select id="filterStatus" aria-label="Filter by status"><option value="">All statuses</option></select>
+        <select id="filterOwner" aria-label="Filter by owner"><option value="">All owners</option></select>
+        <select id="filterPillar" aria-label="Filter by pillar"><option value="">All pillars</option></select>
+        <select id="filterType" aria-label="Filter by value type"><option value="">Savings &amp; Avoidance</option><option value="Savings">Savings</option><option value="Avoidance">Avoidance</option></select>
+        <select id="tableDensity" class="density" aria-label="Table density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select>
+        <button class="btn btn-quiet" id="filterClear" type="button">Clear</button>
+        <span class="chip" id="filterCount"></span>
+      </div>
       <div id="gridBody"></div>
     </div>
   </div>
+
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  <aside class="drawer" id="itemDrawer" aria-hidden="true" role="dialog" aria-label="Edit initiative">
+    <div class="drawer-head">
+      <h3 id="drawerTitle">Edit initiative</h3>
+      <button class="icon-btn" id="drawerClose" aria-label="Close drawer" type="button">✕</button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+    <div class="drawer-foot">
+      <button class="btn btn-quiet" id="drawerDelete" type="button">Delete</button>
+      <button class="btn btn-primary" id="drawerDone" type="button">Done</button>
+    </div>
+  </aside>
 
   <div id="toast" class="toast" role="status"></div>
   <div class="pres-controls">
@@ -370,9 +508,15 @@ body.presenting.dark{--pbg:#070708}
 <script>
 "use strict";
 const S = { view:'start', structure:[], items:[], collapsedPillars:{}, fyStart:6, tab:'struct', projectionEnd:null, projectionTarget:'', projectionShowRealized:true,
+  weightConfidence:true, showBaseline:true, roadmapGroup:'structure',
+  filters:{q:'',status:'',owner:'',pillarId:'',valueType:''}, tableDensity:'comfortable',
+  colWidths:{name:200,pillar:150,ws:150,start:128,end:128,mile:52,status:118,valueType:120,value:120,realized:90,confidence:88,owner:110},
+  scenarios:[], baseline:null, drawerId:null,
   history:[], future:[], presenting:false, dark:false, seq:1, fileName:null };
 const STATUSES = ['Not Started','On Track','At Risk','Complete'];
 const VALUE_TYPES = ['Savings','Avoidance'];
+const CONFIDENCE_PRESETS = [{label:'High',pct:100},{label:'Med',pct:70},{label:'Low',pct:40}];
+const DEFAULT_COL_WIDTHS = {name:200,pillar:150,ws:150,start:128,end:128,mile:52,status:118,valueType:120,value:120,realized:90,confidence:88,owner:110};
 const $ = id => document.getElementById(id);
 const MS_DAY = 86400000;
 const uid = p => p + (S.seq++);
@@ -424,11 +568,48 @@ function parsePercent(v){ if(v==null||v==='')return'';
   return clampPercent(!hasPercent&&n>0&&n<1?n*100:n); }
 function fmtPercent(v){ const n=parsePercent(v); if(n===''||n==null)return'';
   return n.toFixed(n%1===0?0:1).replace(/\.0$/,'')+'%'; }
-function realizedValue(it,type){ const value=parseMoney(it.value), pct=parsePercent(it.realizedPct);
-  if(value===''||pct===''||normValueType(it.valueType)!==type)return 0;
-  return value*pct/100; }
+function parseConfidence(v){
+  if(v==null||v==='')return 100;
+  const s=textOf(v).trim().toLowerCase();
+  if(s==='high')return 100; if(s==='med'||s==='medium')return 70; if(s==='low')return 40;
+  const n=parsePercent(v); return n===''?100:n;
+}
+function fmtConfidence(v){ const n=parseConfidence(v);
+  const preset=CONFIDENCE_PRESETS.find(p=>p.pct===n); return preset?preset.label:fmtPercent(n); }
+function normalizePhases(phases){
+  if(!Array.isArray(phases))return [];
+  return phases.map(ph=>{
+    const date=ph.date?parseAnyDate(ph.date,'end',S.fyStart):null;
+    const pct=parsePercent(ph.pct);
+    if(!date||pct===''||pct==null)return null;
+    return{date:isoDate(date),pct};
+  }).filter(Boolean).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+}
+function phasePctAt(it,date){
+  const phases=normalizePhases(it.phases);
+  const t=isoDate(date instanceof Date?date:(parseAnyDate(date,'end',S.fyStart)||todayUtc()));
+  if(!phases.length){ const pct=parsePercent(it.realizedPct); return pct===''||pct==null?0:pct; }
+  let pct=0; phases.forEach(ph=>{ if(ph.date<=t)pct=ph.pct; }); return pct;
+}
+function realizedValue(it,type){ const value=parseMoney(it.value);
+  if(value===''||normValueType(it.valueType)!==type)return 0;
+  return value*phasePctAt(it,todayUtc())/100; }
 function realizedSavingsValue(it){ return realizedValue(it,'Savings'); }
 function realizedAvoidanceValue(it){ return realizedValue(it,'Avoidance'); }
+function itemValue(it){ const v=parseMoney(it.value); return v===''?0:v; }
+function expectedValue(it){ return itemValue(it)*parseConfidence(it.confidence)/100; }
+function initiativeDurationDays(it){
+  const start=it.start instanceof Date?it.start:parseAnyDate(it.start,'start',S.fyStart);
+  const end=it.milestone?start:(it.end instanceof Date?it.end:parseAnyDate(it.end,'end',S.fyStart));
+  if(!start||!end)return 0;
+  return Math.max(1,Math.round((end-start)/MS_DAY)+1);
+}
+function annualizedValue(it){
+  const value=itemValue(it); if(!value)return 0;
+  if(it.milestone)return value;
+  const days=initiativeDurationDays(it); if(days<=0)return value;
+  return value*(365/days);
+}
 function pillarFinancialTotals(pillarId){ const totals={Savings:0,Avoidance:0,Realized:0};
   S.items.filter(it=>it.pillarId===pillarId).forEach(it=>{
     const value=parseMoney(it.value), type=normValueType(it.valueType);
@@ -444,6 +625,60 @@ function normStatus(v){ const s=textOf(v).trim().toLowerCase(); if(!s)return'Not
   if(s.includes('complete')||s==='done'||s.includes('closed'))return'Complete';
   if(s.includes('not')||s.includes('plan')||s.includes('backlog')||s.includes('future'))return'Not Started';
   return'On Track'; }
+function filteredItems(){
+  const f=S.filters||{}, q=(f.q||'').trim().toLowerCase();
+  return S.items.filter(it=>{
+    if(f.status&&it.status!==f.status)return false;
+    if(f.owner&&it.owner!==f.owner)return false;
+    if(f.pillarId&&it.pillarId!==f.pillarId)return false;
+    if(f.valueType&&normValueType(it.valueType)!==f.valueType)return false;
+    if(q){
+      const p=pillarOf(it.pillarId), w=wsOf(it.pillarId,it.wsId);
+      const hay=[it.name,it.owner,it.status,normValueType(it.valueType),p&&p.name,w&&w.name].map(x=>textOf(x).toLowerCase()).join(' ');
+      if(!hay.includes(q))return false;
+    }
+    return true;
+  });
+}
+function healthSummary(){
+  const out={}; STATUSES.forEach(s=>out[s]={count:0,value:0});
+  S.items.forEach(it=>{ const st=normStatus(it.status); out[st].count++; out[st].value+=itemValue(it); });
+  return out;
+}
+function clonePlanPayload(){
+  return{
+    structure:JSON.parse(JSON.stringify(S.structure)),
+    items:S.items.map(i=>{ const it={...i}; delete it.notes; delete it._sub;
+      return{...it,start:isoDate(i.start),end:isoDate(i.end),confidence:parseConfidence(i.confidence),phases:normalizePhases(i.phases)}; }),
+    fyStart:S.fyStart, collapsedPillars:{...S.collapsedPillars},
+    projectionEnd:S.projectionEnd, projectionTarget:S.projectionTarget,
+    projectionShowRealized:S.projectionShowRealized!==false,
+    weightConfidence:S.weightConfidence!==false
+  };
+}
+function applyPlanPayload(o){
+  S.structure=Array.isArray(o.structure)?JSON.parse(JSON.stringify(o.structure)):[];
+  S.items=(Array.isArray(o.items)?o.items:[]).map(raw=>{
+    const it={...raw}; delete it.notes; delete it._sub;
+    return{...it,
+      start:raw.start?(raw.start instanceof Date?raw.start:parseAnyDate(raw.start,'start',S.fyStart)):null,
+      end:raw.end?(raw.end instanceof Date?raw.end:parseAnyDate(raw.end,'end',S.fyStart)):null,
+      valueType:normValueType(raw.valueType), value:parseMoney(raw.value),
+      realizedPct:parsePercent(raw.realizedPct), confidence:parseConfidence(raw.confidence),
+      phases:normalizePhases(raw.phases), milestone:!!raw.milestone,
+      status:normStatus(raw.status||'Not Started'), owner:textOf(raw.owner),
+      name:textOf(raw.name)||'New initiative'};
+  });
+  if(o.fyStart!=null)S.fyStart=o.fyStart;
+  S.collapsedPillars=(o.collapsedPillars&&typeof o.collapsedPillars==='object')?{...o.collapsedPillars}:{};
+  if('projectionEnd' in o)S.projectionEnd=o.projectionEnd||null;
+  if('projectionTarget' in o){ const t=parseMoney(o.projectionTarget); S.projectionTarget=t===''?'':t; }
+  if('projectionShowRealized' in o)S.projectionShowRealized=o.projectionShowRealized!==false;
+  if('weightConfidence' in o)S.weightConfidence=o.weightConfidence!==false;
+  let mx=0; const scan=id=>{const n=parseInt(String(id).replace(/\D/g,''),10); if(!isNaN(n)&&n>mx)mx=n;};
+  S.structure.forEach(p=>{scan(p.id);(p.workstreams||[]).forEach(w=>scan(w.id));}); S.items.forEach(i=>scan(i.id));
+  S.seq=Math.max(S.seq,mx+1); refreshOwners();
+}
 function fqOf(d,fyStart){ const m=d.getUTCMonth(),y=d.getUTCFullYear();
   if(fyStart===0)return{q:Math.floor(m/3)+1,fy:y};
   const off=(m-fyStart+12)%12; return{q:Math.floor(off/3)+1,fy:y+(m>=fyStart?1:0)}; }
@@ -475,7 +710,7 @@ function pal(){ const d=S.presenting&&S.dark;
     savings:'#188038',savingsText:'#ffffff',avoidance:'#2563eb',avoidanceText:'#ffffff'}; }
 function valueColor(it,P){ if(it.status==='Not Started')return[P.notFill,P.notText];
   return normValueType(it.valueType)==='Avoidance'?[P.avoidance,P.avoidanceText]:[P.savings,P.savingsText]; }
-function roadmapLabel(it){ const money=fmtMoneyShort(it.value); return money==='$0'?it.name:`${it.name} · ${money}`; }
+/* roadmapLabel defined near renderTimeline */
 
 /* ---------- screens ---------- */
 function show(view){ S.view=view;
@@ -485,7 +720,11 @@ function show(view){ S.view=view;
 /* ---------- start actions ---------- */
 $('btnBlank').onclick = () => {
   S.structure=[{id:uid('p'),name:'New pillar',workstreams:[{id:uid('w'),name:'New workstream'}]}];
-  S.items=[]; S.collapsedPillars={}; S.projectionEnd=null; S.projectionTarget=''; S.projectionShowRealized=true; S.fileName='Untitled roadmap'; enterStudio();
+  S.items=[]; S.collapsedPillars={}; S.projectionEnd=null; S.projectionTarget=''; S.projectionShowRealized=true;
+  S.weightConfidence=true; S.showBaseline=true; S.roadmapGroup='structure';
+  S.filters={q:'',status:'',owner:'',pillarId:'',valueType:''}; S.tableDensity='comfortable';
+  S.scenarios=[]; S.baseline=null; S.drawerId=null;
+  S.fileName='Untitled roadmap'; enterStudio();
 };
 function showErr(m){ const e=$('err'); e.textContent=m; e.style.display='block'; }
 
@@ -496,7 +735,7 @@ function enterStudio(){
   fy.innerHTML=['January','February','March','April','May','June','July','August','September','October','November','December']
     .map((m,i)=>`<option value="${i}" ${i===S.fyStart?'selected':''}>FY starts ${m.slice(0,3)}</option>`).join('');
   fy.onchange=()=>{S.fyStart=+fy.value;renderAll();};
-  refreshOwners(); show('studio'); setTab('struct');
+  refreshOwners(); bindScenarioControls(); renderScenarioUI(); show('studio'); setTab('struct');
 }
 function refreshOwners(){ $('ownerList').innerHTML=[...new Set(S.items.map(i=>i.owner).filter(Boolean))].map(o=>`<option value="${esc(o)}">`).join(''); }
 function setTab(t){ S.tab=t;
@@ -520,6 +759,7 @@ $('segStack').onclick=()=>setTab('stack');
 
 function renderAll(){ if(S.view!=='studio')return;
   pruneCollapsedPillars();
+  renderScenarioUI();
   if(S.tab==='struct')renderOutline();
   if(S.tab==='road'||S.presenting)renderTimeline();
   if(S.tab==='data')renderGrid();
@@ -546,12 +786,14 @@ function renderLegendTotals(){
 /* ============ PROJECTED SAVINGS ============ */
 function todayUtc(){ const t=new Date(); return utc(t.getFullYear(),t.getMonth(),t.getDate()); }
 function projectionDateOf(it,field){ const v=it[field]; return v instanceof Date?v:parseAnyDate(v,field,S.fyStart); }
-function projectionFinancialItems(){
-  return S.items.map(it=>{
-    const value=parseMoney(it.value), start=projectionDateOf(it,'start'), milestone=!!it.milestone;
+function projectionFinancialItems(items=S.items, opts={}){
+  const weight=opts.weightConfidence!=null?opts.weightConfidence:S.weightConfidence!==false;
+  return items.map(it=>{
+    let value=parseMoney(it.value); const start=projectionDateOf(it,'start'), milestone=!!it.milestone;
     const end=milestone?start:projectionDateOf(it,'end');
     if(value===''||!start||!end||(!milestone&&end<start))return null;
-    return{source:it,type:normValueType(it.valueType),value,start,end,milestone};
+    if(weight)value=value*parseConfidence(it.confidence)/100;
+    return{source:it,type:normValueType(it.valueType),value,start,end,milestone,confidence:parseConfidence(it.confidence)};
   }).filter(Boolean);
 }
 function projectionDefaultEnd(){
@@ -571,16 +813,47 @@ function projectedValueAt(item,date){
   if(t>=e)return item.value;
   return item.value*((t-s)/(e-s));
 }
-function projectedRealizedAt(item,date){ const pct=parsePercent(item.source.realizedPct);
-  if(pct===''||pct==null)return 0;
-  return projectedValueAt(item,date)*pct/100; }
+function projectedRealizedAt(item,date){
+  // Time-phased: realized $ = full plan value * cumulative phase % at date (not plan-accrued fraction).
+  // When no phases, fall back to single realizedPct applied to plan-accrued value (legacy behavior).
+  const phases=normalizePhases(item.source.phases);
+  const full=parseMoney(item.source.value); if(full==='')return 0;
+  const conf=S.weightConfidence!==false?parseConfidence(item.source.confidence)/100:1;
+  if(phases.length)return full*conf*phasePctAt(item.source,date)/100;
+  const pct=parsePercent(item.source.realizedPct); if(pct===''||pct==null)return 0;
+  return projectedValueAt(item,date)*pct/100;
+}
 function projectionTotalsAt(items,date){
-  const totals={Savings:0,Avoidance:0,Combined:0,Realized:0};
+  const totals={Savings:0,Avoidance:0,Combined:0,Realized:0,Expected:0,Annualized:0};
   items.forEach(it=>{
     const v=projectedValueAt(it,date);
     totals[it.type]+=v; totals.Combined+=v; totals.Realized+=projectedRealizedAt(it,date);
   });
   return totals;
+}
+function projectionRunRateTotals(items){
+  let annualized=0, expected=0;
+  items.forEach(it=>{
+    annualized+=annualizedValue(it.source)*(S.weightConfidence!==false?parseConfidence(it.source.confidence)/100:1);
+    expected+=expectedValue(it.source);
+  });
+  return{annualized,expected};
+}
+function baselineProjectionPoints(endDate){
+  if(!S.baseline||!Array.isArray(S.baseline.items))return null;
+  // Reconstruct temporary items from baseline without mutating live state
+  const items=S.baseline.items.map(raw=>{
+    const it={...raw,
+      start:raw.start?parseAnyDate(raw.start,'start',S.baseline.fyStart??S.fyStart):null,
+      end:raw.end?parseAnyDate(raw.end,'end',S.baseline.fyStart??S.fyStart):null,
+      confidence:parseConfidence(raw.confidence), phases:normalizePhases(raw.phases)};
+    return it;
+  });
+  const fin=projectionFinancialItems(items,{weightConfidence:S.weightConfidence!==false});
+  if(!fin.length)return null;
+  const axis=projectionAxis(fin,endDate);
+  const points=projectionPointDates(fin,axis,endDate).map(date=>({date,...projectionTotalsAt(fin,date)}));
+  return{items:fin,axis,points};
 }
 function projectionTargetValue(){ return parseMoney(S.projectionTarget); }
 function projectionDrivers(items,date){ return items.map(it=>{
@@ -604,7 +877,8 @@ function projectionPointDates(items,axis,endDate){
 function projectionPoints(endDate=selectedProjectionEnd()){
   const items=projectionFinancialItems(), axis=projectionAxis(items,endDate);
   const points=projectionPointDates(items,axis,endDate).map(date=>({date,...projectionTotalsAt(items,date)}));
-  return{items,axis,points};
+  const run=projectionRunRateTotals(items);
+  return{items,axis,points,run};
 }
 function niceProjectionMax(v){
   if(v<=0)return 1;
@@ -641,21 +915,39 @@ function bindProjectionInspect(svg,data,X,Y){
 }
 function renderProjection(){
   const end=selectedProjectionEnd(), data=projectionPoints(end), totals=projectionTotalsAt(data.items,end), target=projectionTargetValue();
+  const baseline=S.showBaseline!==false?baselineProjectionPoints(end):null;
+  const run=data.run||projectionRunRateTotals(data.items);
   $('projectionEndDate').value=isoDate(end);
   $('projectionEndDate').onchange=()=>{ S.projectionEnd=$('projectionEndDate').value||null; renderProjection(); scheduleSave(); };
   $('projectionTarget').value=target===''?'':fmtMoney(target);
   $('projectionTarget').onchange=()=>{ const v=parseMoney($('projectionTarget').value); S.projectionTarget=v===''?'':v; renderProjection(); scheduleSave(); };
   $('projectionRealizedToggle').checked=S.projectionShowRealized!==false;
   $('projectionRealizedToggle').onchange=()=>{ S.projectionShowRealized=$('projectionRealizedToggle').checked; renderProjection(); scheduleSave(); };
+  if($('projectionConfidenceToggle')){
+    $('projectionConfidenceToggle').checked=S.weightConfidence!==false;
+    $('projectionConfidenceToggle').onchange=()=>{ S.weightConfidence=$('projectionConfidenceToggle').checked; renderProjection(); scheduleSave(); };
+  }
+  if($('projectionBaselineToggle')){
+    $('projectionBaselineToggle').checked=S.showBaseline!==false;
+    $('projectionBaselineToggle').disabled=!S.baseline;
+    $('projectionBaselineToggle').onchange=()=>{ S.showBaseline=$('projectionBaselineToggle').checked; renderProjection(); scheduleSave(); };
+  }
   $('projSavings').textContent=fmtMoneyShort(totals.Savings,true);
   $('projAvoidance').textContent=fmtMoneyShort(totals.Avoidance,true);
   $('projCombined').textContent=fmtMoneyShort(totals.Combined,true);
+  if($('projExpected'))$('projExpected').textContent=fmtMoneyShort(run.expected,true);
+  if($('projAnnualized'))$('projAnnualized').textContent=fmtMoneyShort(run.annualized,true);
+  const confNote=S.weightConfidence!==false?' · confidence-weighted':'';
   $('projectionHeadline').textContent=`${fmtMoneyShort(totals.Combined,true)} projected by ${fmtDate(end)}`;
-  $('projectionSubhead').innerHTML=`${esc(fmtMoneyShort(totals.Savings,true))} Savings · ${esc(fmtMoneyShort(totals.Avoidance,true))} Avoidance${S.projectionShowRealized!==false?` · <span id="projectionRealizedValue">${esc(fmtMoneyShort(totals.Realized,true))}</span> realized`:''}`;
-  $('projectionTargetStatus').textContent=target===''?'':`${totals.Combined>=target?'Above':'Below'} target by ${fmtMoneyShort(Math.abs(totals.Combined-target),true)}`;
+  $('projectionSubhead').innerHTML=`${esc(fmtMoneyShort(totals.Savings,true))} Savings · ${esc(fmtMoneyShort(totals.Avoidance,true))} Avoidance${S.projectionShowRealized!==false?` · <span id="projectionRealizedValue">${esc(fmtMoneyShort(totals.Realized,true))}</span> realized`:''}${esc(confNote)}`;
+  let status=target===''?'':`${totals.Combined>=target?'Above':'Below'} target by ${fmtMoneyShort(Math.abs(totals.Combined-target),true)}`;
+  if(baseline&&baseline.points.length){ const bLast=baseline.points[baseline.points.length-1];
+    const delta=totals.Combined-bLast.Combined;
+    status+=(status?' · ':'')+`vs baseline ${delta>=0?'+':''}${fmtMoneyShort(delta,true)}`; }
+  $('projectionTargetStatus').textContent=status;
   $('projMeta').textContent=`${data.items.length} ${data.items.length===1?'financial initiative':'financial initiatives'} · through ${fmtDate(end)}`;
   const drivers=projectionDrivers(data.items,end);
-  $('projectionDrivers').innerHTML=drivers.length?drivers.map(d=>`<div class="driver-row"><div><div class="driver-name">${esc(d.item.name)}</div><div class="driver-meta">${esc(d.type)}${d.realized?` · Realized ${esc(fmtMoneyShort(d.realized,true))}`:''}</div></div><div class="driver-value">${esc(fmtMoneyShort(d.value,true))}</div></div>`).join(''):`<div class="empty-note" style="padding:20px 0">No active drivers by this date.</div>`;
+  $('projectionDrivers').innerHTML=drivers.length?drivers.map(d=>`<div class="driver-row"><div><div class="driver-name">${esc(d.item.name)}</div><div class="driver-meta">${esc(d.type)}${d.realized?` · Realized ${esc(fmtMoneyShort(d.realized,true))}`:''}${d.item.confidence!=null&&parseConfidence(d.item.confidence)<100?` · ${esc(fmtConfidence(d.item.confidence))} conf`:''}</div></div><div class="driver-value">${esc(fmtMoneyShort(d.value,true))}</div></div>`).join(''):`<div class="empty-note" style="padding:20px 0">No active drivers by this date.</div>`;
   $('projectionInspect').innerHTML='';
   const body=$('projectionBody');
   if(!data.items.length){
@@ -664,12 +956,13 @@ function renderProjection(){
   }
 
   const W=Math.max(body.clientWidth||980,760), H=392, L=78, R=30, T=34, B=58, PW=W-L-R, PH=H-T-B;
-  const maxY=niceProjectionMax(Math.max(...data.points.map(p=>Math.max(p.Combined,p.Realized)),totals.Combined,target===''?0:target));
+  const baseMax=baseline?Math.max(...baseline.points.map(p=>p.Combined)):0;
+  const maxY=niceProjectionMax(Math.max(...data.points.map(p=>Math.max(p.Combined,p.Realized)),totals.Combined,target===''?0:target,baseMax));
   const span=Math.max(1,data.axis.end-data.axis.start);
   const X=d=>L+((d-data.axis.start)/span)*PW;
   const Y=v=>T+PH-(v/maxY)*PH;
   const yTicks=[0,.25,.5,.75,1].map(f=>f*maxY);
-  let svg=`<div class="projection-legend"><span><i style="background:#188038"></i>Savings only</span><span><i style="background:#2563eb"></i>Savings + Avoidance</span><span><i style="background:rgba(37,99,235,.18);height:8px"></i>Avoidance lift</span>${S.projectionShowRealized!==false?'<span><i style="background:#8e8e93"></i>Realized</span>':''}${target!==''?'<span><i style="background:#d97706"></i>Target</span>':''}</div>`;
+  let svg=`<div class="projection-legend"><span><i style="background:#188038"></i>Savings only</span><span><i style="background:#2563eb"></i>Savings + Avoidance</span><span><i style="background:rgba(37,99,235,.18);height:8px"></i>Avoidance lift</span>${S.projectionShowRealized!==false?'<span><i style="background:#8e8e93"></i>Realized</span>':''}${baseline?'<span><i style="background:#a1a1a6;height:2px"></i>Baseline</span>':''}${target!==''?'<span><i style="background:#d97706"></i>Target</span>':''}</div>`;
   svg+=`<svg id="projectionSvg" class="projection-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected savings chart" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Inter,sans-serif">`;
   svg+=`<rect width="${W}" height="${H}" fill="#fff"/>`;
   yTicks.forEach(v=>{ const y=Y(v); svg+=`<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="rgba(0,0,0,.07)"/>`;
@@ -683,6 +976,7 @@ function renderProjection(){
   }
   svg+=`<line x1="${L}" y1="${T+PH}" x2="${W-R}" y2="${T+PH}" stroke="rgba(0,0,0,.18)"/>`;
   if(target!==''){ const ty=Y(target); svg+=`<line id="projectionTargetLine" x1="${L}" y1="${ty}" x2="${W-R}" y2="${ty}" stroke="#d97706" stroke-width="1.5" stroke-dasharray="7 7"/><text x="${W-R}" y="${ty-6}" text-anchor="end" font-size="11" font-weight="650" fill="#b45309">Target ${esc(fmtMoneyShort(target,true))}</text>`; }
+  if(baseline&&baseline.points.length)svg+=`<path data-series="baseline" d="${projectionPath(baseline.points,'Combined',X,Y)}" fill="none" stroke="#a1a1a6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 6"/>`;
   svg+=`<path data-series="avoidance-band" d="${projectionBandPath(data.points,X,Y)}" fill="rgba(37,99,235,.12)" stroke="none"/>`;
   svg+=`<path data-series="combined" d="${projectionPath(data.points,'Combined',X,Y)}" fill="none" stroke="#2563eb" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
   svg+=`<path data-series="savings" d="${projectionPath(data.points,'Savings',X,Y)}" fill="none" stroke="#188038" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
@@ -758,12 +1052,14 @@ function renderStackedCharts(){
 }
 
 /* ---------- undo ---------- */
-function cleanItem(i){ const o={...i}; delete o.notes; return o; }
+function cleanItem(i){ const o={...i}; delete o.notes; delete o._sub; return o; }
 function snapshot(){ return JSON.stringify({structure:S.structure,
-  items:S.items.map(i=>{ const it=cleanItem(i); return {...it,start:isoDate(i.start),end:isoDate(i.end)}; })}); }
+  items:S.items.map(i=>{ const it=cleanItem(i); return {...it,start:isoDate(i.start),end:isoDate(i.end),
+    confidence:parseConfidence(i.confidence),phases:normalizePhases(i.phases)}; })}); }
 function restore(s){ const o=JSON.parse(s); S.structure=o.structure;
   S.items=o.items.map(i=>cleanItem({...i,start:i.start?parseAnyDate(i.start,'start',S.fyStart):null,
-    end:i.end?parseAnyDate(i.end,'end',S.fyStart):null,value:parseMoney(i.value),realizedPct:parsePercent(i.realizedPct)})); refreshOwners(); renderAll(); }
+    end:i.end?parseAnyDate(i.end,'end',S.fyStart):null,value:parseMoney(i.value),realizedPct:parsePercent(i.realizedPct),
+    confidence:parseConfidence(i.confidence),phases:normalizePhases(i.phases)})); refreshOwners(); renderAll(); }
 function pushUndo(){ S.history.push(snapshot()); if(S.history.length>150)S.history.shift(); S.future=[]; }
 function undo(){ if(!S.history.length)return; S.future.push(snapshot()); restore(S.history.pop()); }
 function redo(){ if(!S.future.length)return; S.history.push(snapshot()); restore(S.future.pop()); }
@@ -779,10 +1075,11 @@ const svgIcon=p=>`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" st
 function renderOutline(){
   const root=$('outline');
   root.innerHTML=S.structure.map((p,pi)=>`
-    <div class="pillar" data-p="${p.id}">
+    <div class="pillar" data-p="${p.id}" draggable="true" data-dnd="pillar">
       <div class="pillar-head">
+        <span class="drag-handle" title="Drag to reorder" aria-hidden="true">⋮⋮</span>
         <span class="pillar-num">${String(pi+1).padStart(2,'0')}</span>
-        <input class="pillar-name" data-p="${p.id}" value="${esc(p.name)}" aria-label="Pillar name">
+        <input class="pillar-name" data-p="${p.id}" value="${esc(p.name)}" aria-label="Pillar name" draggable="false">
         <div class="tools">
           <button data-act="pup" data-p="${p.id}" ${pi===0?'disabled':''} title="Move up">${svgIcon(ICON.up)}</button>
           <button data-act="pdown" data-p="${p.id}" ${pi===S.structure.length-1?'disabled':''} title="Move down">${svgIcon(ICON.down)}</button>
@@ -791,9 +1088,10 @@ function renderOutline(){
       </div>
       <div class="ws-list">
         ${p.workstreams.map((w,wi)=>{const n=itemsForWs(w.id).length;return`
-          <div class="ws-row" data-w="${w.id}">
+          <div class="ws-row" data-p="${p.id}" data-w="${w.id}" draggable="true" data-dnd="ws">
+            <span class="drag-handle" title="Drag to reorder" aria-hidden="true">⋮⋮</span>
             <span class="ws-tick">${n?'<svg width=\"6\" height=\"6\"><circle cx=\"3\" cy=\"3\" r=\"3\" fill=\"#0071e3\"/></svg>':'<svg width=\"6\" height=\"6\"><circle cx=\"3\" cy=\"3\" r=\"2.5\" fill=\"none\" stroke=\"#c7c7cc\"/></svg>'}</span>
-            <input class="ws-name" data-p="${p.id}" data-w="${w.id}" value="${esc(w.name)}" aria-label="Workstream name">
+            <input class="ws-name" data-p="${p.id}" data-w="${w.id}" value="${esc(w.name)}" aria-label="Workstream name" draggable="false">
             <span class="ws-count">${n?n+(n===1?' item':' items'):''}</span>
             <div class="tools">
               <button data-act="wup" data-p="${p.id}" data-w="${w.id}" ${wi===0?'disabled':''} title="Move up">${svgIcon(ICON.up)}</button>
@@ -848,6 +1146,47 @@ function renderOutline(){
   $('addPillar').onclick=()=>{ pushUndo();
     const p={id:uid('p'),name:'',workstreams:[{id:uid('w'),name:'New workstream'}]}; S.structure.push(p); renderAll();
     const nx=root.querySelector(`.pillar-name[data-p="${p.id}"]`); nx&&(nx.focus(),nx.select()); };
+  bindStructureDnD(root);
+}
+function bindStructureDnD(root){
+  let dragEl=null;
+  root.querySelectorAll('[data-dnd]').forEach(el=>{
+    el.addEventListener('dragstart',e=>{
+      if(e.target.closest('input,button,select,textarea')){ e.preventDefault(); return; }
+      dragEl=el; el.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain', el.dataset.dnd+':'+(el.dataset.p||'')+':'+(el.dataset.w||''));
+    });
+    el.addEventListener('dragend',()=>{ el.classList.remove('dragging'); root.querySelectorAll('.drag-over').forEach(x=>x.classList.remove('drag-over')); dragEl=null; });
+    el.addEventListener('dragover',e=>{
+      if(!dragEl||dragEl===el)return;
+      if(dragEl.dataset.dnd!==el.dataset.dnd)return;
+      if(dragEl.dataset.dnd==='ws'&&dragEl.dataset.p!==el.dataset.p)return; // only reorder within pillar for simplicity
+      e.preventDefault(); el.classList.add('drag-over');
+    });
+    el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));
+    el.addEventListener('drop',e=>{
+      e.preventDefault(); el.classList.remove('drag-over');
+      if(!dragEl||dragEl===el||dragEl.dataset.dnd!==el.dataset.dnd)return;
+      pushUndo();
+      if(dragEl.dataset.dnd==='pillar'){
+        const from=S.structure.findIndex(p=>p.id===dragEl.dataset.p);
+        const to=S.structure.findIndex(p=>p.id===el.dataset.p);
+        if(from<0||to<0)return;
+        const [moved]=S.structure.splice(from,1);
+        S.structure.splice(to,0,moved);
+      } else {
+        if(dragEl.dataset.p!==el.dataset.p)return;
+        const p=pillarOf(el.dataset.p); if(!p)return;
+        const from=p.workstreams.findIndex(w=>w.id===dragEl.dataset.w);
+        const to=p.workstreams.findIndex(w=>w.id===el.dataset.w);
+        if(from<0||to<0)return;
+        const [moved]=p.workstreams.splice(from,1);
+        p.workstreams.splice(to,0,moved);
+      }
+      renderAll();
+    });
+  });
 }
 
 /* ============ TIMELINE ============ */
@@ -857,7 +1196,27 @@ function packItems(items){ const sorted=items.filter(i=>i.start).sort((a,b)=>a.s
     let sub=ends.findIndex(x=>x<=s); if(sub===-1){sub=ends.length;ends.push(0);} ends[sub]=e+MS_DAY*5; it._sub=sub; }
   return Math.max(1,ends.length); }
 
+function renderHealthPanel(){
+  const el=$('healthPanel'); if(!el)return;
+  const h=healthSummary();
+  const meta={
+    'On Track':{color:'#188038'},
+    'At Risk':{color:'#b45309'},
+    'Not Started':{color:'#1d1d1f'},
+    'Complete':{color:'#8e8e93'}
+  };
+  el.innerHTML=STATUSES.map(st=>{
+    const row=h[st]||{count:0,value:0};
+    return`<div class="health-card" data-status="${esc(st)}"><div class="hk"><i style="background:${meta[st].color}"></i>${esc(st)}</div><div class="hv">${row.count}</div><div class="hm">${esc(fmtMoneyShort(row.value))} impact</div></div>`;
+  }).join('');
+}
+function roadmapLabel(it){ const money=fmtMoneyShort(it.value); const conf=parseConfidence(it.confidence);
+  const base=money==='$0'?it.name:`${it.name} · ${money}`;
+  return conf<100?`${base} · ${fmtConfidence(conf)}`:base; }
 function renderTimeline(){
+  renderHealthPanel();
+  if($('groupStruct'))$('groupStruct').classList.toggle('on',S.roadmapGroup!=='owner');
+  if($('groupOwner'))$('groupOwner').classList.toggle('on',S.roadmapGroup==='owner');
   const box=$('tlBox'); const P=pal();
   if(!S.structure.length){ box.innerHTML=`<div class="empty-note">Add a pillar in the Structure tab to begin.</div>`; return; }
   const dated=S.items.filter(i=>i.start);
@@ -874,20 +1233,41 @@ function renderTimeline(){
   const pxDay=pxq/91.31; const W=GUTTER+pxq*quarters.length;
   const X=d=>GUTTER+(d-axisStart)/MS_DAY*pxDay;
 
-  // layout
+  // layout: structure or owner swimlanes
   let H=AXIS_H; const lanes=[];
-  S.structure.forEach(p=>{ const pTop=H; H+=PILLAR_H;
-    const collapsed=isPillarCollapsed(p.id), wlanes=[];
-    if(!collapsed){
-      p.workstreams.forEach(w=>{ const items=itemsForWs(w.id); const subs=packItems(items);
-        const top=H, h=subs*ROW_H+WS_PAD; H+=h; wlanes.push({w,items,top,h}); });
-      if(!p.workstreams.length)H+=ROW_H;
-    }
-    lanes.push({p,pTop,wlanes,bottom:H,collapsed}); });
+  if(S.roadmapGroup==='owner'){
+    const owners=[...new Set(S.items.map(i=>i.owner||'Unassigned'))].sort((a,b)=>{
+      if(a==='Unassigned')return 1; if(b==='Unassigned')return -1; return a.localeCompare(b);
+    });
+    if(!owners.length)owners.push('Unassigned');
+    owners.forEach(owner=>{
+      const pTop=H; H+=PILLAR_H;
+      const collapsed=isPillarCollapsed('owner:'+owner);
+      const items=S.items.filter(i=>(i.owner||'Unassigned')===owner);
+      const wlanes=[];
+      if(!collapsed){
+        const subs=packItems(items.slice());
+        const top=H, h=subs*ROW_H+WS_PAD; H+=h;
+        wlanes.push({w:{name:items.length?`${items.length} initiative${items.length===1?'':'s'}`:'No initiatives'},items,top,h});
+      }
+      const sav=items.reduce((s,it)=>s+(normValueType(it.valueType)==='Savings'?itemValue(it):0),0);
+      const avo=items.reduce((s,it)=>s+(normValueType(it.valueType)==='Avoidance'?itemValue(it):0),0);
+      const real=items.reduce((s,it)=>s+realizedSavingsValue(it)+realizedAvoidanceValue(it),0);
+      lanes.push({p:{id:'owner:'+owner,name:owner},pTop,wlanes,bottom:H,collapsed,ft:{Savings:sav,Avoidance:avo,Realized:real},ownerMode:true});
+    });
+  } else {
+    S.structure.forEach(p=>{ const pTop=H; H+=PILLAR_H;
+      const collapsed=isPillarCollapsed(p.id), wlanes=[];
+      if(!collapsed){
+        p.workstreams.forEach(w=>{ const items=itemsForWs(w.id); const subs=packItems(items);
+          const top=H, h=subs*ROW_H+WS_PAD; H+=h; wlanes.push({w,items,top,h}); });
+        if(!p.workstreams.length)H+=ROW_H;
+      }
+      lanes.push({p,pTop,wlanes,bottom:H,collapsed,ft:pillarFinancialTotals(p.id)}); });
+  }
 
   let svg=`<svg id="tlSvg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Inter,sans-serif" role="img" aria-label="Roadmap">`;
   svg+=`<rect width="${W}" height="${H}" fill="${P.bg}"/>`;
-  // FY bands + labels
   let lastFY=null,bandX=GUTTER,band=0;
   quarters.forEach((q,i)=>{ const fq=fqOf(q,S.fyStart); if(lastFY===null){lastFY=fq.fy;bandX=X(q);}
     const isLast=i===quarters.length-1; const next=isLast?null:fqOf(quarters[i+1],S.fyStart).fy;
@@ -907,7 +1287,7 @@ function renderTimeline(){
     svg+=`<rect x="0" y="${lane.pTop}" width="${W}" height="${PILLAR_H}" fill="${P.band}"/>`;
     svg+=`<text x="20" y="${lane.pTop+PILLAR_H/2+4}" text-anchor="middle" font-size="14" font-weight="700" fill="${P.ink}">${lane.collapsed?'+':'-'}</text>`;
     svg+=`<text x="42" y="${lane.pTop+PILLAR_H/2+4}" font-size="12" font-weight="700" letter-spacing="0.04em" fill="${P.ink}">${esc(lane.p.name.toUpperCase())}</text>`;
-    if(!lane.collapsed){ const ft=pillarFinancialTotals(lane.p.id), fy=lane.pTop+PILLAR_H/2+4;
+    if(!lane.collapsed&&lane.ft){ const ft=lane.ft, fy=lane.pTop+PILLAR_H/2+4;
       svg+=`<text class="pillar-financials" x="${GUTTER+18}" y="${fy}" font-size="11" fill="${P.ink2}"><tspan>Savings </tspan><tspan font-weight="650" fill="${P.ink}">${esc(fmtMoneyShort(ft.Savings))}</tspan><tspan> · Avoidance </tspan><tspan font-weight="650" fill="${P.ink}">${esc(fmtMoneyShort(ft.Avoidance))}</tspan><tspan> · Realized </tspan><tspan font-weight="650" fill="${P.ink}">${esc(fmtMoneyShort(ft.Realized,true))}</tspan></text>`;
     }
     svg+=`</g>`;
@@ -920,7 +1300,7 @@ function renderTimeline(){
         const statusOpacity=it.status==='Complete'?'.62':'1';
         const label=roadmapLabel(it);
         if(it.milestone){ const sx=X(it.start),cy=y+BAR_H/2,r=7;
-          svg+=`<g class="bar-grab" data-id="${it.id}" data-kind="move"><rect x="${sx-r}" y="${cy-r}" width="${r*2}" height="${r*2}" rx="2.5" transform="rotate(45 ${sx} ${cy})" fill="${col[0]}" opacity="${statusOpacity}"${statusStroke||` stroke="${col[0]}" stroke-width="1.5"`}/><text x="${sx+13}" y="${cy+4}" font-size="12" fill="${P.ink}">${esc(label)}</text></g>`;
+          svg+=`<g class="bar-grab" data-id="${it.id}" data-kind="move"><rect x="${sx-r}" y="${cy-r}" width="${r*2}" height="${r*2}" rx="2.5" transform="rotate(45 ${sx} ${cy})" fill="${col[0]}" opacity="${statusOpacity}"${statusStroke||` stroke="${col[0]}" stroke-width="1.5"`}/><text x="${sx+13}" y="${cy+4}" font-size="12" fill="${P.ink}" pointer-events="none">${esc(label)}</text></g>`;
         } else { const sx=X(it.start),ex=X(addDays(it.end,1)),w=Math.max(ex-sx,8);
           const fits=label.length*6.8+22<w;
           svg+=`<g data-id="${it.id}"><rect class="bar-grab" data-id="${it.id}" data-kind="move" x="${sx}" y="${y}" width="${w}" height="${BAR_H}" rx="7" fill="${col[0]}" opacity="${statusOpacity}"${statusStroke}/>`;
@@ -948,7 +1328,8 @@ function bindTimeline(){ const el=$('tlSvg'); if(!el)return; const tip=$('tip');
     if(!g){tip.style.display='none';return;} const it=S.items.find(i=>i.id===g.dataset.id); if(!it){tip.style.display='none';return;}
     const p=pillarOf(it.pillarId), w=wsOf(it.pillarId,it.wsId);
     const money=fmtMoney(it.value);
-    tip.innerHTML=`<b>${esc(it.name)}</b><span class="t2">${esc(p?p.name:'')}${w?' · '+esc(w.name):''}</span><br>${it.milestone?fmtDate(it.start):fmtDate(it.start)+' – '+fmtDate(it.end)}<br>${esc(normValueType(it.valueType))}${money?' · '+esc(money):''}<br>${esc(it.status)}${it.owner?' · '+esc(it.owner):''}`;
+    const phases=normalizePhases(it.phases);
+    tip.innerHTML=`<b>${esc(it.name)}</b><span class="t2">${esc(p?p.name:'')}${w?' · '+esc(w.name):''}</span><br>${it.milestone?fmtDate(it.start):fmtDate(it.start)+' – '+fmtDate(it.end)}<br>${esc(normValueType(it.valueType))}${money?' · '+esc(money):''} · Conf ${esc(fmtConfidence(it.confidence))}<br>${esc(it.status)}${it.owner?' · '+esc(it.owner):''}${phases.length?`<br>Phases: ${phases.length}`:''}<br><span class="t2">Click to edit</span>`;
     tip.style.display='block'; const r=tip.getBoundingClientRect(); let x=e.clientX+14,y=e.clientY+14;
     if(x+r.width>innerWidth-8)x=e.clientX-r.width-14; if(y+r.height>innerHeight-8)y=e.clientY-r.height-14;
     tip.style.left=x+'px';tip.style.top=y+'px'; });
@@ -961,7 +1342,7 @@ function bindTimeline(){ const el=$('tlSvg'); if(!el)return; const tip=$('tip');
     let n=0; for(let d=axisStart;d<aEnd;d=nextQuarter(d))n++;
     const availW=Math.max(($('tlScroll').clientWidth||1000),760)-2;
     const pxDay=Math.min(280,Math.max(116,Math.floor((availW-GUTTER)/n)))/91.31;
-    drag={it,kind:t.dataset.kind,x0:e.clientX,s0:it.start,e0:it.end,pxDay,moved:false};
+    drag={it,kind:t.dataset.kind,x0:e.clientX,s0:it.start,e0:it.end,pxDay,moved:false,id:it.id};
     window.addEventListener('pointermove',onDrag); window.addEventListener('pointerup',endDrag,{once:true}); });
 }
 function onDrag(e){ if(!drag)return; const dd=Math.round((e.clientX-drag.x0)/drag.pxDay);
@@ -971,40 +1352,87 @@ function onDrag(e){ if(!drag)return; const dd=Math.round((e.clientX-drag.x0)/dra
   else{const ne=addDays(drag.e0,dd);if(ne>=it.start)it.end=ne;}
   renderTimeline(); }
 function endDrag(){ window.removeEventListener('pointermove',onDrag);
-  if(drag&&drag.moved){ const it=drag.it,ns=it.start,ne=it.end; it.start=drag.s0;it.end=drag.e0;
-    pushUndo(); it.start=ns;it.end=ne; renderAll(); } drag=null; }
+  if(drag){
+    if(drag.moved){ const it=drag.it,ns=it.start,ne=it.end; it.start=drag.s0;it.end=drag.e0;
+      pushUndo(); it.start=ns;it.end=ne; renderAll(); }
+    else if(drag.id) openDrawer(drag.id);
+  }
+  drag=null; }
 
 /* ============ INITIATIVES GRID ============ */
 function wsOptions(pid,selWid){ const p=pillarOf(pid); if(!p)return'';
   return p.workstreams.map(w=>`<option value="${w.id}" ${w.id===selWid?'selected':''}>${esc(w.name)}</option>`).join(''); }
+function colW(key,fallback){ const w=(S.colWidths&&S.colWidths[key])||fallback||DEFAULT_COL_WIDTHS[key]||100; return Math.max(48,w); }
+function syncFilterControls(){
+  if(!$('filterStatus'))return;
+  const owners=[...new Set(S.items.map(i=>i.owner).filter(Boolean))].sort();
+  $('filterStatus').innerHTML=`<option value="">All statuses</option>`+STATUSES.map(s=>`<option value="${esc(s)}" ${S.filters.status===s?'selected':''}>${esc(s)}</option>`).join('');
+  $('filterOwner').innerHTML=`<option value="">All owners</option>`+owners.map(o=>`<option value="${esc(o)}" ${S.filters.owner===o?'selected':''}>${esc(o)}</option>`).join('');
+  $('filterPillar').innerHTML=`<option value="">All pillars</option>`+S.structure.map(p=>`<option value="${esc(p.id)}" ${S.filters.pillarId===p.id?'selected':''}>${esc(p.name)}</option>`).join('');
+  $('filterType').value=S.filters.valueType||'';
+  $('filterSearch').value=S.filters.q||'';
+  $('tableDensity').value=S.tableDensity||'comfortable';
+  const vis=filteredItems().length;
+  $('filterCount').innerHTML=vis===S.items.length?`<b>${S.items.length}</b> initiatives`:`Showing <b>${vis}</b> of ${S.items.length}`;
+  if($('gridMeta'))$('gridMeta').textContent='Add the dated work that lives under each workstream. This is the part owners fill in.';
+}
+function bindGridToolbar(){
+  if(!$('filterSearch')||$('filterSearch')._bound)return;
+  $('filterSearch')._bound=true;
+  const apply=()=>{
+    S.filters.q=$('filterSearch').value;
+    S.filters.status=$('filterStatus').value;
+    S.filters.owner=$('filterOwner').value;
+    S.filters.pillarId=$('filterPillar').value;
+    S.filters.valueType=$('filterType').value;
+    S.tableDensity=$('tableDensity').value;
+    renderGrid(); scheduleSave();
+  };
+  ['filterSearch','filterStatus','filterOwner','filterPillar','filterType','tableDensity'].forEach(id=>{
+    $(id).addEventListener(id==='filterSearch'?'input':'change',apply);
+  });
+  $('filterClear').onclick=()=>{ S.filters={q:'',status:'',owner:'',pillarId:'',valueType:''}; renderGrid(); scheduleSave(); };
+}
+function th(label,key,extra=''){
+  const w=colW(key); return`<th class="${key==='name'?'sticky-col':''}" data-col="${key}" style="width:${w}px;min-width:${w}px;${extra}">${label}<span class="col-resizer" data-col="${key}"></span></th>`;
+}
 function renderGrid(){
+  bindGridToolbar(); syncFilterControls();
   const body=$('gridBody');
+  const items=filteredItems();
   if(!S.items.length){
     body.innerHTML=`<div class="grid-wrap"><div class="empty-note">No initiatives yet. Add the first one and assign it to a workstream — it appears on the roadmap the moment it has a start date.</div><div class="grid-foot"><button class="btn btn-primary" id="addRow">Add initiative</button></div></div>`;
     $('addRow').onclick=addRow; return;
   }
-  const rows=S.items.map((it,i)=>`
+  const dense=S.tableDensity==='compact'?' compact':'';
+  if(!items.length){
+    body.innerHTML=`<div class="grid-wrap"><div class="empty-note">No initiatives match these filters.</div><div class="grid-foot"><button class="btn" id="addRow">Add initiative</button></div></div>`;
+    $('addRow').onclick=addRow; return;
+  }
+  const rows=items.map((it,i)=>`
     <tr data-id="${it.id}">
-      <td class="rownum">${i+1}</td>
-      <td style="min-width:210px"><input class="cell-in" data-f="name" value="${esc(it.name)}" aria-label="Initiative"></td>
-      <td><select class="cell-in" data-f="pillarId" aria-label="Pillar">${S.structure.map(p=>`<option value="${p.id}" ${p.id===it.pillarId?'selected':''}>${esc(p.name)}</option>`).join('')}</select></td>
-      <td><select class="cell-in" data-f="wsId" aria-label="Workstream">${wsOptions(it.pillarId,it.wsId)}</select></td>
-      <td><input class="cell-in" type="date" data-f="start" value="${isoDate(it.start)}" aria-label="Start"></td>
-      <td><input class="cell-in" type="date" data-f="end" value="${isoDate(it.end)}" ${it.milestone?'disabled style="opacity:.4"':''} aria-label="End"></td>
-      <td style="text-align:center"><input type="checkbox" data-f="milestone" ${it.milestone?'checked':''} aria-label="Milestone"></td>
-      <td><select class="cell-in" data-f="status" aria-label="Status">${STATUSES.map(s=>`<option ${s===it.status?'selected':''}>${s}</option>`).join('')}</select></td>
-      <td style="min-width:150px"><select class="cell-in" data-f="valueType" aria-label="Savings or avoidance">${VALUE_TYPES.map(v=>`<option ${v===normValueType(it.valueType)?'selected':''}>${v}</option>`).join('')}</select></td>
-      <td style="min-width:130px"><input class="cell-in money-in" data-f="value" inputmode="decimal" value="${esc(fmtMoney(it.value))}" aria-label="Savings or avoidance dollar value" placeholder="$0"></td>
-      <td style="min-width:110px"><input class="cell-in money-in" data-f="realizedPct" inputmode="decimal" value="${esc(fmtPercent(it.realizedPct))}" aria-label="Percentage realized" placeholder="0%"></td>
-      <td style="min-width:110px"><input class="cell-in" data-f="owner" list="ownerList" value="${esc(it.owner)}" aria-label="Owner"></td>
+      <td class="rownum">${S.items.indexOf(it)+1}</td>
+      <td class="sticky-col" style="width:${colW('name')}px;min-width:${colW('name')}px"><input class="cell-in" data-f="name" value="${esc(it.name)}" aria-label="Initiative"></td>
+      <td style="width:${colW('pillar')}px;min-width:${colW('pillar')}px"><select class="cell-in" data-f="pillarId" aria-label="Pillar">${S.structure.map(p=>`<option value="${p.id}" ${p.id===it.pillarId?'selected':''}>${esc(p.name)}</option>`).join('')}</select></td>
+      <td style="width:${colW('ws')}px;min-width:${colW('ws')}px"><select class="cell-in" data-f="wsId" aria-label="Workstream">${wsOptions(it.pillarId,it.wsId)}</select></td>
+      <td style="width:${colW('start')}px;min-width:${colW('start')}px"><input class="cell-in" type="date" data-f="start" value="${isoDate(it.start)}" aria-label="Start"></td>
+      <td style="width:${colW('end')}px;min-width:${colW('end')}px"><input class="cell-in" type="date" data-f="end" value="${isoDate(it.end)}" ${it.milestone?'disabled style="opacity:.4"':''} aria-label="End"></td>
+      <td style="text-align:center;width:${colW('mile')}px"><input type="checkbox" data-f="milestone" ${it.milestone?'checked':''} aria-label="Milestone"></td>
+      <td style="width:${colW('status')}px;min-width:${colW('status')}px"><select class="cell-in" data-f="status" aria-label="Status">${STATUSES.map(s=>`<option ${s===it.status?'selected':''}>${s}</option>`).join('')}</select></td>
+      <td style="width:${colW('valueType')}px;min-width:${colW('valueType')}px"><select class="cell-in" data-f="valueType" aria-label="Savings or avoidance">${VALUE_TYPES.map(v=>`<option ${v===normValueType(it.valueType)?'selected':''}>${v}</option>`).join('')}</select></td>
+      <td style="width:${colW('value')}px;min-width:${colW('value')}px"><input class="cell-in money-in" data-f="value" inputmode="decimal" value="${esc(fmtMoney(it.value))}" aria-label="Savings or avoidance dollar value" placeholder="$0"></td>
+      <td style="width:${colW('realized')}px;min-width:${colW('realized')}px"><input class="cell-in money-in" data-f="realizedPct" inputmode="decimal" value="${esc(fmtPercent(it.realizedPct))}" aria-label="Percentage realized" placeholder="0%" title="${normalizePhases(it.phases).length?'Overridden by time-phased schedule in drawer':''}"></td>
+      <td style="width:${colW('confidence')}px;min-width:${colW('confidence')}px"><select class="cell-in" data-f="confidence" aria-label="Confidence">${CONFIDENCE_PRESETS.map(c=>`<option value="${c.pct}" ${parseConfidence(it.confidence)===c.pct?'selected':''}>${c.label} (${c.pct}%)</option>`).join('')}<option value="${parseConfidence(it.confidence)}" ${![100,70,40].includes(parseConfidence(it.confidence))?'selected':''}>Custom ${parseConfidence(it.confidence)}%</option></select></td>
+      <td style="width:${colW('owner')}px;min-width:${colW('owner')}px"><input class="cell-in" data-f="owner" list="ownerList" value="${esc(it.owner)}" aria-label="Owner"></td>
       <td><div class="row-tools">
+        <button data-act="edit" title="Edit details">✎</button>
         <button data-act="up" title="Up">${svgIcon(ICON.up)}</button>
         <button data-act="down" title="Down">${svgIcon(ICON.down)}</button>
         <button data-act="del" title="Delete">${svgIcon(ICON.del)}</button>
       </div></td>
     </tr>`).join('');
-  body.innerHTML=`<div class="grid-wrap"><table class="grid">
-    <thead><tr><th></th><th>Initiative</th><th>Pillar</th><th>Workstream</th><th>Start</th><th>End</th><th style="text-align:center">Mile&shy;stone</th><th>Status</th><th>Savings / Avoidance</th><th>$ Value</th><th>% Realized</th><th>Owner</th><th></th></tr></thead>
+  body.innerHTML=`<div class="grid-wrap"><table class="grid${dense}" id="initGrid">
+    <thead><tr><th style="width:34px"></th>${th('Initiative','name')}${th('Pillar','pillar')}${th('Workstream','ws')}${th('Start','start')}${th('End','end')}${th('Mile­stone','mile','text-align:center')}${th('Status','status')}${th('Savings / Avoidance','valueType')}${th('$ Value','value')}${th('% Realized','realized')}${th('Conf.','confidence')}${th('Owner','owner')}<th></th></tr></thead>
     <tbody>${rows}</tbody></table>
     <div class="grid-foot"><button class="btn" id="addRow">Add initiative</button></div></div>`;
   body.querySelectorAll('.cell-in,input[type=checkbox]').forEach(inp=>inp.addEventListener('change',()=>{
@@ -1016,24 +1444,215 @@ function renderGrid(){
     else if(f==='pillarId'){ it.pillarId=inp.value; const p=pillarOf(inp.value); it.wsId=p.workstreams[0]?.id; }
     else if(f==='value')it.value=parseMoney(inp.value);
     else if(f==='realizedPct')it.realizedPct=parsePercent(inp.value);
+    else if(f==='confidence')it.confidence=parseConfidence(inp.value);
     else it[f]=inp.value;
     if(f==='owner')refreshOwners(); renderAll();
   }));
   body.querySelectorAll('.row-tools button').forEach(b=>b.onclick=()=>{
-    const i=S.items.findIndex(x=>x.id===b.closest('tr').dataset.id); if(i<0)return; pushUndo();
+    const id=b.closest('tr').dataset.id; const i=S.items.findIndex(x=>x.id===id); if(i<0)return;
+    if(b.dataset.act==='edit'){ openDrawer(id); return; }
+    pushUndo();
     if(b.dataset.act==='del')S.items.splice(i,1);
     else if(b.dataset.act==='up'&&i>0)[S.items[i-1],S.items[i]]=[S.items[i],S.items[i-1]];
     else if(b.dataset.act==='down'&&i<S.items.length-1)[S.items[i+1],S.items[i]]=[S.items[i],S.items[i+1]];
     renderAll(); });
   $('addRow').onclick=addRow;
+  bindColumnResize(body);
+}
+function bindColumnResize(root){
+  root.querySelectorAll('.col-resizer').forEach(handle=>{
+    handle.addEventListener('pointerdown',e=>{
+      e.preventDefault(); e.stopPropagation();
+      const col=handle.dataset.col, startX=e.clientX, startW=colW(col);
+      const move=ev=>{
+        S.colWidths=S.colWidths||{...DEFAULT_COL_WIDTHS};
+        S.colWidths[col]=Math.max(48,startW+(ev.clientX-startX));
+        root.querySelectorAll(`th[data-col="${col}"], td[style*="--no"]`).forEach(()=>{});
+        // live update widths on header + cells
+        root.querySelectorAll(`th[data-col="${col}"]`).forEach(th=>{ th.style.width=S.colWidths[col]+'px'; th.style.minWidth=S.colWidths[col]+'px'; });
+        const idx=[...root.querySelectorAll('thead th')].findIndex(th=>th.dataset.col===col);
+        if(idx>=0) root.querySelectorAll('tbody tr').forEach(tr=>{ const td=tr.children[idx]; if(td){ td.style.width=S.colWidths[col]+'px'; td.style.minWidth=S.colWidths[col]+'px'; }});
+      };
+      const up=()=>{ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); scheduleSave(); };
+      window.addEventListener('pointermove',move); window.addEventListener('pointerup',up,{once:true});
+    });
+  });
 }
 function addRow(){ pushUndo();
   const today=new Date(),t=utc(today.getFullYear(),today.getMonth(),today.getDate());
   const p=S.structure[0]; const w=p.workstreams[0];
   S.items.push({id:uid('i'),pillarId:p.id,wsId:w.id,name:'New initiative',start:t,end:addDays(t,90),
-    valueType:'Savings',value:'',realizedPct:'',milestone:false,status:'Not Started',owner:''});
+    valueType:'Savings',value:'',realizedPct:'',confidence:100,phases:[],milestone:false,status:'Not Started',owner:''});
   renderAll();
   $('gridBody').querySelector('tbody tr:last-child input[data-f=name]')?.focus();
+}
+
+/* ============ EDIT DRAWER ============ */
+function openDrawer(id){
+  const it=S.items.find(i=>i.id===id); if(!it)return;
+  S.drawerId=id;
+  $('drawerTitle').textContent=it.name||'Edit initiative';
+  const phases=normalizePhases(it.phases);
+  $('drawerBody').innerHTML=`
+    <div class="drawer-field"><label>Name</label><input id="dName" value="${esc(it.name)}"></div>
+    <div class="drawer-row">
+      <div class="drawer-field"><label>Pillar</label><select id="dPillar">${S.structure.map(p=>`<option value="${p.id}" ${p.id===it.pillarId?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div>
+      <div class="drawer-field"><label>Workstream</label><select id="dWs">${wsOptions(it.pillarId,it.wsId)}</select></div>
+    </div>
+    <div class="drawer-row">
+      <div class="drawer-field"><label>Start</label><input type="date" id="dStart" value="${isoDate(it.start)}"></div>
+      <div class="drawer-field"><label>End</label><input type="date" id="dEnd" value="${isoDate(it.end)}" ${it.milestone?'disabled':''}></div>
+    </div>
+    <div class="drawer-row">
+      <div class="drawer-field"><label>Status</label><select id="dStatus">${STATUSES.map(s=>`<option ${s===it.status?'selected':''}>${s}</option>`).join('')}</select></div>
+      <div class="drawer-field"><label>Milestone</label><select id="dMile"><option value="0" ${!it.milestone?'selected':''}>Range</option><option value="1" ${it.milestone?'selected':''}>Milestone</option></select></div>
+    </div>
+    <div class="drawer-row">
+      <div class="drawer-field"><label>Type</label><select id="dType">${VALUE_TYPES.map(v=>`<option ${v===normValueType(it.valueType)?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="drawer-field"><label>$ Value</label><input id="dValue" class="money-in" value="${esc(fmtMoney(it.value))}" inputmode="decimal"></div>
+    </div>
+    <div class="drawer-row">
+      <div class="drawer-field"><label>% Realized (fallback)</label><input id="dRealized" value="${esc(fmtPercent(it.realizedPct))}" inputmode="decimal"></div>
+      <div class="drawer-field"><label>Confidence</label><select id="dConf">${CONFIDENCE_PRESETS.map(c=>`<option value="${c.pct}" ${parseConfidence(it.confidence)===c.pct?'selected':''}>${c.label} · ${c.pct}%</option>`).join('')}</select></div>
+    </div>
+    <div class="drawer-field"><label>Owner</label><input id="dOwner" list="ownerList" value="${esc(it.owner)}"></div>
+    <div class="drawer-field"><label>Run-rate</label><div style="font-size:13px;color:var(--ink2)">Annualized ${esc(fmtMoneyShort(annualizedValue(it),true))} · Expected ${esc(fmtMoneyShort(expectedValue(it),true))} · Duration ${initiativeDurationDays(it)} days</div></div>
+    <div class="drawer-field"><label>Time-phased realization</label>
+      <div class="drawer-phases"><table><thead><tr><th>Date</th><th>Cumulative %</th><th></th></tr></thead>
+      <tbody id="dPhases">${phases.map((ph,i)=>`<tr data-i="${i}"><td><input type="date" data-ph="date" value="${esc(ph.date)}"></td><td><input data-ph="pct" value="${esc(fmtPercent(ph.pct))}"></td><td><button type="button" data-phdel="${i}">✕</button></td></tr>`).join('')||'<tr><td colspan="3" style="color:var(--ink3);font-size:12px;padding:10px">No phases — uses % Realized as a constant.</td></tr>'}</tbody></table>
+      <button type="button" class="phase-add" id="dAddPhase">+ Add phase</button></div>
+      <div style="font-size:11px;color:var(--ink3);margin-top:6px">Each phase sets cumulative realized % of full value on that date.</div>
+    </div>`;
+  $('itemDrawer').classList.add('on'); $('itemDrawer').setAttribute('aria-hidden','false');
+  $('drawerBackdrop').classList.add('on');
+  $('dPillar').onchange=()=>{ const p=pillarOf($('dPillar').value); $('dWs').innerHTML=wsOptions(p.id,p.workstreams[0]?.id); };
+  $('dMile').onchange=()=>{ $('dEnd').disabled=$('dMile').value==='1'; };
+  $('dAddPhase').onclick=()=>{
+    const tbody=$('dPhases');
+    if(tbody.querySelector('[colspan]'))tbody.innerHTML='';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><input type="date" data-ph="date" value="${isoDate(todayUtc())}"></td><td><input data-ph="pct" value="25%"></td><td><button type="button" data-phdel>✕</button></td>`;
+    tbody.appendChild(tr);
+    tr.querySelector('[data-phdel]').onclick=()=>tr.remove();
+  };
+  $('dPhases').querySelectorAll('[data-phdel]').forEach(b=>b.onclick=()=>b.closest('tr').remove());
+}
+function readPhasesFromDrawer(){
+  return normalizePhases([...$('dPhases').querySelectorAll('tr')].map(tr=>{
+    const date=tr.querySelector('[data-ph=date]')?.value;
+    const pct=tr.querySelector('[data-ph=pct]')?.value;
+    return date?{date,pct}:null;
+  }).filter(Boolean));
+}
+function commitDrawer(){
+  const it=S.items.find(i=>i.id===S.drawerId); if(!it)return closeDrawer();
+  pushUndo();
+  it.name=$('dName').value||'New initiative';
+  it.pillarId=$('dPillar').value;
+  it.wsId=$('dWs').value;
+  it.start=$('dStart').value?parseAnyDate($('dStart').value,'start',S.fyStart):null;
+  it.milestone=$('dMile').value==='1';
+  it.end=it.milestone?it.start:($('dEnd').value?parseAnyDate($('dEnd').value,'end',S.fyStart):null);
+  it.status=$('dStatus').value;
+  it.valueType=$('dType').value;
+  it.value=parseMoney($('dValue').value);
+  it.realizedPct=parsePercent($('dRealized').value);
+  it.confidence=parseConfidence($('dConf').value);
+  it.owner=$('dOwner').value;
+  it.phases=readPhasesFromDrawer();
+  if(it.phases.length)it.realizedPct=it.phases[it.phases.length-1].pct;
+  refreshOwners(); closeDrawer(); renderAll();
+}
+function closeDrawer(){
+  S.drawerId=null;
+  $('itemDrawer').classList.remove('on'); $('itemDrawer').setAttribute('aria-hidden','true');
+  $('drawerBackdrop').classList.remove('on');
+}
+function deleteDrawerItem(){
+  const i=S.items.findIndex(x=>x.id===S.drawerId); if(i<0)return closeDrawer();
+  pushUndo(); S.items.splice(i,1); closeDrawer(); renderAll();
+}
+
+/* ============ SCENARIOS / BASELINE ============ */
+function renderScenarioUI(){
+  const sel=$('scenarioSelect'); if(!sel)return;
+  const cur=sel.value;
+  const n=(S.scenarios||[]).length;
+  sel.innerHTML=`<option value="">Scenarios${n?` (${n})`:''}</option>`+
+    (S.scenarios||[]).map(sc=>`<option value="${esc(sc.id)}">${esc(sc.name)}</option>`).join('')+
+    (n?`<option value="__delete__">Delete…</option>`:'');
+  if(cur&&[...sel.options].some(o=>o.value===cur))sel.value=cur;
+  const pill=$('baselinePill'), btn=$('baselineBtn');
+  if(S.baseline){
+    pill.textContent='On';
+    pill.classList.remove('off');
+    pill.title='Baseline set '+relTime(S.baseline.savedAt)+' — click to clear';
+    if(btn){ btn.textContent='Update'; btn.title='Replace baseline with the current plan'; }
+  } else {
+    pill.textContent='Off';
+    pill.classList.add('off');
+    pill.title='No baseline set';
+    if(btn){ btn.textContent='Baseline'; btn.title='Freeze current plan as baseline for comparison'; }
+  }
+}
+function saveScenario(){
+  const name=prompt('Scenario name', `Scenario ${(S.scenarios||[]).length+1}`);
+  if(!name)return;
+  pushUndo();
+  S.scenarios=S.scenarios||[];
+  S.scenarios.push({id:uid('sc'),name:name.trim(),savedAt:Date.now(),payload:clonePlanPayload()});
+  renderScenarioUI(); scheduleSave();
+  showToast(`Saved scenario “${name.trim()}”`);
+}
+function loadScenario(id){
+  const sc=(S.scenarios||[]).find(s=>s.id===id); if(!sc)return;
+  if(!confirm(`Load scenario “${sc.name}”? Current plan will be replaced (undo available).`))return;
+  pushUndo(); applyPlanPayload(sc.payload); renderAll(); renderScenarioUI();
+  showToast(`Loaded “${sc.name}”`);
+}
+function deleteScenario(id){
+  const sc=(S.scenarios||[]).find(s=>s.id===id); if(!sc)return;
+  if(!confirm(`Delete scenario “${sc.name}”?`))return;
+  S.scenarios=S.scenarios.filter(s=>s.id!==id); renderScenarioUI(); scheduleSave();
+}
+function setBaseline(){
+  pushUndo();
+  S.baseline={savedAt:Date.now(),...clonePlanPayload()};
+  S.showBaseline=true;
+  renderScenarioUI(); scheduleSave();
+  showToast('Baseline frozen for comparison');
+}
+function clearBaseline(){
+  if(!S.baseline)return;
+  if(!confirm('Clear baseline snapshot?'))return;
+  pushUndo(); S.baseline=null; renderScenarioUI(); scheduleSave();
+}
+function showToast(msg){
+  const t=$('toast'); t.innerHTML=esc(msg); t.classList.add('on');
+  clearTimeout(showToast._t); showToast._t=setTimeout(()=>t.classList.remove('on'),3200);
+}
+function bindScenarioControls(){
+  if(!$('scenarioSaveBtn')||$('scenarioSaveBtn')._bound)return;
+  $('scenarioSaveBtn')._bound=true;
+  $('scenarioSaveBtn').onclick=saveScenario;
+  $('baselineBtn').onclick=()=>{ if(S.baseline&&confirm('Replace existing baseline with current plan?')===false)return; setBaseline(); };
+  $('baselinePill').onclick=()=>{ if(S.baseline)clearBaseline(); };
+  $('scenarioSelect').onchange=()=>{
+    const v=$('scenarioSelect').value;
+    if(!v)return;
+    if(v==='__delete__'){ const prev=[...$('scenarioSelect').options].find(o=>o.value&&o.value!=='__delete__');
+      if(prev)deleteScenario(prev.value); $('scenarioSelect').value=''; return; }
+    loadScenario(v); $('scenarioSelect').value='';
+  };
+  $('groupStruct').onclick=()=>{ S.roadmapGroup='structure'; renderAll(); scheduleSave(); };
+  $('groupOwner').onclick=()=>{ S.roadmapGroup='owner'; renderAll(); scheduleSave(); };
+  $('drawerClose').onclick=closeDrawer;
+  $('drawerBackdrop').onclick=closeDrawer;
+  $('drawerDone').onclick=commitDrawer;
+  $('drawerDelete').onclick=deleteDrawerItem;
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&S.drawerId){ e.preventDefault(); closeDrawer(); }
+  });
 }
 
 function dl(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
@@ -1276,12 +1895,21 @@ window.addEventListener('resize',()=>{if(S.view==='studio'&&(S.tab==='road'||S.p
 
 /* ============ PERSISTENCE ============ */
 const LS_KEY='roadmapStudio.v1';
-function serializeState(){ return {v:1,savedAt:Date.now(),fileName:S.fileName,fyStart:S.fyStart,
+function serializeState(){ return {v:2,savedAt:Date.now(),fileName:S.fileName,fyStart:S.fyStart,
   collapsedPillars:S.collapsedPillars,
   projectionEnd:S.projectionEnd||null,
   projectionTarget:S.projectionTarget===''?'':parseMoney(S.projectionTarget),
   projectionShowRealized:S.projectionShowRealized!==false,
-  structure:S.structure, items:S.items.map(i=>{ const it=cleanItem(i); return {...it,start:isoDate(i.start),end:isoDate(i.end)}; })}; }
+  weightConfidence:S.weightConfidence!==false,
+  showBaseline:S.showBaseline!==false,
+  roadmapGroup:S.roadmapGroup==='owner'?'owner':'structure',
+  filters:S.filters||{q:'',status:'',owner:'',pillarId:'',valueType:''},
+  tableDensity:S.tableDensity||'comfortable',
+  colWidths:S.colWidths||{...DEFAULT_COL_WIDTHS},
+  scenarios:S.scenarios||[],
+  baseline:S.baseline||null,
+  structure:S.structure, items:S.items.map(i=>{ const it=cleanItem(i); return {...it,start:isoDate(i.start),end:isoDate(i.end),
+    confidence:parseConfidence(i.confidence),phases:normalizePhases(i.phases)}; })}; }
 function deserializeInto(o){
   S.fileName=o.fileName||'Roadmap'; S.fyStart=(o.fyStart==null?6:o.fyStart);
   S.collapsedPillars=(o.collapsedPillars&&typeof o.collapsedPillars==='object')?o.collapsedPillars:{};
@@ -1290,15 +1918,27 @@ function deserializeInto(o){
   const target=parseMoney(o.projectionTarget);
   S.projectionTarget=target===''?'':target;
   S.projectionShowRealized=o.projectionShowRealized===false?false:true;
+  S.weightConfidence=o.weightConfidence===false?false:true;
+  S.showBaseline=o.showBaseline===false?false:true;
+  S.roadmapGroup=o.roadmapGroup==='owner'?'owner':'structure';
+  S.filters=Object.assign({q:'',status:'',owner:'',pillarId:'',valueType:''},o.filters||{});
+  S.tableDensity=o.tableDensity==='compact'?'compact':'comfortable';
+  S.colWidths=Object.assign({},DEFAULT_COL_WIDTHS,o.colWidths||{});
+  S.scenarios=Array.isArray(o.scenarios)?o.scenarios:[];
+  S.baseline=o.baseline&&typeof o.baseline==='object'?o.baseline:null;
   S.structure=Array.isArray(o.structure)?o.structure:[];
   S.items=(Array.isArray(o.items)?o.items:[]).map(i=>cleanItem({...i,
     start:i.start?parseAnyDate(i.start,'start',S.fyStart):null,
     end:i.end?parseAnyDate(i.end,'end',S.fyStart):null,
     valueType:normValueType(i.valueType),
     value:parseMoney(i.value),
-    realizedPct:parsePercent(i.realizedPct)}));
+    realizedPct:parsePercent(i.realizedPct),
+    confidence:parseConfidence(i.confidence),
+    phases:normalizePhases(i.phases)}));
   let mx=0; const scan=id=>{const n=parseInt(String(id).replace(/\D/g,''),10); if(!isNaN(n)&&n>mx)mx=n;};
-  S.structure.forEach(p=>{scan(p.id);(p.workstreams||[]).forEach(w=>scan(w.id));}); S.items.forEach(i=>scan(i.id));
+  S.structure.forEach(p=>{scan(p.id);(p.workstreams||[]).forEach(w=>scan(w.id));});
+  S.items.forEach(i=>scan(i.id));
+  (S.scenarios||[]).forEach(sc=>scan(sc.id));
   S.seq=mx+1;
 }
 let _saveT=null;

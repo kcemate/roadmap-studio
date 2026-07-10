@@ -7,27 +7,38 @@ It is designed for sensitive planning work: roadmap data stays in the browser, p
 ## Current Feature Set
 
 - Build a roadmap from editable pillars and workstreams.
-- Track initiatives by pillar, workstream, start/end date, milestone flag, status, owner, financial type, dollar value, and realized percentage.
+- **Drag-and-drop** pillars and workstreams to reorder structure (button reorder still available).
+- Track initiatives by pillar, workstream, start/end date, milestone flag, status, owner, financial type, dollar value, realized percentage, and **confidence**.
+- **Initiative filters + search** by text, status, owner, pillar, and Savings/Avoidance.
+- **Resizable columns** and comfortable/compact density on the initiatives table.
 - Classify financial impact as `Savings` or `Avoidance`.
 - Show planned and realized totals for Savings and Avoidance in the roadmap header.
+- **Health / risk summary panel** with counts and $ impact by status.
 - Show each expanded pillar's Savings, Avoidance, and Realized rollups directly inside the roadmap view.
-- Collapse or expand roadmap pillars to showcase one pillar at a time.
+- Collapse or expand roadmap pillars (or owner lanes) to showcase one group at a time.
+- **Owner swimlane view** — group the roadmap by owner instead of structure.
 - Render `Not Started` initiatives in black so they are distinct from savings and avoidance work.
 - Drag roadmap bars and edges to adjust initiative timing.
+- **Click a roadmap bar** to open a side **edit drawer** (dates, finance, confidence, time-phased realization).
+- **Time-phased realization** schedule (cumulative % by date) with single-% fallback.
+- **Confidence / probability weighting** (High / Med / Low) for expected-value projections.
+- **Scenario snapshots** and a frozen **baseline** for plan-vs-baseline comparison.
 - Save and reopen roadmap project files locally.
 - Export the roadmap view to PNG.
 - Export a PowerPoint deck with one slide per pillar plus financial summary slides.
 
 ## Analytics Views
 
-Roadmap Studio now includes dedicated executive analytics tabs:
+Roadmap Studio includes dedicated executive analytics tabs:
 
 - `Projected Savings`: projects cumulative value through a selected date.
 - `Savings only` trajectory: includes only Savings initiatives.
 - `Savings + Avoidance` trajectory: includes both Savings and Avoidance initiatives.
 - Milestone initiatives recognize full value on the milestone date.
 - Ranged initiatives accrue value linearly from start through end.
-- Optional realized overlay compares planned value with realized value.
+- Optional realized overlay compares planned value with realized value (supports time-phased phases).
+- Optional **confidence weighting** and **baseline** trajectory overlay.
+- **Expected** (confidence-weighted) and **annualized run-rate** metric cards.
 - Top drivers identify the initiatives carrying the selected-date projection.
 - `Stacked Bar Chart`: shows pillar concentration as percent of total value.
 - Stacked bars are available for both Savings only and Savings + Avoidance.
