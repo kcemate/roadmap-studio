@@ -51,9 +51,10 @@ input,select{font:inherit;color:inherit}
 .err{margin-top:14px;font-size:13px;color:var(--risk);display:none}
 
 #studio{display:none;min-height:100vh;flex-direction:column}
-.toolbar{display:flex;align-items:center;gap:14px;height:54px;padding:0 20px;
+.toolbar{display:flex;align-items:center;gap:10px;height:54px;padding:0 16px 0 20px;
   background:rgba(251,251,253,.85);backdrop-filter:saturate(180%) blur(12px);
-  border-bottom:1px solid var(--hairline);position:sticky;top:0;z-index:20}
+  border-bottom:1px solid var(--hairline);position:sticky;top:0;z-index:20;
+  flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 .brand{font-size:14px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
 .spacer{flex:1}
 .seg{display:flex;background:rgba(0,0,0,.05);border-radius:9px;padding:2px}
@@ -69,7 +70,7 @@ input,select{font:inherit;color:inherit}
 .stage-head{display:flex;align-items:baseline;gap:14px;margin-bottom:18px;max-width:880px}
 .stage-head h2{font-size:22px;font-weight:600;letter-spacing:-.02em}
 .stage-head .meta{font-size:12px;color:var(--ink2)}
-#roadStage .stage-head,#projStage .stage-head,#stackStage .stage-head{max-width:none;align-items:flex-start}
+#roadStage .stage-head,#execStage .stage-head,#rollupStage .stage-head,#projStage .stage-head,#stackStage .stage-head{max-width:none;align-items:flex-start}
 
 /* ---------- structure outline ---------- */
 .outline{max-width:680px;margin:0 auto}
@@ -202,7 +203,7 @@ tr:hover .row-tools{opacity:1}
 .empty-note{padding:64px;text-align:center;color:var(--ink2)}
 
 body.presenting{background:var(--pbg,#fbfbfd)}
-body.presenting .toolbar,body.presenting .stage-head{display:none!important}
+body.presenting .toolbar,body.presenting .stage-head,body.presenting .health-panel,body.presenting .drawer,body.presenting .drawer-backdrop,body.presenting .scenario-bar{display:none!important}
 body.presenting .stage{padding:0;overflow:hidden;display:flex;align-items:center;justify-content:center;height:100vh}
 body.presenting .tl-scroll{border:none;box-shadow:none;background:transparent;overflow:visible}
 .pres-controls{position:fixed;bottom:24px;right:24px;z-index:60;display:none;gap:8px;opacity:.2;transition:opacity .25s}
@@ -217,6 +218,145 @@ body.presenting.dark{--pbg:#070708}
   opacity:0;pointer-events:none;transition:opacity .3s,transform .3s}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
 .toast button{color:#2997ff;font-weight:600;font-size:13px}
+
+/* ---------- filters / table density ---------- */
+.grid-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.grid-toolbar .search{flex:1;min-width:180px;max-width:280px;border:1px solid var(--hairline);border-radius:8px;padding:7px 12px;background:var(--surface)}
+.grid-toolbar select,.grid-toolbar .density{border:1px solid var(--hairline);border-radius:8px;padding:7px 10px;background:var(--surface);font-size:13px;color:var(--ink2)}
+.grid-toolbar .chip{font-size:12px;color:var(--ink2)}
+.grid-toolbar .chip b{color:var(--ink);font-weight:650}
+table.grid.compact{font-size:12px;min-width:1200px}
+table.grid.compact th{padding:8px 6px}
+table.grid.compact .cell-in{padding:4px 6px}
+table.grid th{position:relative;user-select:none}
+table.grid th .col-resizer{position:absolute;right:0;top:0;width:6px;height:100%;cursor:col-resize;user-select:none}
+table.grid th .col-resizer:hover{background:rgba(0,113,227,.25)}
+table.grid th.sticky-col,table.grid td.sticky-col{position:sticky;left:0;background:var(--surface);z-index:4;box-shadow:1px 0 0 var(--hairline)}
+table.grid th.sticky-col{z-index:6}
+.grid-meta-row{display:flex;align-items:baseline;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.grid-meta-row h2{font-size:22px;font-weight:600;letter-spacing:-.02em}
+#gridStage .stage-head{max-width:none}
+
+/* ---------- health panel ---------- */
+.health-panel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.health-card{background:var(--surface);border:1px solid var(--hairline);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow-card);min-width:0}
+.health-card .hk{font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.health-card .hk i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.health-card .hv{font-size:20px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.health-card .hm{font-size:11px;color:var(--ink2);margin-top:2px}
+.road-controls{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap}
+.road-seg{display:flex;background:rgba(0,0,0,.05);border-radius:9px;padding:2px;margin:0}
+.road-seg button{padding:5px 12px;border-radius:7px;font-size:12px;font-weight:500;color:var(--ink2);transition:all .18s var(--spring)}
+.road-seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+#roadStage .stage-head{flex-wrap:wrap;gap:12px}
+@media (max-width:900px){.health-panel{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ---------- drawer ---------- */
+.drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:80;opacity:0;pointer-events:none;transition:opacity .2s}
+.drawer-backdrop.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100vh;width:min(420px,100vw);background:var(--surface);z-index:90;
+  box-shadow:-12px 0 40px rgba(0,0,0,.12);transform:translateX(100%);transition:transform .24s var(--spring);
+  display:flex;flex-direction:column}
+.drawer.on{transform:none}
+.drawer-head{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--hairline)}
+.drawer-head h3{flex:1;font-size:16px;font-weight:650;letter-spacing:-.01em}
+.drawer-body{flex:1;overflow:auto;padding:16px 18px 32px}
+.drawer-field{margin-bottom:12px}
+.drawer-field label{display:block;font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin-bottom:5px}
+.drawer-field input,.drawer-field select,.drawer-field textarea{width:100%;border:1px solid var(--hairline);border-radius:8px;padding:8px 10px;background:var(--paper)}
+.drawer-field textarea{min-height:64px;resize:vertical}
+.drawer-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.drawer-phases{border:1px solid var(--hairline);border-radius:10px;overflow:hidden}
+.drawer-phases table{width:100%;border-collapse:collapse;font-size:12px}
+.drawer-phases th,.drawer-phases td{padding:6px 8px;border-bottom:1px solid var(--hairline);text-align:left}
+.drawer-phases th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2);background:var(--paper)}
+.drawer-phases input{width:100%;border:1px solid transparent;border-radius:6px;padding:4px 6px;background:transparent}
+.drawer-phases input:focus{border-color:var(--accent);outline:none;background:#fff}
+.phase-add{width:100%;padding:8px;font-size:12px;color:var(--accent);font-weight:500}
+.phase-add:hover{background:#f0f7ff}
+.drawer-foot{padding:12px 18px;border-top:1px solid var(--hairline);display:flex;gap:8px;justify-content:flex-end}
+
+/* ---------- scenarios (compact toolbar cluster) ---------- */
+.scenario-bar{display:inline-flex;align-items:stretch;flex:none;flex-wrap:nowrap;height:32px;
+  border:1px solid var(--hairline);border-radius:8px;background:var(--surface);overflow:hidden}
+.scenario-bar select,.scenario-bar .scenario-action,.scenario-bar .baseline-pill{
+  height:100%;border:none;border-radius:0;background:transparent;font-size:12px;line-height:1;
+  white-space:nowrap;box-shadow:none}
+.scenario-bar select{padding:0 10px;color:var(--ink2);max-width:118px;min-width:96px;cursor:pointer}
+.scenario-bar select:hover,.scenario-bar .scenario-action:hover{background:rgba(0,0,0,.04);color:var(--ink)}
+.scenario-bar select:focus-visible,.scenario-bar .scenario-action:focus-visible,.scenario-bar .baseline-pill:focus-visible{
+  outline:2px solid var(--accent);outline-offset:-2px;z-index:1}
+.scenario-bar .scenario-action{padding:0 10px;font-weight:500;color:var(--ink2);border-left:1px solid var(--hairline)}
+.scenario-bar .baseline-pill{display:inline-flex;align-items:center;padding:0 10px;font-weight:600;
+  color:#0f766e;background:#ecfdf5;border-left:1px solid #a7f3d0;cursor:pointer;user-select:none}
+.scenario-bar .baseline-pill.off{color:var(--ink3);background:transparent;border-left-color:var(--hairline);cursor:default}
+.scenario-bar .baseline-pill:not(.off):hover{background:#d1fae5}
+
+@media (min-width:861px){
+  .toolbar{height:auto;min-height:96px;flex-wrap:wrap;overflow:visible;padding-top:8px;padding-bottom:8px}
+  .toolbar>.spacer{display:none}
+  .toolbar>.seg{order:2;flex:1 0 100%;justify-content:center}
+  .toolbar>.seg button{flex:none}
+}
+
+/* ---------- structure dnd ---------- */
+.pillar.dragging,.ws-row.dragging{opacity:.45}
+.pillar.drag-over{outline:2px solid var(--accent);outline-offset:2px}
+.ws-row.drag-over{background:#f0f7ff;border-radius:8px}
+.drag-handle{cursor:grab;color:var(--ink3);padding:4px 2px;display:inline-flex;user-select:none;touch-action:none}
+.drag-handle:active{cursor:grabbing}
+.pillar-head .drag-handle,.ws-row .drag-handle{opacity:.5}
+.pillar-head:hover .drag-handle,.ws-row:hover .drag-handle{opacity:1}
+
+/* ---------- projection extras ---------- */
+.projection-summary.cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media (max-width:1100px){.projection-summary.cols-5{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.proj-toggles{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+
+/* ---------- executive summary ---------- */
+.exec-head{justify-content:space-between;flex-wrap:wrap}
+.exec-head-copy{display:flex;align-items:baseline;gap:14px}
+.exec-goal{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:650;color:var(--ink2)}
+.exec-goal input{width:148px;background:var(--surface);border:1px solid var(--hairline);border-radius:7px;padding:8px 10px;font-weight:650;font-variant-numeric:tabular-nums}
+.exec-insight{padding:22px 24px 24px;background:#1d1d1f;color:#fff;border-radius:var(--radius-card);margin-bottom:14px}
+.exec-insight .kicker{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#a1a1a6}
+.exec-insight h3{font-size:32px;line-height:1.08;letter-spacing:-.02em;margin-top:8px;max-width:940px}
+.exec-insight p{font-size:13px;color:#d1d1d6;margin-top:9px}
+.exec-summary{margin-bottom:14px}
+.exec-tracker-panel{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:20px 22px 18px;overflow:hidden}
+.exec-tracker-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:8px}
+.exec-tracker-head h3{font-size:16px;font-weight:650}
+.exec-tracker-head p{font-size:11px;color:var(--ink2);margin-top:4px}
+.exec-key{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end;font-size:11px;color:var(--ink2)}
+.exec-key span{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.exec-key i{display:inline-block;width:18px;height:7px;border-radius:3px}
+.exec-tracker-scroll{overflow-x:auto;overflow-y:hidden}
+.exec-tracker-svg{display:block;width:100%;height:auto}
+.exec-breakdown{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--hairline);margin-top:4px}
+.exec-breakdown-group{padding:14px 16px 2px;border-left:1px solid var(--hairline)}
+.exec-breakdown-group:first-child{border-left:none}
+.exec-breakdown-group h4{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink2);margin-bottom:9px}
+.exec-breakdown-row{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;margin:7px 0;font-variant-numeric:tabular-nums}
+.exec-breakdown-row span{display:flex;align-items:center;gap:7px;color:var(--ink2)}
+.exec-breakdown-row i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.exec-empty{margin-top:0}
+@media (max-width:860px){.exec-insight h3{font-size:25px}.exec-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.exec-breakdown{grid-template-columns:1fr}.exec-breakdown-group{border-left:none;border-top:1px solid var(--hairline)}.exec-breakdown-group:first-child{border-top:none}.exec-tracker-head{display:block}.exec-key{justify-content:flex-start;margin-top:12px}}
+
+/* ---------- portfolio rollup ---------- */
+.rollup-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--surface);border:1px solid var(--hairline);border-radius:var(--radius-card);box-shadow:var(--shadow-card);margin-bottom:14px;overflow:hidden}
+.rollup-metric{padding:16px 20px;min-width:0;border-left:1px solid var(--hairline)}
+.rollup-metric:first-child{border-left:none}
+.rollup-metric .kicker{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:650;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+.rollup-metric .kicker i{width:16px;height:6px;border-radius:3px;display:inline-block}
+.rollup-metric .value{font-size:28px;font-weight:650;line-height:1.05;margin-top:8px;font-variant-numeric:tabular-nums}
+.rollup-metric .note{font-size:11px;color:var(--ink2);margin-top:5px}
+.rollup-scroll{overflow:auto;border:1px solid var(--hairline);border-radius:var(--radius-card);background:var(--surface);box-shadow:var(--shadow-card)}
+.rollup-svg{display:block;width:100%;height:auto;min-width:1080px}
+.rollup-bar{cursor:pointer}
+.approval-pill{display:inline-flex;align-items:center;justify-content:center;min-width:72px;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:650}
+.approval-pill.approved{background:#e8f2ff;color:#0066cc}
+.approval-pill.proposed{background:#f1f1f3;color:#55555a}
+@media (max-width:860px){.rollup-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.rollup-metric:nth-child(3){border-left:none;border-top:1px solid var(--hairline)}.rollup-metric:nth-child(4){border-top:1px solid var(--hairline)}}
 </style>
 </head>
 <body>
@@ -256,6 +396,8 @@ body.presenting.dark{--pbg:#070708}
       <button id="segStruct" class="on" role="tab">Structure</button>
       <button id="segData" role="tab">Initiatives</button>
       <button id="segRoad" role="tab">Roadmap</button>
+      <button id="segExec" role="tab">Executive Summary</button>
+      <button id="segRollup" role="tab">Portfolio Rollup</button>
       <button id="segProj" role="tab">Projected Savings</button>
       <button id="segStack" role="tab">Stacked Bar Chart</button>
     </div>
@@ -263,6 +405,12 @@ body.presenting.dark{--pbg:#070708}
     <button class="icon-btn" id="undoBtn" title="Undo (⌘Z)" aria-label="Undo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
     <button class="icon-btn" id="redoBtn" title="Redo (⇧⌘Z)" aria-label="Redo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
     <select class="fy-select" id="fySelect" title="Fiscal year start"></select>
+    <div class="scenario-bar" role="group" aria-label="Scenarios and baseline">
+      <select id="scenarioSelect" aria-label="Load scenario" title="Load a saved scenario"><option value="">Scenarios</option></select>
+      <button type="button" class="scenario-action" id="scenarioSaveBtn" title="Save current plan as a named scenario">Save</button>
+      <button type="button" class="scenario-action" id="baselineBtn" title="Freeze current plan as baseline for comparison">Baseline</button>
+      <span class="baseline-pill off" id="baselinePill" title="No baseline set" tabindex="0">Off</span>
+    </div>
     <button class="btn" id="saveBtn" title="Download a project file you can reopen on any machine">Save</button>
     <button class="btn" id="pngBtn">PNG</button>
     <button class="btn" id="pptBtn">PowerPoint</button>
@@ -279,15 +427,61 @@ body.presenting.dark{--pbg:#070708}
     <!-- ROADMAP -->
     <div id="roadStage" style="display:none">
       <div class="stage-head"><h2>Roadmap</h2><span class="meta" id="roadMeta"></span>
-        <div class="legend">
-          <span class="impact-stack" data-impact="savings"><i style="background:#188038"></i><span class="impact-main"><b class="total" id="savingsTotal">$0</b><span class="label">Savings</span></span><span class="impact-realized"><b class="total" id="realizedSavingsTotal">$0</b><span class="label">Realized</span></span></span>
-          <span class="impact-stack" data-impact="avoidance"><i style="background:#2563eb"></i><span class="impact-main"><b class="total" id="avoidanceTotal">$0</b><span class="label">Avoidance</span></span><span class="impact-realized"><b class="total" id="realizedAvoidanceTotal">$0</b><span class="label">Realized</span></span></span>
-          <span><i style="background:#1d1d1f"></i>Not Started</span>
-          <span><i style="background:#fff;border:2px solid #b45309"></i>At risk border</span>
-          <span><i style="background:#1d1d1f;opacity:.5"></i>Complete fade</span>
+        <div class="road-controls">
+          <div class="road-seg" role="group" aria-label="Roadmap grouping">
+            <button type="button" id="groupStruct" class="on">By structure</button>
+            <button type="button" id="groupOwner">By owner</button>
+          </div>
+          <div class="legend">
+            <span class="impact-stack" data-impact="savings"><i style="background:#188038"></i><span class="impact-main"><b class="total" id="savingsTotal">$0</b><span class="label">Savings</span></span><span class="impact-realized"><b class="total" id="realizedSavingsTotal">$0</b><span class="label">Realized</span></span></span>
+            <span class="impact-stack" data-impact="avoidance"><i style="background:#2563eb"></i><span class="impact-main"><b class="total" id="avoidanceTotal">$0</b><span class="label">Avoidance</span></span><span class="impact-realized"><b class="total" id="realizedAvoidanceTotal">$0</b><span class="label">Realized</span></span></span>
+            <span><i style="background:#1d1d1f"></i>Not Started</span>
+            <span><i style="background:#fff;border:2px solid #b45309"></i>At risk border</span>
+            <span><i style="background:#1d1d1f;opacity:.5"></i>Complete fade</span>
+          </div>
         </div>
       </div>
+      <div class="health-panel" id="healthPanel" aria-label="Health and risk summary"></div>
       <div class="tl-scroll" id="tlScroll"><div id="tlBox"></div></div>
+    </div>
+    <!-- EXECUTIVE SUMMARY -->
+    <div id="execStage" style="display:none">
+      <div class="stage-head exec-head">
+        <div class="exec-head-copy"><h2>Executive Summary</h2><span class="meta" id="execMeta"></span></div>
+        <label class="exec-goal">Portfolio goal <input id="execGoalInput" inputmode="decimal" aria-label="Portfolio dollar goal"></label>
+      </div>
+      <div class="exec-insight">
+        <div class="kicker">Path to portfolio goal</div>
+        <h3 id="execHeadline">Build the portfolio to see progress.</h3>
+        <p id="execSubhead">Every dollar appears once across realized, approved remaining, and proposed remaining value.</p>
+      </div>
+      <div class="rollup-summary exec-summary" aria-label="Executive portfolio totals">
+        <div class="rollup-metric"><div class="kicker"><i style="background:#1d1d1f"></i>Total portfolio</div><div class="value" id="execTotal">$0</div><div class="note" id="execTotalNote">Savings + Avoidance</div></div>
+        <div class="rollup-metric"><div class="kicker"><i style="background:#0a84ff"></i>Approved</div><div class="value" id="execApproved">$0</div><div class="note" id="execApprovedNote">Selected as approved</div></div>
+        <div class="rollup-metric"><div class="kicker"><i style="background:#aeaeb2"></i>Proposed</div><div class="value" id="execProposed">$0</div><div class="note" id="execProposedNote">Selected as proposed</div></div>
+        <div class="rollup-metric"><div class="kicker"><i style="background:#166534"></i>Realized</div><div class="value" id="execRealized">$0</div><div class="note" id="execRealizedNote">Captured to date</div></div>
+      </div>
+      <div id="execEmpty" class="stack-empty exec-empty" style="display:none"><b>No portfolio value yet</b>Add Savings or Avoidance values to initiatives to build the dollar tracker.</div>
+      <div class="exec-tracker-panel" id="execTrackerPanel">
+        <div class="exec-tracker-head">
+          <div><h3 id="execTrackerTitle">How the portfolio builds</h3><p>One reconciled path from captured value to the full opportunity.</p></div>
+          <div class="exec-key" aria-label="Tracker color key"><span><i style="background:#188038"></i>Savings</span><span><i style="background:#2563eb"></i>Avoidance</span><span><i style="background:#1d1d1f"></i>Darker = more certain</span></div>
+        </div>
+        <div class="exec-tracker-scroll" id="execTrackerScroll"><div id="execTrackerBody"></div></div>
+        <div class="exec-breakdown" id="execBreakdown"></div>
+      </div>
+    </div>
+    <!-- PORTFOLIO ROLLUP -->
+    <div id="rollupStage" style="display:none">
+      <div class="stage-head"><h2>Portfolio Rollup</h2><span class="meta" id="rollupMeta"></span></div>
+      <div class="rollup-summary" aria-label="Portfolio approval totals">
+        <div class="rollup-metric"><div class="kicker"><i style="background:#1d1d1f"></i>Total portfolio</div><div class="value" id="rollupTotal">$0</div><div class="note">Savings + Avoidance</div></div>
+        <div class="rollup-metric"><div class="kicker"><i style="background:#0a84ff"></i>Approved</div><div class="value" id="rollupApproved">$0</div><div class="note">Selected as approved</div></div>
+        <div class="rollup-metric"><div class="kicker"><i style="background:#aeaeb2"></i>Proposed</div><div class="value" id="rollupProposed">$0</div><div class="note">Selected as proposed</div></div>
+        <div class="rollup-metric"><div class="kicker"><i style="background:#30a46c"></i>Realized</div><div class="value" id="rollupRealized">$0</div><div class="note">Captured to date</div></div>
+      </div>
+      <div id="rollupEmpty" class="stack-empty" style="display:none"><b>No dated initiatives</b>Add initiative dates to build the portfolio approval outlook.</div>
+      <div class="rollup-scroll" id="rollupScroll"><div id="rollupBody"></div></div>
     </div>
     <!-- PROJECTION -->
     <div id="projStage" style="display:none">
@@ -296,14 +490,18 @@ body.presenting.dark{--pbg:#070708}
         <div class="projection-controls">
           <label class="projection-control">Project to <input type="date" id="projectionEndDate" aria-label="Projection end date"></label>
           <label class="projection-control">Target <input class="money-in" id="projectionTarget" inputmode="decimal" placeholder="$0" aria-label="Projection target"></label>
-          <label class="projection-control"><input type="checkbox" id="projectionRealizedToggle" checked aria-label="Show realized projection">Show realized</label>
+          <div class="proj-toggles">
+            <label class="projection-control"><input type="checkbox" id="projectionRealizedToggle" checked aria-label="Show realized projection">Show realized</label>
+            <label class="projection-control"><input type="checkbox" id="projectionConfidenceToggle" checked aria-label="Weight by confidence">Weight confidence</label>
+            <label class="projection-control"><input type="checkbox" id="projectionBaselineToggle" checked aria-label="Show baseline comparison">Show baseline</label>
+          </div>
         </div>
       </div>
       <div class="projection-hero">
         <div><h3 id="projectionHeadline">$0 projected</h3><p id="projectionSubhead">$0 Savings · $0 Avoidance</p></div>
         <div class="projection-target-status" id="projectionTargetStatus"></div>
       </div>
-      <div class="projection-summary" aria-label="Projected financial totals">
+      <div class="projection-summary cols-5" aria-label="Projected financial totals">
         <div class="projection-card">
           <div class="kicker"><i class="swatch" style="background:#188038"></i>Savings</div>
           <div class="value" id="projSavings">$0</div>
@@ -318,6 +516,16 @@ body.presenting.dark{--pbg:#070708}
           <div class="kicker"><i class="swatch" style="background:#2563eb"></i>Savings + Avoidance</div>
           <div class="value" id="projCombined">$0</div>
           <div class="note">Projected total impact</div>
+        </div>
+        <div class="projection-card">
+          <div class="kicker"><i class="swatch" style="background:#0f766e"></i>Expected</div>
+          <div class="value" id="projExpected">$0</div>
+          <div class="note">Confidence-weighted total</div>
+        </div>
+        <div class="projection-card">
+          <div class="kicker"><i class="swatch" style="background:#d97706"></i>Annualized</div>
+          <div class="value" id="projAnnualized">$0</div>
+          <div class="note">Run-rate of ranged work</div>
         </div>
       </div>
       <div class="projection-main">
@@ -352,10 +560,33 @@ body.presenting.dark{--pbg:#070708}
     </div>
     <!-- GRID -->
     <div id="gridStage" style="display:none">
-      <div class="stage-head"><h2>Initiatives</h2><span class="meta">Add the dated work that lives under each workstream. This is the part owners fill in.</span></div>
+      <div class="grid-meta-row"><h2>Initiatives</h2><span class="meta" id="gridMeta">Add the dated work that lives under each workstream. This is the part owners fill in.</span></div>
+      <div class="grid-toolbar" id="gridToolbar">
+        <input class="search" id="filterSearch" type="search" placeholder="Search initiatives…" aria-label="Search initiatives">
+        <select id="filterStatus" aria-label="Filter by status"><option value="">All statuses</option></select>
+        <select id="filterOwner" aria-label="Filter by owner"><option value="">All owners</option></select>
+        <select id="filterPillar" aria-label="Filter by pillar"><option value="">All pillars</option></select>
+        <select id="filterType" aria-label="Filter by value type"><option value="">Savings &amp; Avoidance</option><option value="Savings">Savings</option><option value="Avoidance">Avoidance</option></select>
+        <select id="tableDensity" class="density" aria-label="Table density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select>
+        <button class="btn btn-quiet" id="filterClear" type="button">Clear</button>
+        <span class="chip" id="filterCount"></span>
+      </div>
       <div id="gridBody"></div>
     </div>
   </div>
+
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  <aside class="drawer" id="itemDrawer" aria-hidden="true" role="dialog" aria-label="Edit initiative">
+    <div class="drawer-head">
+      <h3 id="drawerTitle">Edit initiative</h3>
+      <button class="icon-btn" id="drawerClose" aria-label="Close drawer" type="button">✕</button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+    <div class="drawer-foot">
+      <button class="btn btn-quiet" id="drawerDelete" type="button">Delete</button>
+      <button class="btn btn-primary" id="drawerDone" type="button">Done</button>
+    </div>
+  </aside>
 
   <div id="toast" class="toast" role="status"></div>
   <div class="pres-controls">
@@ -370,9 +601,16 @@ body.presenting.dark{--pbg:#070708}
 <script>
 "use strict";
 const S = { view:'start', structure:[], items:[], collapsedPillars:{}, fyStart:6, tab:'struct', projectionEnd:null, projectionTarget:'', projectionShowRealized:true,
+  weightConfidence:true, showBaseline:true, roadmapGroup:'structure',
+  filters:{q:'',status:'',owner:'',pillarId:'',valueType:''}, tableDensity:'comfortable',
+  colWidths:{name:200,pillar:150,ws:150,start:128,end:128,mile:52,status:118,approval:112,valueType:120,value:120,realized:90,confidence:88,owner:110},
+  scenarios:[], baseline:null, drawerId:null,
   history:[], future:[], presenting:false, dark:false, seq:1, fileName:null };
 const STATUSES = ['Not Started','On Track','At Risk','Complete'];
+const APPROVAL_STATES = ['Approved','Proposed'];
 const VALUE_TYPES = ['Savings','Avoidance'];
+const CONFIDENCE_PRESETS = [{label:'High',pct:100},{label:'Med',pct:70},{label:'Low',pct:40}];
+const DEFAULT_COL_WIDTHS = {name:200,pillar:150,ws:150,start:128,end:128,mile:52,status:118,approval:112,valueType:120,value:120,realized:90,confidence:88,owner:110};
 const $ = id => document.getElementById(id);
 const MS_DAY = 86400000;
 const uid = p => p + (S.seq++);
@@ -424,11 +662,56 @@ function parsePercent(v){ if(v==null||v==='')return'';
   return clampPercent(!hasPercent&&n>0&&n<1?n*100:n); }
 function fmtPercent(v){ const n=parsePercent(v); if(n===''||n==null)return'';
   return n.toFixed(n%1===0?0:1).replace(/\.0$/,'')+'%'; }
-function realizedValue(it,type){ const value=parseMoney(it.value), pct=parsePercent(it.realizedPct);
-  if(value===''||pct===''||normValueType(it.valueType)!==type)return 0;
-  return value*pct/100; }
+function parseConfidence(v){
+  if(v==null||v==='')return 100;
+  const s=textOf(v).trim().toLowerCase();
+  if(s==='high')return 100; if(s==='med'||s==='medium')return 70; if(s==='low')return 40;
+  const n=parsePercent(v); return n===''?100:n;
+}
+function fmtConfidence(v){ const n=parseConfidence(v);
+  const preset=CONFIDENCE_PRESETS.find(p=>p.pct===n); return preset?preset.label:fmtPercent(n); }
+function normalizePhases(phases){
+  if(!Array.isArray(phases))return [];
+  return phases.map(ph=>{
+    const date=ph.date?parseAnyDate(ph.date,'end',S.fyStart):null;
+    const pct=parsePercent(ph.pct);
+    if(!date||pct===''||pct==null)return null;
+    return{date:isoDate(date),pct};
+  }).filter(Boolean).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+}
+function phasePctAt(it,date){
+  const phases=normalizePhases(it.phases);
+  const t=isoDate(date instanceof Date?date:(parseAnyDate(date,'end',S.fyStart)||todayUtc()));
+  if(!phases.length){ const pct=parsePercent(it.realizedPct); return pct===''||pct==null?0:pct; }
+  let pct=0; phases.forEach(ph=>{ if(ph.date<=t)pct=ph.pct; }); return pct;
+}
+function realizedValue(it,type){ const value=parseMoney(it.value);
+  if(value===''||normValueType(it.valueType)!==type)return 0;
+  return value*phasePctAt(it,todayUtc())/100; }
 function realizedSavingsValue(it){ return realizedValue(it,'Savings'); }
 function realizedAvoidanceValue(it){ return realizedValue(it,'Avoidance'); }
+function itemValue(it){ const v=parseMoney(it.value); return v===''?0:v; }
+function normApproval(v,status='Not Started'){
+  const s=textOf(v).trim().toLowerCase();
+  if(s==='approved')return'Approved';
+  if(s==='proposed')return'Proposed';
+  return status==='Not Started'?'Proposed':'Approved';
+}
+function approvalStatus(it){ return normApproval(it.approval,it.status); }
+function realizedItemValue(it,date=todayUtc()){ return itemValue(it)*phasePctAt(it,date)/100; }
+function expectedValue(it){ return itemValue(it)*parseConfidence(it.confidence)/100; }
+function initiativeDurationDays(it){
+  const start=it.start instanceof Date?it.start:parseAnyDate(it.start,'start',S.fyStart);
+  const end=it.milestone?start:(it.end instanceof Date?it.end:parseAnyDate(it.end,'end',S.fyStart));
+  if(!start||!end)return 0;
+  return Math.max(1,Math.round((end-start)/MS_DAY)+1);
+}
+function annualizedValue(it){
+  const value=itemValue(it); if(!value)return 0;
+  if(it.milestone)return value;
+  const days=initiativeDurationDays(it); if(days<=0)return value;
+  return value*(365/days);
+}
 function pillarFinancialTotals(pillarId){ const totals={Savings:0,Avoidance:0,Realized:0};
   S.items.filter(it=>it.pillarId===pillarId).forEach(it=>{
     const value=parseMoney(it.value), type=normValueType(it.valueType);
@@ -444,6 +727,88 @@ function normStatus(v){ const s=textOf(v).trim().toLowerCase(); if(!s)return'Not
   if(s.includes('complete')||s==='done'||s.includes('closed'))return'Complete';
   if(s.includes('not')||s.includes('plan')||s.includes('backlog')||s.includes('future'))return'Not Started';
   return'On Track'; }
+function filteredItems(){
+  const f=S.filters||{}, q=(f.q||'').trim().toLowerCase();
+  return S.items.filter(it=>{
+    if(f.status&&it.status!==f.status)return false;
+    if(f.owner&&it.owner!==f.owner)return false;
+    if(f.pillarId&&it.pillarId!==f.pillarId)return false;
+    if(f.valueType&&normValueType(it.valueType)!==f.valueType)return false;
+    if(q){
+      const p=pillarOf(it.pillarId), w=wsOf(it.pillarId,it.wsId);
+      const hay=[it.name,it.owner,it.status,normValueType(it.valueType),p&&p.name,w&&w.name].map(x=>textOf(x).toLowerCase()).join(' ');
+      if(!hay.includes(q))return false;
+    }
+    return true;
+  });
+}
+function healthSummary(){
+  const out={}; STATUSES.forEach(s=>out[s]={count:0,value:0});
+  S.items.forEach(it=>{ const st=normStatus(it.status); out[st].count++; out[st].value+=itemValue(it); });
+  return out;
+}
+function clonePlanPayload(){
+  return{
+    structure:JSON.parse(JSON.stringify(S.structure)),
+    items:S.items.map(i=>{ const it={...i}; delete it.notes; delete it._sub;
+      return{...it,start:isoDate(i.start),end:isoDate(i.end),confidence:parseConfidence(i.confidence),phases:normalizePhases(i.phases)}; }),
+    fyStart:S.fyStart, collapsedPillars:{...S.collapsedPillars},
+    projectionEnd:S.projectionEnd, projectionTarget:S.projectionTarget,
+    projectionShowRealized:S.projectionShowRealized!==false,
+    weightConfidence:S.weightConfidence!==false
+  };
+}
+function mergeScenarioPortfolio(target){
+  const active=clonePlanPayload();
+  const snapshots=(S.scenarios||[]).map(sc=>sc&&sc.payload).filter(payload=>payload&&typeof payload==='object');
+  const sources=[target,active,...snapshots];
+  const items=[], itemIds=new Set();
+  sources.forEach(source=>(Array.isArray(source&&source.items)?source.items:[]).forEach(raw=>{
+    const id=textOf(raw&&raw.id); if(!id||itemIds.has(id))return;
+    itemIds.add(id); items.push(JSON.parse(JSON.stringify(raw)));
+  }));
+
+  const structure=[], pillars=new Map();
+  sources.forEach(source=>(Array.isArray(source&&source.structure)?source.structure:[]).forEach(rawP=>{
+    const pid=textOf(rawP&&rawP.id); if(!pid)return;
+    let pillar=pillars.get(pid);
+    if(!pillar){
+      pillar={...JSON.parse(JSON.stringify(rawP)),workstreams:[]};
+      pillars.set(pid,pillar); structure.push(pillar);
+    }
+    const workstreamIds=new Set(pillar.workstreams.map(w=>textOf(w.id)));
+    (Array.isArray(rawP.workstreams)?rawP.workstreams:[]).forEach(rawW=>{
+      const wid=textOf(rawW&&rawW.id); if(!wid||workstreamIds.has(wid))return;
+      workstreamIds.add(wid); pillar.workstreams.push(JSON.parse(JSON.stringify(rawW)));
+    });
+  }));
+
+  const targetCount=new Set((Array.isArray(target&&target.items)?target.items:[]).map(it=>textOf(it&&it.id)).filter(Boolean)).size;
+  return{payload:{...target,structure,items},retainedCount:Math.max(0,items.length-targetCount)};
+}
+function applyPlanPayload(o){
+  S.structure=Array.isArray(o.structure)?JSON.parse(JSON.stringify(o.structure)):[];
+  S.items=(Array.isArray(o.items)?o.items:[]).map(raw=>{
+    const it={...raw}; delete it.notes; delete it._sub;
+    return{...it,
+      start:raw.start?(raw.start instanceof Date?raw.start:parseAnyDate(raw.start,'start',S.fyStart)):null,
+      end:raw.end?(raw.end instanceof Date?raw.end:parseAnyDate(raw.end,'end',S.fyStart)):null,
+      valueType:normValueType(raw.valueType), value:parseMoney(raw.value),
+      realizedPct:parsePercent(raw.realizedPct), confidence:parseConfidence(raw.confidence),
+      phases:normalizePhases(raw.phases), milestone:!!raw.milestone,
+      status:normStatus(raw.status||'Not Started'), approval:normApproval(raw.approval,raw.status), owner:textOf(raw.owner),
+      name:textOf(raw.name)||'New initiative'};
+  });
+  if(o.fyStart!=null)S.fyStart=o.fyStart;
+  S.collapsedPillars=(o.collapsedPillars&&typeof o.collapsedPillars==='object')?{...o.collapsedPillars}:{};
+  if('projectionEnd' in o)S.projectionEnd=o.projectionEnd||null;
+  if('projectionTarget' in o){ const t=parseMoney(o.projectionTarget); S.projectionTarget=t===''?'':t; }
+  if('projectionShowRealized' in o)S.projectionShowRealized=o.projectionShowRealized!==false;
+  if('weightConfidence' in o)S.weightConfidence=o.weightConfidence!==false;
+  let mx=0; const scan=id=>{const n=parseInt(String(id).replace(/\D/g,''),10); if(!isNaN(n)&&n>mx)mx=n;};
+  S.structure.forEach(p=>{scan(p.id);(p.workstreams||[]).forEach(w=>scan(w.id));}); S.items.forEach(i=>scan(i.id));
+  S.seq=Math.max(S.seq,mx+1); refreshOwners();
+}
 function fqOf(d,fyStart){ const m=d.getUTCMonth(),y=d.getUTCFullYear();
   if(fyStart===0)return{q:Math.floor(m/3)+1,fy:y};
   const off=(m-fyStart+12)%12; return{q:Math.floor(off/3)+1,fy:y+(m>=fyStart?1:0)}; }
@@ -475,7 +840,7 @@ function pal(){ const d=S.presenting&&S.dark;
     savings:'#188038',savingsText:'#ffffff',avoidance:'#2563eb',avoidanceText:'#ffffff'}; }
 function valueColor(it,P){ if(it.status==='Not Started')return[P.notFill,P.notText];
   return normValueType(it.valueType)==='Avoidance'?[P.avoidance,P.avoidanceText]:[P.savings,P.savingsText]; }
-function roadmapLabel(it){ const money=fmtMoneyShort(it.value); return money==='$0'?it.name:`${it.name} · ${money}`; }
+/* roadmapLabel defined near renderTimeline */
 
 /* ---------- screens ---------- */
 function show(view){ S.view=view;
@@ -485,7 +850,11 @@ function show(view){ S.view=view;
 /* ---------- start actions ---------- */
 $('btnBlank').onclick = () => {
   S.structure=[{id:uid('p'),name:'New pillar',workstreams:[{id:uid('w'),name:'New workstream'}]}];
-  S.items=[]; S.collapsedPillars={}; S.projectionEnd=null; S.projectionTarget=''; S.projectionShowRealized=true; S.fileName='Untitled roadmap'; enterStudio();
+  S.items=[]; S.collapsedPillars={}; S.projectionEnd=null; S.projectionTarget=''; S.projectionShowRealized=true;
+  S.weightConfidence=true; S.showBaseline=true; S.roadmapGroup='structure';
+  S.filters={q:'',status:'',owner:'',pillarId:'',valueType:''}; S.tableDensity='comfortable';
+  S.scenarios=[]; S.baseline=null; S.drawerId=null;
+  S.fileName='Untitled roadmap'; enterStudio();
 };
 function showErr(m){ const e=$('err'); e.textContent=m; e.style.display='block'; }
 
@@ -496,17 +865,21 @@ function enterStudio(){
   fy.innerHTML=['January','February','March','April','May','June','July','August','September','October','November','December']
     .map((m,i)=>`<option value="${i}" ${i===S.fyStart?'selected':''}>FY starts ${m.slice(0,3)}</option>`).join('');
   fy.onchange=()=>{S.fyStart=+fy.value;renderAll();};
-  refreshOwners(); show('studio'); setTab('struct');
+  refreshOwners(); bindScenarioControls(); renderScenarioUI(); show('studio'); setTab('struct');
 }
 function refreshOwners(){ $('ownerList').innerHTML=[...new Set(S.items.map(i=>i.owner).filter(Boolean))].map(o=>`<option value="${esc(o)}">`).join(''); }
 function setTab(t){ S.tab=t;
   $('segStruct').classList.toggle('on',t==='struct');
   $('segRoad').classList.toggle('on',t==='road');
+  $('segExec').classList.toggle('on',t==='exec');
+  $('segRollup').classList.toggle('on',t==='rollup');
   $('segData').classList.toggle('on',t==='data');
   $('segProj').classList.toggle('on',t==='proj');
   $('segStack').classList.toggle('on',t==='stack');
   $('structStage').style.display=t==='struct'?'':'none';
   $('roadStage').style.display=t==='road'?'':'none';
+  $('execStage').style.display=t==='exec'?'':'none';
+  $('rollupStage').style.display=t==='rollup'?'':'none';
   $('gridStage').style.display=t==='data'?'':'none';
   $('projStage').style.display=t==='proj'?'':'none';
   $('stackStage').style.display=t==='stack'?'':'none';
@@ -514,14 +887,19 @@ function setTab(t){ S.tab=t;
 }
 $('segStruct').onclick=()=>setTab('struct');
 $('segRoad').onclick=()=>setTab('road');
+$('segExec').onclick=()=>setTab('exec');
+$('segRollup').onclick=()=>setTab('rollup');
 $('segData').onclick=()=>setTab('data');
 $('segProj').onclick=()=>setTab('proj');
 $('segStack').onclick=()=>setTab('stack');
 
 function renderAll(){ if(S.view!=='studio')return;
   pruneCollapsedPillars();
+  renderScenarioUI();
   if(S.tab==='struct')renderOutline();
   if(S.tab==='road'||S.presenting)renderTimeline();
+  if(S.tab==='exec')renderExecutiveSummary();
+  if(S.tab==='rollup')renderPortfolioRollup();
   if(S.tab==='data')renderGrid();
   if(S.tab==='proj')renderProjection();
   if(S.tab==='stack')renderStackedCharts();
@@ -546,12 +924,14 @@ function renderLegendTotals(){
 /* ============ PROJECTED SAVINGS ============ */
 function todayUtc(){ const t=new Date(); return utc(t.getFullYear(),t.getMonth(),t.getDate()); }
 function projectionDateOf(it,field){ const v=it[field]; return v instanceof Date?v:parseAnyDate(v,field,S.fyStart); }
-function projectionFinancialItems(){
-  return S.items.map(it=>{
-    const value=parseMoney(it.value), start=projectionDateOf(it,'start'), milestone=!!it.milestone;
+function projectionFinancialItems(items=S.items, opts={}){
+  const weight=opts.weightConfidence!=null?opts.weightConfidence:S.weightConfidence!==false;
+  return items.map(it=>{
+    let value=parseMoney(it.value); const start=projectionDateOf(it,'start'), milestone=!!it.milestone;
     const end=milestone?start:projectionDateOf(it,'end');
     if(value===''||!start||!end||(!milestone&&end<start))return null;
-    return{source:it,type:normValueType(it.valueType),value,start,end,milestone};
+    if(weight)value=value*parseConfidence(it.confidence)/100;
+    return{source:it,type:normValueType(it.valueType),value,start,end,milestone,confidence:parseConfidence(it.confidence)};
   }).filter(Boolean);
 }
 function projectionDefaultEnd(){
@@ -571,16 +951,47 @@ function projectedValueAt(item,date){
   if(t>=e)return item.value;
   return item.value*((t-s)/(e-s));
 }
-function projectedRealizedAt(item,date){ const pct=parsePercent(item.source.realizedPct);
-  if(pct===''||pct==null)return 0;
-  return projectedValueAt(item,date)*pct/100; }
+function projectedRealizedAt(item,date){
+  // Time-phased: realized $ = full plan value * cumulative phase % at date (not plan-accrued fraction).
+  // When no phases, fall back to single realizedPct applied to plan-accrued value (legacy behavior).
+  const phases=normalizePhases(item.source.phases);
+  const full=parseMoney(item.source.value); if(full==='')return 0;
+  const conf=S.weightConfidence!==false?parseConfidence(item.source.confidence)/100:1;
+  if(phases.length)return full*conf*phasePctAt(item.source,date)/100;
+  const pct=parsePercent(item.source.realizedPct); if(pct===''||pct==null)return 0;
+  return projectedValueAt(item,date)*pct/100;
+}
 function projectionTotalsAt(items,date){
-  const totals={Savings:0,Avoidance:0,Combined:0,Realized:0};
+  const totals={Savings:0,Avoidance:0,Combined:0,Realized:0,Expected:0,Annualized:0};
   items.forEach(it=>{
     const v=projectedValueAt(it,date);
     totals[it.type]+=v; totals.Combined+=v; totals.Realized+=projectedRealizedAt(it,date);
   });
   return totals;
+}
+function projectionRunRateTotals(items){
+  let annualized=0, expected=0;
+  items.forEach(it=>{
+    annualized+=annualizedValue(it.source)*(S.weightConfidence!==false?parseConfidence(it.source.confidence)/100:1);
+    expected+=expectedValue(it.source);
+  });
+  return{annualized,expected};
+}
+function baselineProjectionPoints(endDate){
+  if(!S.baseline||!Array.isArray(S.baseline.items))return null;
+  // Reconstruct temporary items from baseline without mutating live state
+  const items=S.baseline.items.map(raw=>{
+    const it={...raw,
+      start:raw.start?parseAnyDate(raw.start,'start',S.baseline.fyStart??S.fyStart):null,
+      end:raw.end?parseAnyDate(raw.end,'end',S.baseline.fyStart??S.fyStart):null,
+      confidence:parseConfidence(raw.confidence), phases:normalizePhases(raw.phases)};
+    return it;
+  });
+  const fin=projectionFinancialItems(items,{weightConfidence:S.weightConfidence!==false});
+  if(!fin.length)return null;
+  const axis=projectionAxis(fin,endDate);
+  const points=projectionPointDates(fin,axis,endDate).map(date=>({date,...projectionTotalsAt(fin,date)}));
+  return{items:fin,axis,points};
 }
 function projectionTargetValue(){ return parseMoney(S.projectionTarget); }
 function projectionDrivers(items,date){ return items.map(it=>{
@@ -604,7 +1015,8 @@ function projectionPointDates(items,axis,endDate){
 function projectionPoints(endDate=selectedProjectionEnd()){
   const items=projectionFinancialItems(), axis=projectionAxis(items,endDate);
   const points=projectionPointDates(items,axis,endDate).map(date=>({date,...projectionTotalsAt(items,date)}));
-  return{items,axis,points};
+  const run=projectionRunRateTotals(items);
+  return{items,axis,points,run};
 }
 function niceProjectionMax(v){
   if(v<=0)return 1;
@@ -641,21 +1053,39 @@ function bindProjectionInspect(svg,data,X,Y){
 }
 function renderProjection(){
   const end=selectedProjectionEnd(), data=projectionPoints(end), totals=projectionTotalsAt(data.items,end), target=projectionTargetValue();
+  const baseline=S.showBaseline!==false?baselineProjectionPoints(end):null;
+  const run=data.run||projectionRunRateTotals(data.items);
   $('projectionEndDate').value=isoDate(end);
   $('projectionEndDate').onchange=()=>{ S.projectionEnd=$('projectionEndDate').value||null; renderProjection(); scheduleSave(); };
   $('projectionTarget').value=target===''?'':fmtMoney(target);
   $('projectionTarget').onchange=()=>{ const v=parseMoney($('projectionTarget').value); S.projectionTarget=v===''?'':v; renderProjection(); scheduleSave(); };
   $('projectionRealizedToggle').checked=S.projectionShowRealized!==false;
   $('projectionRealizedToggle').onchange=()=>{ S.projectionShowRealized=$('projectionRealizedToggle').checked; renderProjection(); scheduleSave(); };
+  if($('projectionConfidenceToggle')){
+    $('projectionConfidenceToggle').checked=S.weightConfidence!==false;
+    $('projectionConfidenceToggle').onchange=()=>{ S.weightConfidence=$('projectionConfidenceToggle').checked; renderProjection(); scheduleSave(); };
+  }
+  if($('projectionBaselineToggle')){
+    $('projectionBaselineToggle').checked=S.showBaseline!==false;
+    $('projectionBaselineToggle').disabled=!S.baseline;
+    $('projectionBaselineToggle').onchange=()=>{ S.showBaseline=$('projectionBaselineToggle').checked; renderProjection(); scheduleSave(); };
+  }
   $('projSavings').textContent=fmtMoneyShort(totals.Savings,true);
   $('projAvoidance').textContent=fmtMoneyShort(totals.Avoidance,true);
   $('projCombined').textContent=fmtMoneyShort(totals.Combined,true);
+  if($('projExpected'))$('projExpected').textContent=fmtMoneyShort(run.expected,true);
+  if($('projAnnualized'))$('projAnnualized').textContent=fmtMoneyShort(run.annualized,true);
+  const confNote=S.weightConfidence!==false?' · confidence-weighted':'';
   $('projectionHeadline').textContent=`${fmtMoneyShort(totals.Combined,true)} projected by ${fmtDate(end)}`;
-  $('projectionSubhead').innerHTML=`${esc(fmtMoneyShort(totals.Savings,true))} Savings · ${esc(fmtMoneyShort(totals.Avoidance,true))} Avoidance${S.projectionShowRealized!==false?` · <span id="projectionRealizedValue">${esc(fmtMoneyShort(totals.Realized,true))}</span> realized`:''}`;
-  $('projectionTargetStatus').textContent=target===''?'':`${totals.Combined>=target?'Above':'Below'} target by ${fmtMoneyShort(Math.abs(totals.Combined-target),true)}`;
+  $('projectionSubhead').innerHTML=`${esc(fmtMoneyShort(totals.Savings,true))} Savings · ${esc(fmtMoneyShort(totals.Avoidance,true))} Avoidance${S.projectionShowRealized!==false?` · <span id="projectionRealizedValue">${esc(fmtMoneyShort(totals.Realized,true))}</span> realized`:''}${esc(confNote)}`;
+  let status=target===''?'':`${totals.Combined>=target?'Above':'Below'} target by ${fmtMoneyShort(Math.abs(totals.Combined-target),true)}`;
+  if(baseline&&baseline.points.length){ const bLast=baseline.points[baseline.points.length-1];
+    const delta=totals.Combined-bLast.Combined;
+    status+=(status?' · ':'')+`vs baseline ${delta>=0?'+':''}${fmtMoneyShort(delta,true)}`; }
+  $('projectionTargetStatus').textContent=status;
   $('projMeta').textContent=`${data.items.length} ${data.items.length===1?'financial initiative':'financial initiatives'} · through ${fmtDate(end)}`;
   const drivers=projectionDrivers(data.items,end);
-  $('projectionDrivers').innerHTML=drivers.length?drivers.map(d=>`<div class="driver-row"><div><div class="driver-name">${esc(d.item.name)}</div><div class="driver-meta">${esc(d.type)}${d.realized?` · Realized ${esc(fmtMoneyShort(d.realized,true))}`:''}</div></div><div class="driver-value">${esc(fmtMoneyShort(d.value,true))}</div></div>`).join(''):`<div class="empty-note" style="padding:20px 0">No active drivers by this date.</div>`;
+  $('projectionDrivers').innerHTML=drivers.length?drivers.map(d=>`<div class="driver-row"><div><div class="driver-name">${esc(d.item.name)}</div><div class="driver-meta">${esc(d.type)}${d.realized?` · Realized ${esc(fmtMoneyShort(d.realized,true))}`:''}${d.item.confidence!=null&&parseConfidence(d.item.confidence)<100?` · ${esc(fmtConfidence(d.item.confidence))} conf`:''}</div></div><div class="driver-value">${esc(fmtMoneyShort(d.value,true))}</div></div>`).join(''):`<div class="empty-note" style="padding:20px 0">No active drivers by this date.</div>`;
   $('projectionInspect').innerHTML='';
   const body=$('projectionBody');
   if(!data.items.length){
@@ -664,12 +1094,13 @@ function renderProjection(){
   }
 
   const W=Math.max(body.clientWidth||980,760), H=392, L=78, R=30, T=34, B=58, PW=W-L-R, PH=H-T-B;
-  const maxY=niceProjectionMax(Math.max(...data.points.map(p=>Math.max(p.Combined,p.Realized)),totals.Combined,target===''?0:target));
+  const baseMax=baseline?Math.max(...baseline.points.map(p=>p.Combined)):0;
+  const maxY=niceProjectionMax(Math.max(...data.points.map(p=>Math.max(p.Combined,p.Realized)),totals.Combined,target===''?0:target,baseMax));
   const span=Math.max(1,data.axis.end-data.axis.start);
   const X=d=>L+((d-data.axis.start)/span)*PW;
   const Y=v=>T+PH-(v/maxY)*PH;
   const yTicks=[0,.25,.5,.75,1].map(f=>f*maxY);
-  let svg=`<div class="projection-legend"><span><i style="background:#188038"></i>Savings only</span><span><i style="background:#2563eb"></i>Savings + Avoidance</span><span><i style="background:rgba(37,99,235,.18);height:8px"></i>Avoidance lift</span>${S.projectionShowRealized!==false?'<span><i style="background:#8e8e93"></i>Realized</span>':''}${target!==''?'<span><i style="background:#d97706"></i>Target</span>':''}</div>`;
+  let svg=`<div class="projection-legend"><span><i style="background:#188038"></i>Savings only</span><span><i style="background:#2563eb"></i>Savings + Avoidance</span><span><i style="background:rgba(37,99,235,.18);height:8px"></i>Avoidance lift</span>${S.projectionShowRealized!==false?'<span><i style="background:#8e8e93"></i>Realized</span>':''}${baseline?'<span><i style="background:#a1a1a6;height:2px"></i>Baseline</span>':''}${target!==''?'<span><i style="background:#d97706"></i>Target</span>':''}</div>`;
   svg+=`<svg id="projectionSvg" class="projection-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected savings chart" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Inter,sans-serif">`;
   svg+=`<rect width="${W}" height="${H}" fill="#fff"/>`;
   yTicks.forEach(v=>{ const y=Y(v); svg+=`<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="rgba(0,0,0,.07)"/>`;
@@ -683,6 +1114,7 @@ function renderProjection(){
   }
   svg+=`<line x1="${L}" y1="${T+PH}" x2="${W-R}" y2="${T+PH}" stroke="rgba(0,0,0,.18)"/>`;
   if(target!==''){ const ty=Y(target); svg+=`<line id="projectionTargetLine" x1="${L}" y1="${ty}" x2="${W-R}" y2="${ty}" stroke="#d97706" stroke-width="1.5" stroke-dasharray="7 7"/><text x="${W-R}" y="${ty-6}" text-anchor="end" font-size="11" font-weight="650" fill="#b45309">Target ${esc(fmtMoneyShort(target,true))}</text>`; }
+  if(baseline&&baseline.points.length)svg+=`<path data-series="baseline" d="${projectionPath(baseline.points,'Combined',X,Y)}" fill="none" stroke="#a1a1a6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 6"/>`;
   svg+=`<path data-series="avoidance-band" d="${projectionBandPath(data.points,X,Y)}" fill="rgba(37,99,235,.12)" stroke="none"/>`;
   svg+=`<path data-series="combined" d="${projectionPath(data.points,'Combined',X,Y)}" fill="none" stroke="#2563eb" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
   svg+=`<path data-series="savings" d="${projectionPath(data.points,'Savings',X,Y)}" fill="none" stroke="#188038" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
@@ -757,13 +1189,210 @@ function renderStackedCharts(){
   renderStackedChart('stackCombinedBody','stackCombinedSvg','combined',combined,'No Savings or Avoidance values');
 }
 
+/* ============ EXECUTIVE SUMMARY ============ */
+function executiveSummaryData(){
+  const totals={Total:0,Approved:0,Proposed:0,Realized:0,Savings:0,Avoidance:0};
+  const buckets={realized:{Savings:0,Avoidance:0},approved:{Savings:0,Avoidance:0},proposed:{Savings:0,Avoidance:0}};
+  let count=0;
+  S.items.forEach(it=>{
+    const value=Math.max(0,itemValue(it)); if(value<=0)return;
+    const type=normValueType(it.valueType), approval=approvalStatus(it);
+    const realized=Math.max(0,Math.min(value,realizedItemValue(it)));
+    const remaining=value-realized;
+    count++; totals.Total+=value; totals[approval]+=value; totals.Realized+=realized; totals[type]+=value;
+    buckets.realized[type]+=realized;
+    buckets[approval==='Approved'?'approved':'proposed'][type]+=remaining;
+  });
+  const colors={
+    realized:{Savings:'#166534',Avoidance:'#1e3a8a'},
+    approved:{Savings:'#188038',Avoidance:'#2563eb'},
+    proposed:{Savings:'#9bcaa8',Avoidance:'#9bbcf2'}
+  };
+  const names={realized:'Realized',approved:'Approved remaining',proposed:'Proposed remaining'};
+  const segments=[];
+  ['realized','approved','proposed'].forEach(stage=>['Savings','Avoidance'].forEach(type=>segments.push({stage,type,name:names[stage],value:buckets[stage][type],color:colors[stage][type]})));
+  return{count,totals,buckets,segments};
+}
+function executiveGoalValue(){ const target=projectionTargetValue(); return target!==''&&target>0?target:1e9; }
+function renderExecutiveSummary(){
+  const data=executiveSummaryData(), total=data.totals.Total, goal=executiveGoalValue();
+  const share=value=>fmtPercent(total?value/total*100:0);
+  $('execMeta').textContent=`${data.count} financial ${data.count===1?'initiative':'initiatives'}`;
+  $('execTotal').textContent=fmtMoneyShort(total,true);
+  $('execApproved').textContent=fmtMoneyShort(data.totals.Approved,true);
+  $('execProposed').textContent=fmtMoneyShort(data.totals.Proposed,true);
+  $('execRealized').textContent=fmtMoneyShort(data.totals.Realized,true);
+  $('execTotalNote').textContent=`Savings ${fmtMoneyShort(data.totals.Savings,true)} · Avoidance ${fmtMoneyShort(data.totals.Avoidance,true)}`;
+  $('execApprovedNote').textContent=`${share(data.totals.Approved)} of portfolio`;
+  $('execProposedNote').textContent=`${share(data.totals.Proposed)} of portfolio`;
+  $('execRealizedNote').textContent=`${share(data.totals.Realized)} captured to date`;
+  $('execGoalInput').value=fmtMoney(goal);
+  $('execGoalInput').onchange=()=>{ const value=parseMoney($('execGoalInput').value); S.projectionTarget=value!==''&&value>0?value:''; renderExecutiveSummary(); scheduleSave(); };
+
+  const delta=Math.abs(total-goal), direction=total>=goal?'above':'short of';
+  $('execHeadline').textContent=total?`Portfolio is ${fmtMoneyShort(delta,true)} ${direction} the ${fmtMoneyShort(goal,true)} goal`:`Build toward the ${fmtMoneyShort(goal,true)} portfolio goal`;
+  const approvedRemaining=data.buckets.approved.Savings+data.buckets.approved.Avoidance;
+  const proposedRemaining=data.buckets.proposed.Savings+data.buckets.proposed.Avoidance;
+  $('execSubhead').textContent=`${fmtMoneyShort(data.totals.Realized,true)} realized · ${fmtMoneyShort(approvedRemaining,true)} approved remaining · ${fmtMoneyShort(proposedRemaining,true)} proposed remaining`;
+  $('execTrackerTitle').textContent=`How the portfolio builds to ${fmtMoneyShort(total,true)}`;
+  $('execEmpty').style.display=total?'none':'';
+  $('execTrackerPanel').style.display=total?'':'none';
+  if(!total){ $('execTrackerBody').innerHTML=''; $('execBreakdown').innerHTML=''; return; }
+
+  const available=$('execTrackerScroll').clientWidth||960, compact=available<700;
+  const W=Math.max(300,available), H=222, L=compact?40:54, R=compact?20:34, plotW=W-L-R;
+  const axisMax=niceProjectionMax(Math.max(total,goal)), X=value=>L+Math.max(0,Math.min(1,value/axisMax))*plotW;
+  const barY=84, barH=58, axisY=174;
+  let svg=`<svg id="execTrackerSvg" class="exec-tracker-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Portfolio dollar tracker toward ${esc(fmtMoneyShort(goal,true))}" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Inter,sans-serif">`;
+  svg+=`<defs><clipPath id="execBarClip"><rect x="${L}" y="${barY}" width="${plotW}" height="${barH}" rx="11"/></clipPath></defs>`;
+  svg+=`<rect x="${L}" y="${barY}" width="${plotW}" height="${barH}" rx="11" fill="#f1f1f3"/>`;
+  let cursor=0;
+  data.segments.forEach(segment=>{
+    const x=X(cursor), width=Math.max(0,X(cursor+segment.value)-x), ink=segment.stage==='proposed'?'#1d1d1f':'#fff';
+    const tip=`${segment.name} · ${segment.type}\n${fmtMoneyShort(segment.value,true)} · ${share(segment.value)} of portfolio`;
+    svg+=`<rect class="exec-segment" data-stage="${segment.stage}" data-type="${segment.type}" data-value="${segment.value}" x="${x}" y="${barY}" width="${width}" height="${barH}" fill="${segment.color}" clip-path="url(#execBarClip)"><title>${esc(tip)}</title></rect>`;
+    if(segment.value&&width>=92)svg+=`<text x="${x+width/2}" y="${barY+34}" text-anchor="middle" font-size="11" font-weight="700" fill="${ink}" pointer-events="none">${esc(segment.type)} ${esc(fmtMoneyShort(segment.value,true))}</text>`;
+    cursor+=segment.value;
+  });
+  let stageCursor=0;
+  ['realized','approved','proposed'].forEach(stage=>{
+    const value=data.buckets[stage].Savings+data.buckets[stage].Avoidance, x1=X(stageCursor), x2=X(stageCursor+value);
+    const label=stage==='realized'?'Realized':stage==='approved'?'Approved remaining':'Proposed remaining';
+    if(value&&x2-x1>=76)svg+=`<text x="${(x1+x2)/2}" y="${barY-15}" text-anchor="middle" font-size="11" font-weight="650" fill="#6e6e73">${label} · ${esc(fmtMoneyShort(value,true))}</text>`;
+    stageCursor+=value;
+  });
+  const goalX=X(goal), totalX=X(total);
+  svg+=`<g id="execGoalMarker" data-goal="${goal}"><line x1="${goalX}" y1="36" x2="${goalX}" y2="${barY+barH+18}" stroke="#d97706" stroke-width="2"/><path d="M ${goalX-6} 36 L ${goalX+6} 36 L ${goalX} 44 Z" fill="#d97706"/><text x="${goalX}" y="25" text-anchor="middle" font-size="12" font-weight="750" fill="#b45309">${esc(fmtMoneyShort(goal,true))} goal</text></g>`;
+  svg+=`<line x1="${totalX}" y1="${barY+barH}" x2="${totalX}" y2="${barY+barH+11}" stroke="#1d1d1f" stroke-width="2"/><text x="${totalX}" y="${barY+barH+27}" text-anchor="middle" font-size="11" font-weight="700" fill="#1d1d1f">Current ${esc(fmtMoneyShort(total,true))}</text>`;
+  const tickCount=compact?2:4;
+  for(let i=0;i<=tickCount;i++){ const value=axisMax*i/tickCount, x=X(value);
+    svg+=`<line x1="${x}" y1="${axisY-5}" x2="${x}" y2="${axisY}" stroke="#aeaeb2"/><text x="${x}" y="${axisY+17}" text-anchor="middle" font-size="10.5" fill="#6e6e73">${esc(fmtMoneyShort(value,true))}</text>`;
+  }
+  svg+=`<line x1="${L}" y1="${axisY}" x2="${W-R}" y2="${axisY}" stroke="#d1d1d6"/></svg>`;
+  $('execTrackerBody').innerHTML=svg;
+
+  const groupHtml=(stage,label)=>{ const rows=data.segments.filter(segment=>segment.stage===stage), value=rows.reduce((sum,row)=>sum+row.value,0);
+    return`<div class="exec-breakdown-group"><h4>${esc(label)} · ${esc(fmtMoneyShort(value,true))}</h4>${rows.map(row=>`<div class="exec-breakdown-row"><span><i style="background:${row.color}"></i>${row.type}</span><b>${esc(fmtMoneyShort(row.value,true))}</b></div>`).join('')}</div>`; };
+  $('execBreakdown').innerHTML=groupHtml('realized','Realized')+groupHtml('approved','Approved remaining')+groupHtml('proposed','Proposed remaining');
+}
+
+/* ============ PORTFOLIO ROLLUP ============ */
+function portfolioRollupData(){
+  const items=S.items.map(it=>{
+    const start=projectionDateOf(it,'start');
+    let end=it.milestone?start:projectionDateOf(it,'end');
+    if(!start)return null;
+    if(!end||end<start)end=start;
+    const value=itemValue(it), realized=realizedItemValue(it);
+    return{source:it,start,end,value,realized,realizedPct:value?clampPercent(realized/value*100):0,
+      approval:approvalStatus(it),type:normValueType(it.valueType)};
+  }).filter(Boolean);
+  const groups=S.structure.map(p=>{
+    const rows=items.filter(row=>row.source.pillarId===p.id);
+    const bucket=()=>({count:0,value:0,Savings:0,Avoidance:0,realized:0,realizedPct:0,start:null,end:null,items:[]});
+    const summary={Approved:bucket(),Proposed:bucket(),realized:0,total:0};
+    rows.forEach(row=>{ const b=summary[row.approval];
+      b.count++; b.value+=row.value; b[row.type]+=row.value; b.realized+=row.realized; b.items.push(row.source);
+      b.start=!b.start||row.start<b.start?row.start:b.start; b.end=!b.end||row.end>b.end?row.end:b.end;
+      summary.realized+=row.realized; summary.total+=row.value;
+    });
+    APPROVAL_STATES.forEach(approval=>{ const b=summary[approval]; b.realizedPct=b.value?clampPercent(b.realized/b.value*100):0; });
+    return{p,items:rows,summary};
+  }).filter(group=>group.items.length);
+  const totals={Approved:0,Proposed:0,Realized:0,Total:0};
+  items.forEach(row=>{ totals[row.approval]+=row.value; totals.Realized+=row.realized; totals.Total+=row.value; });
+  const minYear=items.length?Math.min(...items.map(row=>row.start.getUTCFullYear())):todayUtc().getUTCFullYear();
+  const maxYear=items.length?Math.max(...items.map(row=>row.end.getUTCFullYear())):minYear;
+  return{items,groups,totals,minYear,maxYear};
+}
+function portfolioRollupLabel(b,available){
+  const count=`${b.count} ${b.count===1?'initiative':'initiatives'}`;
+  const value=fmtMoneyShort(b.value,true);
+  const labels=[
+    `${count} · ${value} · Savings ${fmtMoneyShort(b.Savings,true)} · Avoidance ${fmtMoneyShort(b.Avoidance,true)}`,
+    `${count} · ${value}`,
+    `${b.count} · ${value}`,
+  ];
+  return labels.find(label=>label.length*5.8<=available)||'';
+}
+function renderPortfolioRollup(){
+  const data=portfolioRollupData(), empty=!data.items.length;
+  $('rollupTotal').textContent=fmtMoneyShort(data.totals.Total,true);
+  $('rollupApproved').textContent=fmtMoneyShort(data.totals.Approved,true);
+  $('rollupProposed').textContent=fmtMoneyShort(data.totals.Proposed,true);
+  $('rollupRealized').textContent=fmtMoneyShort(data.totals.Realized,true);
+  $('rollupMeta').textContent=`${data.items.length} ${data.items.length===1?'initiative':'initiatives'} · ${data.minYear}–${data.maxYear}`;
+  $('rollupEmpty').style.display=empty?'':'none';
+  $('rollupScroll').style.display=empty?'none':'block';
+  if(empty){ $('rollupBody').innerHTML=''; return; }
+
+  const W=Math.max(1080,$('rollupScroll').clientWidth||1080), L=292, R=24, plotW=W-L-R;
+  const top=58, pillarH=54, laneH=58, groupH=pillarH+laneH*2;
+  const H=top+data.groups.length*groupH+18;
+  const axisStart=utc(data.minYear,0,1), axisEnd=utc(data.maxYear+1,0,1), span=axisEnd-axisStart;
+  const X=date=>L+Math.max(0,Math.min(1,(date-axisStart)/span))*plotW;
+  let svg=`<svg id="rollupSvg" class="rollup-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Portfolio approval rollup by pillar and calendar year" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Inter,sans-serif">`;
+  svg+=`<rect width="${W}" height="${H}" fill="#fff"/>`;
+  svg+=`<circle cx="24" cy="20" r="4" fill="#0a84ff"/><text x="34" y="24" font-size="11" fill="#6e6e73">Approved</text>`;
+  svg+=`<circle cx="108" cy="20" r="4" fill="#aeaeb2"/><text x="118" y="24" font-size="11" fill="#6e6e73">Proposed</text>`;
+  svg+=`<circle cx="196" cy="20" r="4" fill="#30a46c"/><text x="206" y="24" font-size="11" fill="#6e6e73">Realized</text>`;
+  for(let year=data.minYear;year<=data.maxYear;year++){
+    const x=X(utc(year,0,1)), next=X(utc(year+1,0,1));
+    if((year-data.minYear)%2===1)svg+=`<rect x="${x}" y="${top}" width="${next-x}" height="${H-top}" fill="#fafafa"/>`;
+    svg+=`<line x1="${x}" y1="36" x2="${x}" y2="${H}" stroke="#e5e5ea"/>`;
+    svg+=`<text x="${(x+next)/2}" y="29" text-anchor="middle" font-size="12" font-weight="650" fill="#1d1d1f">${year}</text>`;
+  }
+  svg+=`<line x1="${W-R}" y1="36" x2="${W-R}" y2="${H}" stroke="#e5e5ea"/>`;
+
+  let y=top;
+  data.groups.forEach((group,groupIndex)=>{
+    const approved=group.summary.Approved, proposed=group.summary.Proposed;
+    svg+=`<g class="rollup-pillar" data-pillar="${esc(group.p.id)}">`;
+    svg+=`<rect x="0" y="${y}" width="${W}" height="${pillarH}" fill="${groupIndex%2?'#f8f8fa':'#f4f4f6'}"/>`;
+    svg+=`<text x="24" y="${y+22}" font-size="15" font-weight="700" fill="#1d1d1f">${esc(group.p.name)}</text>`;
+    svg+=`<text x="24" y="${y+41}" font-size="11" fill="#6e6e73">${approved.count} Approved · ${esc(fmtMoneyShort(approved.value,true))}   ·   ${proposed.count} Proposed · ${esc(fmtMoneyShort(proposed.value,true))}   ·   Realized · ${esc(fmtMoneyShort(group.summary.realized,true))}</text>`;
+    y+=pillarH;
+    APPROVAL_STATES.forEach(approval=>{
+      const b=group.summary[approval], by=y+14, bh=30;
+      svg+=`<rect x="0" y="${y}" width="${W}" height="${laneH}" fill="#fff"/>`;
+      svg+=`<text x="24" y="${y+24}" font-size="10" font-weight="700" letter-spacing=".7" fill="${approval==='Approved'?'#0071e3':'#6e6e73'}">${approval.toUpperCase()}</text>`;
+      svg+=`<text x="24" y="${y+42}" font-size="10" fill="#8e8e93">${b.count} ${b.count===1?'initiative':'initiatives'} · ${esc(fmtMoneyShort(b.value,true))}</text>`;
+      if(!b.count){
+        svg+=`<text x="${L+12}" y="${y+33}" font-size="11" fill="#aeaeb2">No ${approval.toLowerCase()} initiatives</text>`;
+      } else {
+        const sx=X(b.start), ex=X(addDays(b.end,1)), bw=Math.max(8,ex-sx);
+        const base=approval==='Approved'?'#0a84ff':'#e5e5ea', stroke=approval==='Approved'?'#0a84ff':'#aeaeb2';
+        const label=`${b.count} ${b.count===1?'initiative':'initiatives'} · ${fmtMoneyShort(b.value,true)} · Savings ${fmtMoneyShort(b.Savings,true)} · Avoidance ${fmtMoneyShort(b.Avoidance,true)}`;
+        const names=b.items.map(it=>it.name).join(', ');
+        const tip=`${group.p.name} · ${approval}\n${label}\nRealized ${fmtMoneyShort(b.realized,true)} · ${fmtPercent(b.realizedPct)}\n${fmtDate(b.start)} – ${fmtDate(b.end)}\nContributors: ${names}`;
+        svg+=`<rect class="rollup-bar" data-pillar="${esc(group.p.id)}" data-approval="${approval}" data-count="${b.count}" data-start-year="${b.start.getUTCFullYear()}" data-end-year="${b.end.getUTCFullYear()}" x="${sx}" y="${by}" width="${bw}" height="${bh}" rx="7" fill="${base}" stroke="${stroke}" stroke-width="1"><title>${esc(tip)}</title></rect>`;
+        const rw=b.realizedPct>0?Math.max(2,bw*b.realizedPct/100):0;
+        if(rw)svg+=`<rect class="rollup-realized" data-pillar="${esc(group.p.id)}" data-approval="${approval}" data-realized-pct="${b.realizedPct}" x="${sx}" y="${by}" width="${rw}" height="${bh}" rx="7" fill="#30a46c" pointer-events="none"/>`;
+        const showRealizedLabel=rw>=72&&bw-rw>=260;
+        if(showRealizedLabel)svg+=`<text x="${sx+rw/2}" y="${by+19}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" pointer-events="none">${esc(fmtMoneyShort(b.realized,true))} realized</text>`;
+        const tx=showRealizedLabel?sx+rw+10:sx+10, available=Math.max(0,bw-(tx-sx)-10);
+        const visibleLabel=portfolioRollupLabel(b,available);
+        const ink=approval==='Approved'||!showRealizedLabel&&rw>0?'#fff':'#1d1d1f';
+        if(visibleLabel)svg+=`<text x="${tx}" y="${by+19}" font-size="10.5" font-weight="600" fill="${ink}" pointer-events="none">${esc(visibleLabel)}</text>`;
+      }
+      svg+=`<line x1="0" y1="${y+laneH}" x2="${W}" y2="${y+laneH}" stroke="#f1f1f3"/>`;
+      y+=laneH;
+    });
+    svg+=`</g>`;
+  });
+  svg+=`</svg>`;
+  $('rollupBody').innerHTML=svg;
+}
+
 /* ---------- undo ---------- */
-function cleanItem(i){ const o={...i}; delete o.notes; return o; }
+function cleanItem(i){ const o={...i}; delete o.notes; delete o._sub; return o; }
 function snapshot(){ return JSON.stringify({structure:S.structure,
-  items:S.items.map(i=>{ const it=cleanItem(i); return {...it,start:isoDate(i.start),end:isoDate(i.end)}; })}); }
+  items:S.items.map(i=>{ const it=cleanItem(i); return {...it,start:isoDate(i.start),end:isoDate(i.end),
+    confidence:parseConfidence(i.confidence),phases:normalizePhases(i.phases)}; })}); }
 function restore(s){ const o=JSON.parse(s); S.structure=o.structure;
   S.items=o.items.map(i=>cleanItem({...i,start:i.start?parseAnyDate(i.start,'start',S.fyStart):null,
-    end:i.end?parseAnyDate(i.end,'end',S.fyStart):null,value:parseMoney(i.value),realizedPct:parsePercent(i.realizedPct)})); refreshOwners(); renderAll(); }
+    end:i.end?parseAnyDate(i.end,'end',S.fyStart):null,value:parseMoney(i.value),realizedPct:parsePercent(i.realizedPct),
+    confidence:parseConfidence(i.confidence),phases:normalizePhases(i.phases)})); refreshOwners(); renderAll(); }
 function pushUndo(){ S.history.push(snapshot()); if(S.history.length>150)S.history.shift(); S.future=[]; }
 function undo(){ if(!S.history.length)return; S.future.push(snapshot()); restore(S.history.pop()); }
 function redo(){ if(!S.future.length)return; S.history.push(snapshot()); restore(S.future.pop()); }
@@ -779,10 +1408,11 @@ const svgIcon=p=>`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" st
 function renderOutline(){
   const root=$('outline');
   root.innerHTML=S.structure.map((p,pi)=>`
-    <div class="pillar" data-p="${p.id}">
+    <div class="pillar" data-p="${p.id}" draggable="true" data-dnd="pillar">
       <div class="pillar-head">
+        <span class="drag-handle" title="Drag to reorder" aria-hidden="true">⋮⋮</span>
         <span class="pillar-num">${String(pi+1).padStart(2,'0')}</span>
-        <input class="pillar-name" data-p="${p.id}" value="${esc(p.name)}" aria-label="Pillar name">
+        <input class="pillar-name" data-p="${p.id}" value="${esc(p.name)}" aria-label="Pillar name" draggable="false">
         <div class="tools">
           <button data-act="pup" data-p="${p.id}" ${pi===0?'disabled':''} title="Move up">${svgIcon(ICON.up)}</button>
           <button data-act="pdown" data-p="${p.id}" ${pi===S.structure.length-1?'disabled':''} title="Move down">${svgIcon(ICON.down)}</button>
@@ -791,9 +1421,10 @@ function renderOutline(){
       </div>
       <div class="ws-list">
         ${p.workstreams.map((w,wi)=>{const n=itemsForWs(w.id).length;return`
-          <div class="ws-row" data-w="${w.id}">
+          <div class="ws-row" data-p="${p.id}" data-w="${w.id}" draggable="true" data-dnd="ws">
+            <span class="drag-handle" title="Drag to reorder" aria-hidden="true">⋮⋮</span>
             <span class="ws-tick">${n?'<svg width=\"6\" height=\"6\"><circle cx=\"3\" cy=\"3\" r=\"3\" fill=\"#0071e3\"/></svg>':'<svg width=\"6\" height=\"6\"><circle cx=\"3\" cy=\"3\" r=\"2.5\" fill=\"none\" stroke=\"#c7c7cc\"/></svg>'}</span>
-            <input class="ws-name" data-p="${p.id}" data-w="${w.id}" value="${esc(w.name)}" aria-label="Workstream name">
+            <input class="ws-name" data-p="${p.id}" data-w="${w.id}" value="${esc(w.name)}" aria-label="Workstream name" draggable="false">
             <span class="ws-count">${n?n+(n===1?' item':' items'):''}</span>
             <div class="tools">
               <button data-act="wup" data-p="${p.id}" data-w="${w.id}" ${wi===0?'disabled':''} title="Move up">${svgIcon(ICON.up)}</button>
@@ -848,6 +1479,47 @@ function renderOutline(){
   $('addPillar').onclick=()=>{ pushUndo();
     const p={id:uid('p'),name:'',workstreams:[{id:uid('w'),name:'New workstream'}]}; S.structure.push(p); renderAll();
     const nx=root.querySelector(`.pillar-name[data-p="${p.id}"]`); nx&&(nx.focus(),nx.select()); };
+  bindStructureDnD(root);
+}
+function bindStructureDnD(root){
+  let dragEl=null;
+  root.querySelectorAll('[data-dnd]').forEach(el=>{
+    el.addEventListener('dragstart',e=>{
+      if(e.target.closest('input,button,select,textarea')){ e.preventDefault(); return; }
+      dragEl=el; el.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain', el.dataset.dnd+':'+(el.dataset.p||'')+':'+(el.dataset.w||''));
+    });
+    el.addEventListener('dragend',()=>{ el.classList.remove('dragging'); root.querySelectorAll('.drag-over').forEach(x=>x.classList.remove('drag-over')); dragEl=null; });
+    el.addEventListener('dragover',e=>{
+      if(!dragEl||dragEl===el)return;
+      if(dragEl.dataset.dnd!==el.dataset.dnd)return;
+      if(dragEl.dataset.dnd==='ws'&&dragEl.dataset.p!==el.dataset.p)return; // only reorder within pillar for simplicity
+      e.preventDefault(); el.classList.add('drag-over');
+    });
+    el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));
+    el.addEventListener('drop',e=>{
+      e.preventDefault(); el.classList.remove('drag-over');
+      if(!dragEl||dragEl===el||dragEl.dataset.dnd!==el.dataset.dnd)return;
+      pushUndo();
+      if(dragEl.dataset.dnd==='pillar'){
+        const from=S.structure.findIndex(p=>p.id===dragEl.dataset.p);
+        const to=S.structure.findIndex(p=>p.id===el.dataset.p);
+        if(from<0||to<0)return;
+        const [moved]=S.structure.splice(from,1);
+        S.structure.splice(to,0,moved);
+      } else {
+        if(dragEl.dataset.p!==el.dataset.p)return;
+        const p=pillarOf(el.dataset.p); if(!p)return;
+        const from=p.workstreams.findIndex(w=>w.id===dragEl.dataset.w);
+        const to=p.workstreams.findIndex(w=>w.id===el.dataset.w);
+        if(from<0||to<0)return;
+        const [moved]=p.workstreams.splice(from,1);
+        p.workstreams.splice(to,0,moved);
+      }
+      renderAll();
+    });
+  });
 }
 
 /* ============ TIMELINE ============ */
@@ -857,7 +1529,34 @@ function packItems(items){ const sorted=items.filter(i=>i.start).sort((a,b)=>a.s
     let sub=ends.findIndex(x=>x<=s); if(sub===-1){sub=ends.length;ends.push(0);} ends[sub]=e+MS_DAY*5; it._sub=sub; }
   return Math.max(1,ends.length); }
 
+function renderHealthPanel(){
+  const el=$('healthPanel'); if(!el)return;
+  const h=healthSummary();
+  const meta={
+    'On Track':{color:'#188038'},
+    'At Risk':{color:'#b45309'},
+    'Not Started':{color:'#1d1d1f'},
+    'Complete':{color:'#8e8e93'}
+  };
+  el.innerHTML=STATUSES.map(st=>{
+    const row=h[st]||{count:0,value:0};
+    return`<div class="health-card" data-status="${esc(st)}"><div class="hk"><i style="background:${meta[st].color}"></i>${esc(st)}</div><div class="hv">${row.count}</div><div class="hm">${esc(fmtMoneyShort(row.value))} impact</div></div>`;
+  }).join('');
+}
+function roadmapLabel(it){ const money=fmtMoneyShort(it.value); const conf=parseConfidence(it.confidence);
+  const base=money==='$0'?it.name:`${it.name} · ${money}`;
+  return conf<100?`${base} · ${fmtConfidence(conf)}`:base; }
+function ellipsizeLabel(value,maxChars){ const text=String(value||'').trim(),cap=Math.max(1,Math.floor(maxChars)||1);
+  if(text.length<=cap)return text;if(cap===1)return'…';
+  const discriminator=text.match(/\s(?:[A-Z]|\d{1,3})$/),tail=discriminator?.[0]||'';
+  if(tail&&cap>tail.length+2)return`${text.slice(0,cap-tail.length-1).trimEnd()}…${tail}`;
+  return`${text.slice(0,cap-1).trimEnd()}…`; }
+function conciseRoadmapLabel(it,maxChars){ const full=roadmapLabel(it),cap=Math.max(1,Math.floor(maxChars)||1);
+  if(full.length<=cap)return full;const name=String(it.name||'Initiative');return name.length<=cap?name:ellipsizeLabel(name,cap); }
 function renderTimeline(){
+  renderHealthPanel();
+  if($('groupStruct'))$('groupStruct').classList.toggle('on',S.roadmapGroup!=='owner');
+  if($('groupOwner'))$('groupOwner').classList.toggle('on',S.roadmapGroup==='owner');
   const box=$('tlBox'); const P=pal();
   if(!S.structure.length){ box.innerHTML=`<div class="empty-note">Add a pillar in the Structure tab to begin.</div>`; return; }
   const dated=S.items.filter(i=>i.start);
@@ -874,20 +1573,41 @@ function renderTimeline(){
   const pxDay=pxq/91.31; const W=GUTTER+pxq*quarters.length;
   const X=d=>GUTTER+(d-axisStart)/MS_DAY*pxDay;
 
-  // layout
+  // layout: structure or owner swimlanes
   let H=AXIS_H; const lanes=[];
-  S.structure.forEach(p=>{ const pTop=H; H+=PILLAR_H;
-    const collapsed=isPillarCollapsed(p.id), wlanes=[];
-    if(!collapsed){
-      p.workstreams.forEach(w=>{ const items=itemsForWs(w.id); const subs=packItems(items);
-        const top=H, h=subs*ROW_H+WS_PAD; H+=h; wlanes.push({w,items,top,h}); });
-      if(!p.workstreams.length)H+=ROW_H;
-    }
-    lanes.push({p,pTop,wlanes,bottom:H,collapsed}); });
+  if(S.roadmapGroup==='owner'){
+    const owners=[...new Set(S.items.map(i=>i.owner||'Unassigned'))].sort((a,b)=>{
+      if(a==='Unassigned')return 1; if(b==='Unassigned')return -1; return a.localeCompare(b);
+    });
+    if(!owners.length)owners.push('Unassigned');
+    owners.forEach(owner=>{
+      const pTop=H; H+=PILLAR_H;
+      const collapsed=isPillarCollapsed('owner:'+owner);
+      const items=S.items.filter(i=>(i.owner||'Unassigned')===owner);
+      const wlanes=[];
+      if(!collapsed){
+        const subs=packItems(items.slice());
+        const top=H, h=subs*ROW_H+WS_PAD; H+=h;
+        wlanes.push({w:{name:items.length?`${items.length} initiative${items.length===1?'':'s'}`:'No initiatives'},items,top,h});
+      }
+      const sav=items.reduce((s,it)=>s+(normValueType(it.valueType)==='Savings'?itemValue(it):0),0);
+      const avo=items.reduce((s,it)=>s+(normValueType(it.valueType)==='Avoidance'?itemValue(it):0),0);
+      const real=items.reduce((s,it)=>s+realizedSavingsValue(it)+realizedAvoidanceValue(it),0);
+      lanes.push({p:{id:'owner:'+owner,name:owner},pTop,wlanes,bottom:H,collapsed,ft:{Savings:sav,Avoidance:avo,Realized:real},ownerMode:true});
+    });
+  } else {
+    S.structure.forEach(p=>{ const pTop=H; H+=PILLAR_H;
+      const collapsed=isPillarCollapsed(p.id), wlanes=[];
+      if(!collapsed){
+        p.workstreams.forEach(w=>{ const items=itemsForWs(w.id); const subs=packItems(items);
+          const top=H, h=subs*ROW_H+WS_PAD; H+=h; wlanes.push({w,items,top,h}); });
+        if(!p.workstreams.length)H+=ROW_H;
+      }
+      lanes.push({p,pTop,wlanes,bottom:H,collapsed,ft:pillarFinancialTotals(p.id)}); });
+  }
 
   let svg=`<svg id="tlSvg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Inter,sans-serif" role="img" aria-label="Roadmap">`;
   svg+=`<rect width="${W}" height="${H}" fill="${P.bg}"/>`;
-  // FY bands + labels
   let lastFY=null,bandX=GUTTER,band=0;
   quarters.forEach((q,i)=>{ const fq=fqOf(q,S.fyStart); if(lastFY===null){lastFY=fq.fy;bandX=X(q);}
     const isLast=i===quarters.length-1; const next=isLast?null:fqOf(quarters[i+1],S.fyStart).fy;
@@ -907,7 +1627,7 @@ function renderTimeline(){
     svg+=`<rect x="0" y="${lane.pTop}" width="${W}" height="${PILLAR_H}" fill="${P.band}"/>`;
     svg+=`<text x="20" y="${lane.pTop+PILLAR_H/2+4}" text-anchor="middle" font-size="14" font-weight="700" fill="${P.ink}">${lane.collapsed?'+':'-'}</text>`;
     svg+=`<text x="42" y="${lane.pTop+PILLAR_H/2+4}" font-size="12" font-weight="700" letter-spacing="0.04em" fill="${P.ink}">${esc(lane.p.name.toUpperCase())}</text>`;
-    if(!lane.collapsed){ const ft=pillarFinancialTotals(lane.p.id), fy=lane.pTop+PILLAR_H/2+4;
+    if(!lane.collapsed&&lane.ft){ const ft=lane.ft, fy=lane.pTop+PILLAR_H/2+4;
       svg+=`<text class="pillar-financials" x="${GUTTER+18}" y="${fy}" font-size="11" fill="${P.ink2}"><tspan>Savings </tspan><tspan font-weight="650" fill="${P.ink}">${esc(fmtMoneyShort(ft.Savings))}</tspan><tspan> · Avoidance </tspan><tspan font-weight="650" fill="${P.ink}">${esc(fmtMoneyShort(ft.Avoidance))}</tspan><tspan> · Realized </tspan><tspan font-weight="650" fill="${P.ink}">${esc(fmtMoneyShort(ft.Realized,true))}</tspan></text>`;
     }
     svg+=`</g>`;
@@ -920,12 +1640,11 @@ function renderTimeline(){
         const statusOpacity=it.status==='Complete'?'.62':'1';
         const label=roadmapLabel(it);
         if(it.milestone){ const sx=X(it.start),cy=y+BAR_H/2,r=7;
-          svg+=`<g class="bar-grab" data-id="${it.id}" data-kind="move"><rect x="${sx-r}" y="${cy-r}" width="${r*2}" height="${r*2}" rx="2.5" transform="rotate(45 ${sx} ${cy})" fill="${col[0]}" opacity="${statusOpacity}"${statusStroke||` stroke="${col[0]}" stroke-width="1.5"`}/><text x="${sx+13}" y="${cy+4}" font-size="12" fill="${P.ink}">${esc(label)}</text></g>`;
-        } else { const sx=X(it.start),ex=X(addDays(it.end,1)),w=Math.max(ex-sx,8);
-          const fits=label.length*6.8+22<w;
+          svg+=`<g class="bar-grab" data-id="${it.id}" data-kind="move"><rect x="${sx-r}" y="${cy-r}" width="${r*2}" height="${r*2}" rx="2.5" transform="rotate(45 ${sx} ${cy})" fill="${col[0]}" opacity="${statusOpacity}"${statusStroke||` stroke="${col[0]}" stroke-width="1.5"`}/><text x="${sx+13}" y="${cy+4}" font-size="12" fill="${P.ink}" pointer-events="none">${esc(label)}</text></g>`;
+        } else { const sx=X(it.start),ex=X(addDays(it.end,1)),w=Math.max(ex-sx,8),fontSize=w<28?8:12,pad=Math.min(11,Math.max(2,w*.1));
+          const maxChars=Math.max(1,Math.floor(Math.max(4,w-pad*2)/(fontSize*.57))),displayLabel=conciseRoadmapLabel(it,maxChars);
           svg+=`<g data-id="${it.id}"><rect class="bar-grab" data-id="${it.id}" data-kind="move" x="${sx}" y="${y}" width="${w}" height="${BAR_H}" rx="7" fill="${col[0]}" opacity="${statusOpacity}"${statusStroke}/>`;
-          svg+= fits?`<text x="${sx+11}" y="${y+BAR_H/2+4.5}" font-size="12" font-weight="500" fill="${col[1]}" pointer-events="none">${esc(label)}</text>`
-                    :`<text x="${ex+9}" y="${y+BAR_H/2+4.5}" font-size="12" fill="${P.ink2}" pointer-events="none">${esc(label)}</text>`;
+          svg+=`<text class="bar-label" data-id="${it.id}" data-placement="inside" data-full-label="${esc(label)}" x="${sx+pad}" y="${y+BAR_H/2+4.5}" font-size="${fontSize}" font-weight="500" fill="${col[1]}" pointer-events="none">${esc(displayLabel)}</text>`;
           svg+=`<rect class="edge" data-id="${it.id}" data-kind="start" x="${sx-3}" y="${y}" width="8" height="${BAR_H}" fill="transparent"/><rect class="edge" data-id="${it.id}" data-kind="end" x="${sx+w-5}" y="${y}" width="8" height="${BAR_H}" fill="transparent"/></g>`;
         }
       });
@@ -948,7 +1667,8 @@ function bindTimeline(){ const el=$('tlSvg'); if(!el)return; const tip=$('tip');
     if(!g){tip.style.display='none';return;} const it=S.items.find(i=>i.id===g.dataset.id); if(!it){tip.style.display='none';return;}
     const p=pillarOf(it.pillarId), w=wsOf(it.pillarId,it.wsId);
     const money=fmtMoney(it.value);
-    tip.innerHTML=`<b>${esc(it.name)}</b><span class="t2">${esc(p?p.name:'')}${w?' · '+esc(w.name):''}</span><br>${it.milestone?fmtDate(it.start):fmtDate(it.start)+' – '+fmtDate(it.end)}<br>${esc(normValueType(it.valueType))}${money?' · '+esc(money):''}<br>${esc(it.status)}${it.owner?' · '+esc(it.owner):''}`;
+    const phases=normalizePhases(it.phases);
+    tip.innerHTML=`<b>${esc(it.name)}</b><span class="t2">${esc(p?p.name:'')}${w?' · '+esc(w.name):''}</span><br>${it.milestone?fmtDate(it.start):fmtDate(it.start)+' – '+fmtDate(it.end)}<br>${esc(normValueType(it.valueType))}${money?' · '+esc(money):''} · Conf ${esc(fmtConfidence(it.confidence))}<br>${esc(it.status)}${it.owner?' · '+esc(it.owner):''}${phases.length?`<br>Phases: ${phases.length}`:''}<br><span class="t2">Click to edit</span>`;
     tip.style.display='block'; const r=tip.getBoundingClientRect(); let x=e.clientX+14,y=e.clientY+14;
     if(x+r.width>innerWidth-8)x=e.clientX-r.width-14; if(y+r.height>innerHeight-8)y=e.clientY-r.height-14;
     tip.style.left=x+'px';tip.style.top=y+'px'; });
@@ -961,7 +1681,7 @@ function bindTimeline(){ const el=$('tlSvg'); if(!el)return; const tip=$('tip');
     let n=0; for(let d=axisStart;d<aEnd;d=nextQuarter(d))n++;
     const availW=Math.max(($('tlScroll').clientWidth||1000),760)-2;
     const pxDay=Math.min(280,Math.max(116,Math.floor((availW-GUTTER)/n)))/91.31;
-    drag={it,kind:t.dataset.kind,x0:e.clientX,s0:it.start,e0:it.end,pxDay,moved:false};
+    drag={it,kind:t.dataset.kind,x0:e.clientX,s0:it.start,e0:it.end,pxDay,moved:false,id:it.id};
     window.addEventListener('pointermove',onDrag); window.addEventListener('pointerup',endDrag,{once:true}); });
 }
 function onDrag(e){ if(!drag)return; const dd=Math.round((e.clientX-drag.x0)/drag.pxDay);
@@ -971,40 +1691,88 @@ function onDrag(e){ if(!drag)return; const dd=Math.round((e.clientX-drag.x0)/dra
   else{const ne=addDays(drag.e0,dd);if(ne>=it.start)it.end=ne;}
   renderTimeline(); }
 function endDrag(){ window.removeEventListener('pointermove',onDrag);
-  if(drag&&drag.moved){ const it=drag.it,ns=it.start,ne=it.end; it.start=drag.s0;it.end=drag.e0;
-    pushUndo(); it.start=ns;it.end=ne; renderAll(); } drag=null; }
+  if(drag){
+    if(drag.moved){ const it=drag.it,ns=it.start,ne=it.end; it.start=drag.s0;it.end=drag.e0;
+      pushUndo(); it.start=ns;it.end=ne; renderAll(); }
+    else if(drag.id) openDrawer(drag.id);
+  }
+  drag=null; }
 
 /* ============ INITIATIVES GRID ============ */
 function wsOptions(pid,selWid){ const p=pillarOf(pid); if(!p)return'';
   return p.workstreams.map(w=>`<option value="${w.id}" ${w.id===selWid?'selected':''}>${esc(w.name)}</option>`).join(''); }
+function colW(key,fallback){ const w=(S.colWidths&&S.colWidths[key])||fallback||DEFAULT_COL_WIDTHS[key]||100; return Math.max(key==='approval'?112:48,w); }
+function syncFilterControls(){
+  if(!$('filterStatus'))return;
+  const owners=[...new Set(S.items.map(i=>i.owner).filter(Boolean))].sort();
+  $('filterStatus').innerHTML=`<option value="">All statuses</option>`+STATUSES.map(s=>`<option value="${esc(s)}" ${S.filters.status===s?'selected':''}>${esc(s)}</option>`).join('');
+  $('filterOwner').innerHTML=`<option value="">All owners</option>`+owners.map(o=>`<option value="${esc(o)}" ${S.filters.owner===o?'selected':''}>${esc(o)}</option>`).join('');
+  $('filterPillar').innerHTML=`<option value="">All pillars</option>`+S.structure.map(p=>`<option value="${esc(p.id)}" ${S.filters.pillarId===p.id?'selected':''}>${esc(p.name)}</option>`).join('');
+  $('filterType').value=S.filters.valueType||'';
+  $('filterSearch').value=S.filters.q||'';
+  $('tableDensity').value=S.tableDensity||'comfortable';
+  const vis=filteredItems().length;
+  $('filterCount').innerHTML=vis===S.items.length?`<b>${S.items.length}</b> initiatives`:`Showing <b>${vis}</b> of ${S.items.length}`;
+  if($('gridMeta'))$('gridMeta').textContent='Add the dated work that lives under each workstream. This is the part owners fill in.';
+}
+function bindGridToolbar(){
+  if(!$('filterSearch')||$('filterSearch')._bound)return;
+  $('filterSearch')._bound=true;
+  const apply=()=>{
+    S.filters.q=$('filterSearch').value;
+    S.filters.status=$('filterStatus').value;
+    S.filters.owner=$('filterOwner').value;
+    S.filters.pillarId=$('filterPillar').value;
+    S.filters.valueType=$('filterType').value;
+    S.tableDensity=$('tableDensity').value;
+    renderGrid(); scheduleSave();
+  };
+  ['filterSearch','filterStatus','filterOwner','filterPillar','filterType','tableDensity'].forEach(id=>{
+    $(id).addEventListener(id==='filterSearch'?'input':'change',apply);
+  });
+  $('filterClear').onclick=()=>{ S.filters={q:'',status:'',owner:'',pillarId:'',valueType:''}; renderGrid(); scheduleSave(); };
+}
+function th(label,key,extra=''){
+  const w=colW(key); return`<th class="${key==='name'?'sticky-col':''}" data-col="${key}" style="width:${w}px;min-width:${w}px;${extra}">${label}<span class="col-resizer" data-col="${key}"></span></th>`;
+}
 function renderGrid(){
+  bindGridToolbar(); syncFilterControls();
   const body=$('gridBody');
+  const items=filteredItems();
   if(!S.items.length){
     body.innerHTML=`<div class="grid-wrap"><div class="empty-note">No initiatives yet. Add the first one and assign it to a workstream — it appears on the roadmap the moment it has a start date.</div><div class="grid-foot"><button class="btn btn-primary" id="addRow">Add initiative</button></div></div>`;
     $('addRow').onclick=addRow; return;
   }
-  const rows=S.items.map((it,i)=>`
+  const dense=S.tableDensity==='compact'?' compact':'';
+  if(!items.length){
+    body.innerHTML=`<div class="grid-wrap"><div class="empty-note">No initiatives match these filters.</div><div class="grid-foot"><button class="btn" id="addRow">Add initiative</button></div></div>`;
+    $('addRow').onclick=addRow; return;
+  }
+  const rows=items.map((it,i)=>`
     <tr data-id="${it.id}">
-      <td class="rownum">${i+1}</td>
-      <td style="min-width:210px"><input class="cell-in" data-f="name" value="${esc(it.name)}" aria-label="Initiative"></td>
-      <td><select class="cell-in" data-f="pillarId" aria-label="Pillar">${S.structure.map(p=>`<option value="${p.id}" ${p.id===it.pillarId?'selected':''}>${esc(p.name)}</option>`).join('')}</select></td>
-      <td><select class="cell-in" data-f="wsId" aria-label="Workstream">${wsOptions(it.pillarId,it.wsId)}</select></td>
-      <td><input class="cell-in" type="date" data-f="start" value="${isoDate(it.start)}" aria-label="Start"></td>
-      <td><input class="cell-in" type="date" data-f="end" value="${isoDate(it.end)}" ${it.milestone?'disabled style="opacity:.4"':''} aria-label="End"></td>
-      <td style="text-align:center"><input type="checkbox" data-f="milestone" ${it.milestone?'checked':''} aria-label="Milestone"></td>
-      <td><select class="cell-in" data-f="status" aria-label="Status">${STATUSES.map(s=>`<option ${s===it.status?'selected':''}>${s}</option>`).join('')}</select></td>
-      <td style="min-width:150px"><select class="cell-in" data-f="valueType" aria-label="Savings or avoidance">${VALUE_TYPES.map(v=>`<option ${v===normValueType(it.valueType)?'selected':''}>${v}</option>`).join('')}</select></td>
-      <td style="min-width:130px"><input class="cell-in money-in" data-f="value" inputmode="decimal" value="${esc(fmtMoney(it.value))}" aria-label="Savings or avoidance dollar value" placeholder="$0"></td>
-      <td style="min-width:110px"><input class="cell-in money-in" data-f="realizedPct" inputmode="decimal" value="${esc(fmtPercent(it.realizedPct))}" aria-label="Percentage realized" placeholder="0%"></td>
-      <td style="min-width:110px"><input class="cell-in" data-f="owner" list="ownerList" value="${esc(it.owner)}" aria-label="Owner"></td>
+      <td class="rownum">${S.items.indexOf(it)+1}</td>
+      <td class="sticky-col" style="width:${colW('name')}px;min-width:${colW('name')}px"><input class="cell-in" data-f="name" value="${esc(it.name)}" aria-label="Initiative"></td>
+      <td style="width:${colW('pillar')}px;min-width:${colW('pillar')}px"><select class="cell-in" data-f="pillarId" aria-label="Pillar">${S.structure.map(p=>`<option value="${p.id}" ${p.id===it.pillarId?'selected':''}>${esc(p.name)}</option>`).join('')}</select></td>
+      <td style="width:${colW('ws')}px;min-width:${colW('ws')}px"><select class="cell-in" data-f="wsId" aria-label="Workstream">${wsOptions(it.pillarId,it.wsId)}</select></td>
+      <td style="width:${colW('start')}px;min-width:${colW('start')}px"><input class="cell-in" type="date" data-f="start" value="${isoDate(it.start)}" aria-label="Start"></td>
+      <td style="width:${colW('end')}px;min-width:${colW('end')}px"><input class="cell-in" type="date" data-f="end" value="${isoDate(it.end)}" ${it.milestone?'disabled style="opacity:.4"':''} aria-label="End"></td>
+      <td style="text-align:center;width:${colW('mile')}px"><input type="checkbox" data-f="milestone" ${it.milestone?'checked':''} aria-label="Milestone"></td>
+      <td style="width:${colW('status')}px;min-width:${colW('status')}px"><select class="cell-in" data-f="status" aria-label="Status">${STATUSES.map(s=>`<option ${s===it.status?'selected':''}>${s}</option>`).join('')}</select></td>
+      <td style="width:${colW('approval')}px;min-width:${colW('approval')}px"><select class="cell-in" data-f="approval" aria-label="Approval">${APPROVAL_STATES.map(v=>`<option ${v===approvalStatus(it)?'selected':''}>${v}</option>`).join('')}</select></td>
+      <td style="width:${colW('valueType')}px;min-width:${colW('valueType')}px"><select class="cell-in" data-f="valueType" aria-label="Savings or avoidance">${VALUE_TYPES.map(v=>`<option ${v===normValueType(it.valueType)?'selected':''}>${v}</option>`).join('')}</select></td>
+      <td style="width:${colW('value')}px;min-width:${colW('value')}px"><input class="cell-in money-in" data-f="value" inputmode="decimal" value="${esc(fmtMoney(it.value))}" aria-label="Savings or avoidance dollar value" placeholder="$0"></td>
+      <td style="width:${colW('realized')}px;min-width:${colW('realized')}px"><input class="cell-in money-in" data-f="realizedPct" inputmode="decimal" value="${esc(fmtPercent(it.realizedPct))}" aria-label="Percentage realized" placeholder="0%" title="${normalizePhases(it.phases).length?'Overridden by time-phased schedule in drawer':''}"></td>
+      <td style="width:${colW('confidence')}px;min-width:${colW('confidence')}px"><select class="cell-in" data-f="confidence" aria-label="Confidence">${CONFIDENCE_PRESETS.map(c=>`<option value="${c.pct}" ${parseConfidence(it.confidence)===c.pct?'selected':''}>${c.label} (${c.pct}%)</option>`).join('')}<option value="${parseConfidence(it.confidence)}" ${![100,70,40].includes(parseConfidence(it.confidence))?'selected':''}>Custom ${parseConfidence(it.confidence)}%</option></select></td>
+      <td style="width:${colW('owner')}px;min-width:${colW('owner')}px"><input class="cell-in" data-f="owner" list="ownerList" value="${esc(it.owner)}" aria-label="Owner"></td>
       <td><div class="row-tools">
+        <button data-act="edit" title="Edit details">✎</button>
         <button data-act="up" title="Up">${svgIcon(ICON.up)}</button>
         <button data-act="down" title="Down">${svgIcon(ICON.down)}</button>
         <button data-act="del" title="Delete">${svgIcon(ICON.del)}</button>
       </div></td>
     </tr>`).join('');
-  body.innerHTML=`<div class="grid-wrap"><table class="grid">
-    <thead><tr><th></th><th>Initiative</th><th>Pillar</th><th>Workstream</th><th>Start</th><th>End</th><th style="text-align:center">Mile&shy;stone</th><th>Status</th><th>Savings / Avoidance</th><th>$ Value</th><th>% Realized</th><th>Owner</th><th></th></tr></thead>
+  body.innerHTML=`<div class="grid-wrap"><table class="grid${dense}" id="initGrid">
+    <thead><tr><th style="width:34px"></th>${th('Initiative','name')}${th('Pillar','pillar')}${th('Workstream','ws')}${th('Start','start')}${th('End','end')}${th('Mile­stone','mile','text-align:center')}${th('Status','status')}${th('Approval','approval','text-align:center')}${th('Savings / Avoidance','valueType')}${th('$ Value','value')}${th('% Realized','realized')}${th('Conf.','confidence')}${th('Owner','owner')}<th></th></tr></thead>
     <tbody>${rows}</tbody></table>
     <div class="grid-foot"><button class="btn" id="addRow">Add initiative</button></div></div>`;
   body.querySelectorAll('.cell-in,input[type=checkbox]').forEach(inp=>inp.addEventListener('change',()=>{
@@ -1016,24 +1784,218 @@ function renderGrid(){
     else if(f==='pillarId'){ it.pillarId=inp.value; const p=pillarOf(inp.value); it.wsId=p.workstreams[0]?.id; }
     else if(f==='value')it.value=parseMoney(inp.value);
     else if(f==='realizedPct')it.realizedPct=parsePercent(inp.value);
+    else if(f==='confidence')it.confidence=parseConfidence(inp.value);
     else it[f]=inp.value;
     if(f==='owner')refreshOwners(); renderAll();
   }));
   body.querySelectorAll('.row-tools button').forEach(b=>b.onclick=()=>{
-    const i=S.items.findIndex(x=>x.id===b.closest('tr').dataset.id); if(i<0)return; pushUndo();
+    const id=b.closest('tr').dataset.id; const i=S.items.findIndex(x=>x.id===id); if(i<0)return;
+    if(b.dataset.act==='edit'){ openDrawer(id); return; }
+    pushUndo();
     if(b.dataset.act==='del')S.items.splice(i,1);
     else if(b.dataset.act==='up'&&i>0)[S.items[i-1],S.items[i]]=[S.items[i],S.items[i-1]];
     else if(b.dataset.act==='down'&&i<S.items.length-1)[S.items[i+1],S.items[i]]=[S.items[i],S.items[i+1]];
     renderAll(); });
   $('addRow').onclick=addRow;
+  bindColumnResize(body);
+}
+function bindColumnResize(root){
+  root.querySelectorAll('.col-resizer').forEach(handle=>{
+    handle.addEventListener('pointerdown',e=>{
+      e.preventDefault(); e.stopPropagation();
+      const col=handle.dataset.col, startX=e.clientX, startW=colW(col);
+      const move=ev=>{
+        S.colWidths=S.colWidths||{...DEFAULT_COL_WIDTHS};
+        S.colWidths[col]=Math.max(48,startW+(ev.clientX-startX));
+        root.querySelectorAll(`th[data-col="${col}"], td[style*="--no"]`).forEach(()=>{});
+        // live update widths on header + cells
+        root.querySelectorAll(`th[data-col="${col}"]`).forEach(th=>{ th.style.width=S.colWidths[col]+'px'; th.style.minWidth=S.colWidths[col]+'px'; });
+        const idx=[...root.querySelectorAll('thead th')].findIndex(th=>th.dataset.col===col);
+        if(idx>=0) root.querySelectorAll('tbody tr').forEach(tr=>{ const td=tr.children[idx]; if(td){ td.style.width=S.colWidths[col]+'px'; td.style.minWidth=S.colWidths[col]+'px'; }});
+      };
+      const up=()=>{ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); scheduleSave(); };
+      window.addEventListener('pointermove',move); window.addEventListener('pointerup',up,{once:true});
+    });
+  });
 }
 function addRow(){ pushUndo();
   const today=new Date(),t=utc(today.getFullYear(),today.getMonth(),today.getDate());
   const p=S.structure[0]; const w=p.workstreams[0];
   S.items.push({id:uid('i'),pillarId:p.id,wsId:w.id,name:'New initiative',start:t,end:addDays(t,90),
-    valueType:'Savings',value:'',realizedPct:'',milestone:false,status:'Not Started',owner:''});
+    valueType:'Savings',value:'',realizedPct:'',confidence:100,phases:[],milestone:false,status:'Not Started',approval:'Proposed',owner:''});
   renderAll();
   $('gridBody').querySelector('tbody tr:last-child input[data-f=name]')?.focus();
+}
+
+/* ============ EDIT DRAWER ============ */
+function openDrawer(id){
+  const it=S.items.find(i=>i.id===id); if(!it)return;
+  S.drawerId=id;
+  $('drawerTitle').textContent=it.name||'Edit initiative';
+  const phases=normalizePhases(it.phases);
+  $('drawerBody').innerHTML=`
+    <div class="drawer-field"><label>Name</label><input id="dName" value="${esc(it.name)}"></div>
+    <div class="drawer-row">
+      <div class="drawer-field"><label>Pillar</label><select id="dPillar">${S.structure.map(p=>`<option value="${p.id}" ${p.id===it.pillarId?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div>
+      <div class="drawer-field"><label>Workstream</label><select id="dWs">${wsOptions(it.pillarId,it.wsId)}</select></div>
+    </div>
+    <div class="drawer-row">
+      <div class="drawer-field"><label>Start</label><input type="date" id="dStart" value="${isoDate(it.start)}"></div>
+      <div class="drawer-field"><label>End</label><input type="date" id="dEnd" value="${isoDate(it.end)}" ${it.milestone?'disabled':''}></div>
+    </div>
+    <div class="drawer-row">
+      <div class="drawer-field"><label>Status</label><select id="dStatus">${STATUSES.map(s=>`<option ${s===it.status?'selected':''}>${s}</option>`).join('')}</select></div>
+      <div class="drawer-field"><label>Milestone</label><select id="dMile"><option value="0" ${!it.milestone?'selected':''}>Range</option><option value="1" ${it.milestone?'selected':''}>Milestone</option></select></div>
+    </div>
+    <div class="drawer-field"><label>Approval</label><select id="dApproval">${APPROVAL_STATES.map(v=>`<option ${v===approvalStatus(it)?'selected':''}>${v}</option>`).join('')}</select></div>
+    <div class="drawer-row">
+      <div class="drawer-field"><label>Type</label><select id="dType">${VALUE_TYPES.map(v=>`<option ${v===normValueType(it.valueType)?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="drawer-field"><label>$ Value</label><input id="dValue" class="money-in" value="${esc(fmtMoney(it.value))}" inputmode="decimal"></div>
+    </div>
+    <div class="drawer-row">
+      <div class="drawer-field"><label>% Realized (fallback)</label><input id="dRealized" value="${esc(fmtPercent(it.realizedPct))}" inputmode="decimal"></div>
+      <div class="drawer-field"><label>Confidence</label><select id="dConf">${CONFIDENCE_PRESETS.map(c=>`<option value="${c.pct}" ${parseConfidence(it.confidence)===c.pct?'selected':''}>${c.label} · ${c.pct}%</option>`).join('')}</select></div>
+    </div>
+    <div class="drawer-field"><label>Owner</label><input id="dOwner" list="ownerList" value="${esc(it.owner)}"></div>
+    <div class="drawer-field"><label>Run-rate</label><div style="font-size:13px;color:var(--ink2)">Annualized ${esc(fmtMoneyShort(annualizedValue(it),true))} · Expected ${esc(fmtMoneyShort(expectedValue(it),true))} · Duration ${initiativeDurationDays(it)} days</div></div>
+    <div class="drawer-field"><label>Time-phased realization</label>
+      <div class="drawer-phases"><table><thead><tr><th>Date</th><th>Cumulative %</th><th></th></tr></thead>
+      <tbody id="dPhases">${phases.map((ph,i)=>`<tr data-i="${i}"><td><input type="date" data-ph="date" value="${esc(ph.date)}"></td><td><input data-ph="pct" value="${esc(fmtPercent(ph.pct))}"></td><td><button type="button" data-phdel="${i}">✕</button></td></tr>`).join('')||'<tr><td colspan="3" style="color:var(--ink3);font-size:12px;padding:10px">No phases — uses % Realized as a constant.</td></tr>'}</tbody></table>
+      <button type="button" class="phase-add" id="dAddPhase">+ Add phase</button></div>
+      <div style="font-size:11px;color:var(--ink3);margin-top:6px">Each phase sets cumulative realized % of full value on that date.</div>
+    </div>`;
+  $('itemDrawer').classList.add('on'); $('itemDrawer').setAttribute('aria-hidden','false');
+  $('drawerBackdrop').classList.add('on');
+  $('dPillar').onchange=()=>{ const p=pillarOf($('dPillar').value); $('dWs').innerHTML=wsOptions(p.id,p.workstreams[0]?.id); };
+  $('dMile').onchange=()=>{ $('dEnd').disabled=$('dMile').value==='1'; };
+  $('dAddPhase').onclick=()=>{
+    const tbody=$('dPhases');
+    if(tbody.querySelector('[colspan]'))tbody.innerHTML='';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><input type="date" data-ph="date" value="${isoDate(todayUtc())}"></td><td><input data-ph="pct" value="25%"></td><td><button type="button" data-phdel>✕</button></td>`;
+    tbody.appendChild(tr);
+    tr.querySelector('[data-phdel]').onclick=()=>tr.remove();
+  };
+  $('dPhases').querySelectorAll('[data-phdel]').forEach(b=>b.onclick=()=>b.closest('tr').remove());
+}
+function readPhasesFromDrawer(){
+  return normalizePhases([...$('dPhases').querySelectorAll('tr')].map(tr=>{
+    const date=tr.querySelector('[data-ph=date]')?.value;
+    const pct=tr.querySelector('[data-ph=pct]')?.value;
+    return date?{date,pct}:null;
+  }).filter(Boolean));
+}
+function commitDrawer(){
+  const it=S.items.find(i=>i.id===S.drawerId); if(!it)return closeDrawer();
+  pushUndo();
+  it.name=$('dName').value||'New initiative';
+  it.pillarId=$('dPillar').value;
+  it.wsId=$('dWs').value;
+  it.start=$('dStart').value?parseAnyDate($('dStart').value,'start',S.fyStart):null;
+  it.milestone=$('dMile').value==='1';
+  it.end=it.milestone?it.start:($('dEnd').value?parseAnyDate($('dEnd').value,'end',S.fyStart):null);
+  it.status=$('dStatus').value;
+  it.approval=$('dApproval').value;
+  it.valueType=$('dType').value;
+  it.value=parseMoney($('dValue').value);
+  it.realizedPct=parsePercent($('dRealized').value);
+  it.confidence=parseConfidence($('dConf').value);
+  it.owner=$('dOwner').value;
+  it.phases=readPhasesFromDrawer();
+  if(it.phases.length)it.realizedPct=it.phases[it.phases.length-1].pct;
+  refreshOwners(); closeDrawer(); renderAll();
+}
+function closeDrawer(){
+  S.drawerId=null;
+  $('itemDrawer').classList.remove('on'); $('itemDrawer').setAttribute('aria-hidden','true');
+  $('drawerBackdrop').classList.remove('on');
+}
+function deleteDrawerItem(){
+  const i=S.items.findIndex(x=>x.id===S.drawerId); if(i<0)return closeDrawer();
+  pushUndo(); S.items.splice(i,1); closeDrawer(); renderAll();
+}
+
+/* ============ SCENARIOS / BASELINE ============ */
+function renderScenarioUI(){
+  const sel=$('scenarioSelect'); if(!sel)return;
+  const cur=sel.value;
+  const n=(S.scenarios||[]).length;
+  sel.innerHTML=`<option value="">Scenarios${n?` (${n})`:''}</option>`+
+    (S.scenarios||[]).map(sc=>`<option value="${esc(sc.id)}">${esc(sc.name)}</option>`).join('')+
+    (n?`<option value="__delete__">Delete…</option>`:'');
+  if(cur&&[...sel.options].some(o=>o.value===cur))sel.value=cur;
+  const pill=$('baselinePill'), btn=$('baselineBtn');
+  if(S.baseline){
+    pill.textContent='On';
+    pill.classList.remove('off');
+    pill.title='Baseline set '+relTime(S.baseline.savedAt)+' — click to clear';
+    if(btn){ btn.textContent='Update'; btn.title='Replace baseline with the current plan'; }
+  } else {
+    pill.textContent='Off';
+    pill.classList.add('off');
+    pill.title='No baseline set';
+    if(btn){ btn.textContent='Baseline'; btn.title='Freeze current plan as baseline for comparison'; }
+  }
+}
+function saveScenario(){
+  const name=prompt('Scenario name', `Scenario ${(S.scenarios||[]).length+1}`);
+  if(!name)return;
+  pushUndo();
+  S.scenarios=S.scenarios||[];
+  S.scenarios.push({id:uid('sc'),name:name.trim(),savedAt:Date.now(),payload:clonePlanPayload()});
+  renderScenarioUI(); scheduleSave();
+  showToast(`Saved scenario “${name.trim()}”`);
+}
+function loadScenario(id){
+  const sc=(S.scenarios||[]).find(s=>s.id===id); if(!sc)return;
+  const merged=mergeScenarioPortfolio(sc.payload);
+  if(!confirm(`Load scenario “${sc.name}”? Scenario values will be applied while all portfolio initiatives remain (undo available).`))return;
+  pushUndo(); applyPlanPayload(merged.payload); renderAll(); renderScenarioUI();
+  showToast(`Loaded “${sc.name}”${merged.retainedCount?` · kept ${merged.retainedCount} portfolio initiatives`:''}`);
+}
+function deleteScenario(id){
+  const sc=(S.scenarios||[]).find(s=>s.id===id); if(!sc)return;
+  if(!confirm(`Delete scenario “${sc.name}”?`))return;
+  S.scenarios=S.scenarios.filter(s=>s.id!==id); renderScenarioUI(); scheduleSave();
+}
+function setBaseline(){
+  pushUndo();
+  S.baseline={savedAt:Date.now(),...clonePlanPayload()};
+  S.showBaseline=true;
+  renderScenarioUI(); scheduleSave();
+  showToast('Baseline frozen for comparison');
+}
+function clearBaseline(){
+  if(!S.baseline)return;
+  if(!confirm('Clear baseline snapshot?'))return;
+  pushUndo(); S.baseline=null; renderScenarioUI(); scheduleSave();
+}
+function showToast(msg){
+  const t=$('toast'); t.innerHTML=esc(msg); t.classList.add('on');
+  clearTimeout(showToast._t); showToast._t=setTimeout(()=>t.classList.remove('on'),3200);
+}
+function bindScenarioControls(){
+  if(!$('scenarioSaveBtn')||$('scenarioSaveBtn')._bound)return;
+  $('scenarioSaveBtn')._bound=true;
+  $('scenarioSaveBtn').onclick=saveScenario;
+  $('baselineBtn').onclick=()=>{ if(S.baseline&&confirm('Replace existing baseline with current plan?')===false)return; setBaseline(); };
+  $('baselinePill').onclick=()=>{ if(S.baseline)clearBaseline(); };
+  $('scenarioSelect').onchange=()=>{
+    const v=$('scenarioSelect').value;
+    if(!v)return;
+    if(v==='__delete__'){ const prev=[...$('scenarioSelect').options].find(o=>o.value&&o.value!=='__delete__');
+      if(prev)deleteScenario(prev.value); $('scenarioSelect').value=''; return; }
+    loadScenario(v); $('scenarioSelect').value='';
+  };
+  $('groupStruct').onclick=()=>{ S.roadmapGroup='structure'; renderAll(); scheduleSave(); };
+  $('groupOwner').onclick=()=>{ S.roadmapGroup='owner'; renderAll(); scheduleSave(); };
+  $('drawerClose').onclick=closeDrawer;
+  $('drawerBackdrop').onclick=closeDrawer;
+  $('drawerDone').onclick=commitDrawer;
+  $('drawerDelete').onclick=deleteDrawerItem;
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&S.drawerId){ e.preventDefault(); closeDrawer(); }
+  });
 }
 
 function dl(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
@@ -1073,16 +2035,9 @@ function pptFiscalBands(axis,X){ const bands=[]; let fy=fqOf(axis.quarters[0],S.
   axis.quarters.forEach((q,i)=>{ const qFy=fqOf(q,S.fyStart).fy; if(qFy!==fy){ bands.push({fy,start,end:q}); fy=qFy; start=q; }
     if(i===axis.quarters.length-1)bands.push({fy,start,end:axis.end}); });
   return bands.map(b=>({...b,x:X(b.start),w:X(b.end)-X(b.start)})); }
-function pptBarLabelBox(label,font,sx,ex,bw,timeX,timeW){
-  const desired=Math.min(3.15,Math.max(2.05,label.length*(font*.006)+.18));
-  const insideW=Math.max(.15,bw-.14), insideFits=label.length*(font*.0062)<insideW-.04;
-  if(insideFits||insideW>=desired*.72)return{x:sx+.07,w:insideW,inside:true,align:'left'};
-  const rightW=timeX+timeW-ex-.08;
-  if(rightW>=desired)return{x:ex+.08,w:Math.min(desired,rightW),inside:false,align:'left'};
-  const leftW=sx-timeX-.12;
-  if(leftW>=1.2){ const w=Math.min(desired,leftW); return{x:sx-.08-w,w,inside:false,align:'right'}; }
-  const w=Math.min(desired,timeW);
-  return{x:Math.max(timeX,Math.min(sx+.07,timeX+timeW-w)),w,inside:false,align:'left'};
+function pptBarLabelBox(it,font,sx,ex,bw,timeX,timeW){
+  const insideW=Math.max(.15,bw-.14),maxChars=Math.max(1,Math.floor(Math.max(.04,insideW-.04)/(font*.0083)));
+  return{x:sx+.07,w:insideW,inside:true,align:'left',text:conciseRoadmapLabel(it,maxChars)};
 }
 function addPptPillarSlide(pptx,p,idx,total){ const slide=pptx.addSlide(), totals=pillarFinancialTotals(p.id);
   const ink='1D1D1F', ink2='6E6E73', ink3='A1A1A6', hair='DADAE0', band='F6F6F8', bg='FBFBFD', surface='FFFFFF';
@@ -1121,13 +2076,187 @@ function addPptPillarSlide(pptx,p,idx,total){ const slide=pptx.addSlide(), total
         slide.addText(label,{x:sx+.13,y:yy+.005,w:Math.max(.25,timeX+timeW-sx-.18),h:.14,fontSize:font,color:ink,margin:0,fit:'shrink'});
       } else { const sx=X(it.start), ex=X(addDays(it.end||it.start,1)), bw=Math.max(ex-sx,.11);
         slide.addShape('roundRect',{x:sx,y:yy,w:bw,h:barH,fill:{color:it.status==='Complete'?'D8D8DC':col[0],transparency:it.status==='Complete'?12:0},line:{color:it.status==='At Risk'?'B45309':(it.status==='Complete'?'D8D8DC':col[0]),width:it.status==='At Risk'?1.25:.55}});
-        const lb=pptBarLabelBox(label,font,sx,ex,bw,timeX,timeW);
-        slide.addText(label,{x:lb.x,y:yy+.04,w:lb.w,h:.12,fontSize:font,color:lb.inside?col[1]:ink,align:lb.align,margin:0,fit:'shrink'});
+        const lb=pptBarLabelBox(it,font,sx,ex,bw,timeX,timeW);
+        slide.addText(lb.text,{x:lb.x,y:yy+.04,w:lb.w,h:.12,fontSize:font,color:col[1],align:lb.align,margin:0,fit:'shrink'});
       }
     });
     y+=wsH;
   });
   if(!infos.length||!allItems.some(i=>i.start))slide.addText('No dated initiatives in this pillar.',{x:timeX,y:bodyTop+.35,w:4,h:.25,fontSize:11,color:ink2,margin:0});
+}
+function addPptExecutiveSummarySlide(pptx){
+  const slide=pptx.addSlide(), data=executiveSummaryData(), total=data.totals.Total, goal=executiveGoalValue();
+  const ink='1D1D1F', ink2='6E6E73', ink3='8E8E93', hair='E5E5EA', bg='FBFBFD', white='FFFFFF';
+  const share=value=>fmtPercent(total?value/total*100:0);
+  const approvedRemaining=data.buckets.approved.Savings+data.buckets.approved.Avoidance;
+  const proposedRemaining=data.buckets.proposed.Savings+data.buckets.proposed.Avoidance;
+  const delta=Math.abs(total-goal), direction=total>=goal?'above':'short of';
+  const headline=total?`Portfolio is ${fmtMoneyShort(delta,true)} ${direction} the ${fmtMoneyShort(goal,true)} goal`:`Build toward the ${fmtMoneyShort(goal,true)} portfolio goal`;
+  slide.background={color:bg};
+
+  slide.addText('Executive Summary',{x:.55,y:.22,w:5.25,h:.45,fontFace:'Aptos Display',fontSize:35,bold:true,color:ink,margin:0});
+  slide.addText(`${data.count} financial ${data.count===1?'initiative':'initiatives'}`,{x:5.93,y:.42,w:2.0,h:.14,fontSize:10.5,color:ink2,margin:0});
+  slide.addText('PORTFOLIO GOAL',{x:10.55,y:.26,w:1.12,h:.1,fontSize:7.5,bold:true,color:ink2,align:'right',charSpacing:.8,margin:0});
+  slide.addText(fmtMoneyShort(goal,true),{x:11.78,y:.2,w:1.0,h:.24,fontSize:18,bold:true,color:ink,align:'right',margin:0});
+
+  slide.addShape('roundRect',{x:.55,y:.82,w:12.23,h:1.12,rectRadius:.05,fill:{color:ink},line:{color:ink}});
+  slide.addText('PATH TO PORTFOLIO GOAL',{x:.78,y:1.02,w:2.25,h:.11,fontSize:8.2,bold:true,color:'A1A1A6',charSpacing:1.2,margin:0});
+  slide.addText(headline,{x:.78,y:1.23,w:10.9,h:.33,fontFace:'Aptos Display',fontSize:25,bold:true,color:white,margin:0});
+  slide.addText(`${fmtMoneyShort(data.totals.Realized,true)} realized · ${fmtMoneyShort(approvedRemaining,true)} approved remaining · ${fmtMoneyShort(proposedRemaining,true)} proposed remaining`,
+    {x:.78,y:1.65,w:8.4,h:.14,fontSize:10.5,color:'D1D1D6',margin:0});
+
+  const metrics=[
+    {label:'TOTAL PORTFOLIO',value:total,note:`Savings ${fmtMoneyShort(data.totals.Savings,true)} · Avoidance ${fmtMoneyShort(data.totals.Avoidance,true)}`,color:'1D1D1F'},
+    {label:'APPROVED',value:data.totals.Approved,note:`${share(data.totals.Approved)} of portfolio`,color:'0A84FF'},
+    {label:'PROPOSED',value:data.totals.Proposed,note:`${share(data.totals.Proposed)} of portfolio`,color:'AEAEB2'},
+    {label:'REALIZED',value:data.totals.Realized,note:`${share(data.totals.Realized)} captured to date`,color:'166534'},
+  ];
+  const metricX=.55, metricY=2.08, metricGap=.08, metricW=(12.23-metricGap*3)/4, metricH=.84;
+  metrics.forEach((metric,index)=>{ const x=metricX+index*(metricW+metricGap);
+    slide.addShape('roundRect',{x,y:metricY,w:metricW,h:metricH,rectRadius:.04,fill:{color:white},line:{color:hair,width:.75}});
+    slide.addShape('roundRect',{x:x+.18,y:metricY+.18,w:.16,h:.06,fill:{color:metric.color},line:{color:metric.color}});
+    slide.addText(metric.label,{x:x+.42,y:metricY+.12,w:metricW-.58,h:.12,fontSize:8.2,bold:true,color:ink2,charSpacing:1.0,margin:0});
+    slide.addText(fmtMoneyShort(metric.value,true),{x:x+.18,y:metricY+.35,w:metricW-.36,h:.24,fontSize:20,bold:true,color:ink,margin:0});
+    slide.addText(metric.note,{x:x+.18,y:metricY+.66,w:metricW-.36,h:.1,fontSize:8.5,color:ink2,margin:0});
+  });
+
+  const panelX=.55, panelY=3.08, panelW=12.23, panelH=3.9;
+  slide.addShape('roundRect',{x:panelX,y:panelY,w:panelW,h:panelH,rectRadius:.04,fill:{color:white},line:{color:hair,width:.75}});
+  if(!total){
+    slide.addText('No portfolio value yet',{x:.82,y:3.65,w:3.5,h:.3,fontSize:20,bold:true,color:ink,margin:0});
+    slide.addText('Add Savings or Avoidance values to initiatives to build the dollar tracker.',{x:.82,y:4.08,w:5.7,h:.2,fontSize:12,color:ink2,margin:0});
+    return;
+  }
+  slide.addText(`How the portfolio builds to ${fmtMoneyShort(total,true)}`,{x:.78,y:3.32,w:4.0,h:.2,fontSize:15.5,bold:true,color:ink,margin:0});
+  slide.addText('One reconciled path from captured value to the full opportunity.',{x:.78,y:3.58,w:4.3,h:.12,fontSize:9.2,color:ink2,margin:0});
+  const key=[{label:'Savings',color:'188038'},{label:'Avoidance',color:'2563EB'},{label:'Darker = more certain',color:'1D1D1F'}];
+  let keyX=9.1; key.forEach(entry=>{ slide.addShape('roundRect',{x:keyX,y:3.38,w:.17,h:.06,fill:{color:entry.color},line:{color:entry.color}});
+    slide.addText(entry.label,{x:keyX+.23,y:3.33,w:entry.label.length*.07,h:.12,fontSize:8.4,color:ink2,margin:0}); keyX+=entry.label.length*.07+.48; });
+
+  const barX=.98, barY=4.35, barW=11.42, barH=.54, axisMax=niceProjectionMax(Math.max(total,goal));
+  const X=value=>barX+Math.max(0,Math.min(1,value/axisMax))*barW;
+  slide.addShape('roundRect',{x:barX,y:barY,w:barW,h:barH,rectRadius:.05,fill:{color:'F1F1F3'},line:{color:'F1F1F3'}});
+  let cursor=0;
+  data.segments.forEach(segment=>{ const x=X(cursor), width=Math.max(0,X(cursor+segment.value)-x), color=pptHex(segment.color), inkColor=segment.stage==='proposed'?ink:white;
+    if(width>0)slide.addShape('rect',{x,y:barY,w:width,h:barH,fill:{color},line:{color,transparency:100}});
+    if(segment.value&&width>=1.15)slide.addText(`${segment.type} ${fmtMoneyShort(segment.value,true)}`,{x:x+.05,y:barY+.19,w:width-.1,h:.12,fontSize:8.8,bold:true,color:inkColor,align:'center',margin:0});
+    cursor+=segment.value;
+  });
+  let stageCursor=0;
+  ['realized','approved','proposed'].forEach(stage=>{ const value=data.buckets[stage].Savings+data.buckets[stage].Avoidance, x1=X(stageCursor), x2=X(stageCursor+value);
+    const label=stage==='realized'?'Realized':stage==='approved'?'Approved remaining':'Proposed remaining';
+    if(value&&x2-x1>=1.05)slide.addText(`${label} · ${fmtMoneyShort(value,true)}`,{x:x1,y:4.08,w:x2-x1,h:.12,fontSize:8.5,bold:true,color:ink2,align:'center',margin:0});
+    stageCursor+=value;
+  });
+  const goalX=X(goal), totalX=X(total);
+  addPptSafeLine(slide,goalX,3.94,goalX,5.14,'D97706',1.5);
+  slide.addText(`${fmtMoneyShort(goal,true)} goal`,{x:Math.max(barX,Math.min(goalX-.45,barX+barW-.9)),y:3.77,w:.9,h:.13,fontSize:9.2,bold:true,color:'B45309',align:'center',margin:0});
+  addPptSafeLine(slide,totalX,barY+barH,totalX,5.06,ink,1.4);
+  slide.addText(`Current ${fmtMoneyShort(total,true)}`,{x:Math.max(barX,Math.min(totalX-.5,barX+barW-1)),y:5.08,w:1,h:.13,fontSize:8.5,bold:true,color:ink,align:'center',margin:0});
+  const axisY=5.32; addPptSafeLine(slide,barX,axisY,barX+barW,axisY,'D1D1D6',.7);
+  for(let i=0;i<=4;i++){ const value=axisMax*i/4, x=X(value); addPptSafeLine(slide,x,axisY-.04,x,axisY+.04,'AEAEB2',.6);
+    slide.addText(fmtMoneyShort(value,true),{x:x-.35,y:axisY+.09,w:.7,h:.1,fontSize:7.8,color:ink2,align:'center',margin:0}); }
+
+  const breakdownY=5.66, colW=3.82, colGap=.18;
+  ['realized','approved','proposed'].forEach((stage,index)=>{ const x=.78+index*(colW+colGap), rows=data.segments.filter(segment=>segment.stage===stage), value=rows.reduce((sum,row)=>sum+row.value,0);
+    if(index)addPptSafeLine(slide,x-.12,breakdownY,x-.12,6.76,hair,.7);
+    const label=stage==='realized'?'Realized':stage==='approved'?'Approved remaining':'Proposed remaining';
+    slide.addText(`${label} · ${fmtMoneyShort(value,true)}`,{x,y:breakdownY,w:colW,h:.12,fontSize:8.5,bold:true,color:ink2,charSpacing:.45,margin:0});
+    rows.forEach((row,rowIndex)=>{ const y=breakdownY+.32+rowIndex*.29;
+      slide.addShape('rect',{x,y:y+.02,w:.09,h:.09,fill:{color:pptHex(row.color)},line:{color:pptHex(row.color)}});
+      slide.addText(row.type,{x:x+.16,y,w:1.05,h:.12,fontSize:9.2,color:ink2,margin:0});
+      slide.addText(fmtMoneyShort(row.value,true),{x:x+2.5,y,w:1.08,h:.12,fontSize:9.5,bold:true,color:ink,align:'right',margin:0});
+    });
+  });
+}
+function addPptPortfolioRollupSlide(pptx){
+  const slide=pptx.addSlide(), data=portfolioRollupData();
+  const ink='1D1D1F', ink2='6E6E73', ink3='8E8E93', hair='E5E5EA', bg='FBFBFD';
+  slide.background={color:bg};
+  slide.addText('Portfolio Rollup',{x:.55,y:.28,w:3.05,h:.38,fontFace:'Aptos Display',fontSize:27,bold:true,color:ink,margin:0});
+  slide.addText(`${data.items.length} ${data.items.length===1?'initiative':'initiatives'} · ${data.minYear}–${data.maxYear}`,
+    {x:3.55,y:.42,w:2.4,h:.16,fontSize:10.5,color:ink2,margin:0});
+
+  const metrics=[
+    {label:'TOTAL PORTFOLIO',value:data.totals.Total,note:'Savings + Avoidance',color:'1D1D1F'},
+    {label:'APPROVED',value:data.totals.Approved,note:'Selected as approved',color:'0A84FF'},
+    {label:'PROPOSED',value:data.totals.Proposed,note:'Selected as proposed',color:'AEAEB2'},
+    {label:'REALIZED',value:data.totals.Realized,note:'Captured to date',color:'30A46C'},
+  ];
+  const metricX=.55, metricY=.76, metricGap=.08, metricW=(12.23-metricGap*3)/4, metricH=.86;
+  metrics.forEach((metric,index)=>{ const x=metricX+index*(metricW+metricGap);
+    slide.addShape('roundRect',{x,y:metricY,w:metricW,h:metricH,rectRadius:.04,fill:{color:'FFFFFF'},line:{color:'E5E5EA',width:.75}});
+    slide.addShape('roundRect',{x:x+.18,y:metricY+.19,w:.15,h:.06,fill:{color:metric.color},line:{color:metric.color}});
+    slide.addText(metric.label,{x:x+.4,y:metricY+.12,w:metricW-.55,h:.14,fontSize:8.5,bold:true,color:ink2,margin:0,charSpacing:1.1});
+    slide.addText(fmtMoneyShort(metric.value,true),{x:x+.18,y:metricY+.35,w:metricW-.36,h:.24,fontSize:19,bold:true,color:ink,margin:0});
+    slide.addText(metric.note,{x:x+.18,y:metricY+.66,w:metricW-.36,h:.12,fontSize:9,color:ink2,margin:0});
+  });
+  if(!data.items.length){
+    slide.addText('No dated initiatives to roll up.',{x:.58,y:2.35,w:5,h:.34,fontSize:18,color:ink2,margin:0});
+    return;
+  }
+
+  const canvasX=.55, canvasY=1.82, canvasW=12.23, canvasH=5.22, labelX=.77, labelW=2.22, timeX=3.16, timeW=9.35;
+  const axisStart=utc(data.minYear,0,1), axisEnd=utc(data.maxYear+1,0,1), span=axisEnd-axisStart;
+  const X=d=>timeX+Math.max(0,Math.min(1,(d-axisStart)/span))*timeW;
+  slide.addShape('roundRect',{x:canvasX,y:canvasY,w:canvasW,h:canvasH,rectRadius:.04,fill:{color:'FFFFFF'},line:{color:'E5E5EA',width:.75}});
+  slide.addShape('ellipse',{x:canvasX+.18,y:canvasY+.13,w:.07,h:.07,fill:{color:'0A84FF'},line:{color:'0A84FF'}});
+  slide.addText('Approved',{x:canvasX+.3,y:canvasY+.105,w:.62,h:.12,fontSize:8.5,color:ink2,margin:0});
+  slide.addShape('ellipse',{x:canvasX+1.02,y:canvasY+.13,w:.07,h:.07,fill:{color:'AEAEB2'},line:{color:'AEAEB2'}});
+  slide.addText('Proposed',{x:canvasX+1.14,y:canvasY+.105,w:.62,h:.12,fontSize:8.5,color:ink2,margin:0});
+  slide.addShape('ellipse',{x:canvasX+1.9,y:canvasY+.13,w:.07,h:.07,fill:{color:'30A46C'},line:{color:'30A46C'}});
+  slide.addText('Realized',{x:canvasX+2.02,y:canvasY+.105,w:.58,h:.12,fontSize:8.5,color:ink2,margin:0});
+  const yearTop=canvasY+.31, bodyTop=canvasY+.65, bodyBottom=canvasY+canvasH-.14;
+  for(let year=data.minYear;year<=data.maxYear;year++){
+    const x=X(utc(year,0,1)), nx=X(utc(year+1,0,1));
+    if((year-data.minYear)%2===1)slide.addShape('rect',{x,y:yearTop,w:nx-x,h:bodyBottom-yearTop,fill:{color:'FAFAFA'},line:{color:'FAFAFA',transparency:100}});
+    addPptSafeLine(slide,x,yearTop,x,bodyBottom,hair,.6);
+    slide.addText(String(year),{x,y:yearTop+.09,w:nx-x,h:.18,fontSize:11,bold:true,color:ink,align:'center',margin:0});
+  }
+  addPptSafeLine(slide,timeX+timeW,yearTop,timeX+timeW,bodyBottom,hair,.6);
+
+  const groupH=(bodyBottom-bodyTop)/Math.max(1,data.groups.length);
+  data.groups.forEach((group,gi)=>{
+    const gy=bodyTop+gi*groupH, headH=Math.max(.25,Math.min(.34,groupH*.32)), laneH=(groupH-headH)/2;
+    const approved=group.summary.Approved, proposed=group.summary.Proposed;
+    slide.addShape('rect',{x:canvasX,y:gy,w:canvasW,h:headH,fill:{color:gi%2?'F8F8FA':'F4F4F6'},line:{color:gi%2?'F8F8FA':'F4F4F6',transparency:100}});
+    if(gi>0)addPptSafeLine(slide,canvasX+.12,gy,canvasX+canvasW-.12,gy,'E7E7EC',.55);
+    slide.addText(group.p.name,{x:labelX,y:gy+.045,w:labelW,h:.16,fontSize:12.5,bold:true,color:ink,margin:0});
+    slide.addText(`${approved.count} Approved · ${fmtMoneyShort(approved.value,true)}   ·   ${proposed.count} Proposed · ${fmtMoneyShort(proposed.value,true)}   ·   Realized · ${fmtMoneyShort(group.summary.realized,true)}`,
+      {x:labelX,y:gy+.205,w:canvasW-.45,h:.12,fontSize:8.3,color:ink2,margin:0});
+
+    APPROVAL_STATES.forEach((approval,ai)=>{
+      const b=group.summary[approval], ly=gy+headH+ai*laneH;
+      slide.addShape('rect',{x:canvasX,y:ly,w:canvasW,h:laneH,fill:{color:'FFFFFF'},line:{color:'FFFFFF',transparency:100}});
+      slide.addText(approval.toUpperCase(),{x:labelX,y:ly+.055,w:1.0,h:.13,fontSize:8.8,bold:true,
+        color:approval==='Approved'?'0071E3':'6E6E73',margin:0,charSpacing:.55});
+      slide.addText(`${b.count} ${b.count===1?'initiative':'initiatives'} · ${fmtMoneyShort(b.value,true)}`,
+        {x:labelX,y:ly+.19,w:labelW,h:.11,fontSize:8.2,color:ink3,margin:0});
+      if(!b.count){
+        slide.addText(`No ${approval.toLowerCase()} initiatives`,{x:timeX+.1,y:ly+laneH/2-.06,w:1.8,h:.12,fontSize:8.5,color:'AEAEB2',margin:0});
+        return;
+      }
+      const sx=X(b.start), ex=X(addDays(b.end,1)), bw=Math.max(.06,ex-sx), barH=Math.max(.17,Math.min(.25,laneH*.55)), by=ly+(laneH-barH)/2;
+      const base=approval==='Approved'?'0A84FF':'E5E5EA', stroke=approval==='Approved'?'0A84FF':'AEAEB2';
+      slide.addShape('roundRect',{x:sx,y:by,w:bw,h:barH,fill:{color:base},line:{color:stroke,width:.5}});
+      const rw=b.realizedPct>0?Math.max(.03,bw*b.realizedPct/100):0;
+      if(rw)slide.addShape('roundRect',{x:sx,y:by,w:rw,h:barH,fill:{color:'30A46C'},line:{color:'30A46C',width:.3}});
+      const showRealizedLabel=rw>=.85&&bw-rw>=2.2;
+      if(showRealizedLabel)slide.addText(`${fmtMoneyShort(b.realized,true)} realized`,
+        {x:sx+.06,y:by+.055,w:rw-.12,h:barH-.07,fontSize:8.5,bold:true,color:'FFFFFF',align:'center',margin:0});
+      const tx=showRealizedLabel?sx+rw+.08:sx+.08, available=Math.max(0,bw-(tx-sx)-.08);
+      const labelOptions=[
+        `${b.count} ${b.count===1?'initiative':'initiatives'} · ${fmtMoneyShort(b.value,true)} · Savings ${fmtMoneyShort(b.Savings,true)} · Avoidance ${fmtMoneyShort(b.Avoidance,true)}`,
+        `${b.count} ${b.count===1?'initiative':'initiatives'} · ${fmtMoneyShort(b.value,true)}`,
+        `${b.count} · ${fmtMoneyShort(b.value,true)}`,
+      ];
+      const visibleLabel=labelOptions.find(label=>label.length*.07<=available)||'';
+      if(visibleLabel){ const textW=Math.min(available,Math.max(.42,visibleLabel.length*.07));
+        slide.addText(visibleLabel,{x:tx,y:by+.055,w:textW,h:barH-.07,fontSize:8.8,bold:true,
+          color:approval==='Approved'||!showRealizedLabel&&rw>0?'FFFFFF':ink,margin:0});
+      }
+    });
+  });
 }
 function addPptProjectionSlide(pptx){ const slide=pptx.addSlide(), end=selectedProjectionEnd(), data=projectionPoints(end), totals=projectionTotalsAt(data.items,end);
   const ink='1D1D1F', ink2='6E6E73', ink3='A1A1A6', hair='DADAE0', bg='FBFBFD', surface='FFFFFF';
@@ -1251,6 +2380,8 @@ function addPptStackedSlide(pptx){ const slide=pptx.addSlide(), stack=pptStackRo
 }
 async function exportPowerPoint(){ if(typeof PptxGenJS!=='function'){alert('PowerPoint export is unavailable.');return;}
   const btn=$('pptBtn'); btn.disabled=true; try{ const pptx=new PptxGenJS(); pptx.layout='LAYOUT_WIDE'; pptx.author='Roadmap Studio'; pptx.subject='Roadmap export'; pptx.title=S.fileName||'Roadmap';
+    addPptExecutiveSummarySlide(pptx);
+    addPptPortfolioRollupSlide(pptx);
     S.structure.forEach((p,i)=>addPptPillarSlide(pptx,p,i,S.structure.length));
     addPptProjectionSlide(pptx);
     addPptStackedSlide(pptx);
@@ -1272,16 +2403,25 @@ function fitPresentation(){ if(!S.presenting)return; const el=$('tlSvg'); if(!el
   const w=el.width.baseVal.value,h=el.height.baseVal.value;
   const scale=Math.min((innerWidth-96)/w,(innerHeight-120)/h,2.2);
   const box=$('tlBox'); box.style.transformOrigin='center center'; box.style.transform=`scale(${scale})`; box.style.width=w+'px'; }
-window.addEventListener('resize',()=>{if(S.view==='studio'&&(S.tab==='road'||S.presenting))renderTimeline(); if(S.view==='studio'&&S.tab==='proj')renderProjection(); if(S.view==='studio'&&S.tab==='stack')renderStackedCharts();});
+window.addEventListener('resize',()=>{if(S.view==='studio'&&(S.tab==='road'||S.presenting))renderTimeline(); if(S.view==='studio'&&S.tab==='exec')renderExecutiveSummary(); if(S.view==='studio'&&S.tab==='rollup')renderPortfolioRollup(); if(S.view==='studio'&&S.tab==='proj')renderProjection(); if(S.view==='studio'&&S.tab==='stack')renderStackedCharts();});
 
 /* ============ PERSISTENCE ============ */
 const LS_KEY='roadmapStudio.v1';
-function serializeState(){ return {v:1,savedAt:Date.now(),fileName:S.fileName,fyStart:S.fyStart,
+function serializeState(){ return {v:2,savedAt:Date.now(),fileName:S.fileName,fyStart:S.fyStart,
   collapsedPillars:S.collapsedPillars,
   projectionEnd:S.projectionEnd||null,
   projectionTarget:S.projectionTarget===''?'':parseMoney(S.projectionTarget),
   projectionShowRealized:S.projectionShowRealized!==false,
-  structure:S.structure, items:S.items.map(i=>{ const it=cleanItem(i); return {...it,start:isoDate(i.start),end:isoDate(i.end)}; })}; }
+  weightConfidence:S.weightConfidence!==false,
+  showBaseline:S.showBaseline!==false,
+  roadmapGroup:S.roadmapGroup==='owner'?'owner':'structure',
+  filters:S.filters||{q:'',status:'',owner:'',pillarId:'',valueType:''},
+  tableDensity:S.tableDensity||'comfortable',
+  colWidths:S.colWidths||{...DEFAULT_COL_WIDTHS},
+  scenarios:S.scenarios||[],
+  baseline:S.baseline||null,
+  structure:S.structure, items:S.items.map(i=>{ const it=cleanItem(i); return {...it,start:isoDate(i.start),end:isoDate(i.end),
+    confidence:parseConfidence(i.confidence),phases:normalizePhases(i.phases)}; })}; }
 function deserializeInto(o){
   S.fileName=o.fileName||'Roadmap'; S.fyStart=(o.fyStart==null?6:o.fyStart);
   S.collapsedPillars=(o.collapsedPillars&&typeof o.collapsedPillars==='object')?o.collapsedPillars:{};
@@ -1290,15 +2430,28 @@ function deserializeInto(o){
   const target=parseMoney(o.projectionTarget);
   S.projectionTarget=target===''?'':target;
   S.projectionShowRealized=o.projectionShowRealized===false?false:true;
+  S.weightConfidence=o.weightConfidence===false?false:true;
+  S.showBaseline=o.showBaseline===false?false:true;
+  S.roadmapGroup=o.roadmapGroup==='owner'?'owner':'structure';
+  S.filters=Object.assign({q:'',status:'',owner:'',pillarId:'',valueType:''},o.filters||{});
+  S.tableDensity=o.tableDensity==='compact'?'compact':'comfortable';
+  S.colWidths=Object.assign({},DEFAULT_COL_WIDTHS,o.colWidths||{});
+  S.scenarios=Array.isArray(o.scenarios)?o.scenarios:[];
+  S.baseline=o.baseline&&typeof o.baseline==='object'?o.baseline:null;
   S.structure=Array.isArray(o.structure)?o.structure:[];
   S.items=(Array.isArray(o.items)?o.items:[]).map(i=>cleanItem({...i,
     start:i.start?parseAnyDate(i.start,'start',S.fyStart):null,
     end:i.end?parseAnyDate(i.end,'end',S.fyStart):null,
     valueType:normValueType(i.valueType),
+    approval:normApproval(i.approval,i.status),
     value:parseMoney(i.value),
-    realizedPct:parsePercent(i.realizedPct)}));
+    realizedPct:parsePercent(i.realizedPct),
+    confidence:parseConfidence(i.confidence),
+    phases:normalizePhases(i.phases)}));
   let mx=0; const scan=id=>{const n=parseInt(String(id).replace(/\D/g,''),10); if(!isNaN(n)&&n>mx)mx=n;};
-  S.structure.forEach(p=>{scan(p.id);(p.workstreams||[]).forEach(w=>scan(w.id));}); S.items.forEach(i=>scan(i.id));
+  S.structure.forEach(p=>{scan(p.id);(p.workstreams||[]).forEach(w=>scan(w.id));});
+  S.items.forEach(i=>scan(i.id));
+  (S.scenarios||[]).forEach(sc=>scan(sc.id));
   S.seq=mx+1;
 }
 let _saveT=null;
