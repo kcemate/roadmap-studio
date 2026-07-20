@@ -268,6 +268,98 @@ def stacked_chart_state():
     }
 
 
+def portfolio_rollup_state():
+    return {
+        "v": 1,
+        "savedAt": 1893456000000,
+        "fileName": "Portfolio rollup roadmap",
+        "fyStart": 6,
+        "structure": [
+            {"id": "p1", "name": "Product Requirements", "workstreams": [{"id": "w1", "name": "Packaging"}]},
+            {"id": "p2", "name": "Strategic Sourcing", "workstreams": [{"id": "w2", "name": "Sourcing"}]},
+        ],
+        "items": [
+            {
+                "id": "ru1", "pillarId": "p1", "wsId": "w1", "name": "Packaging redesign",
+                "start": "2026-01-01", "end": "2028-12-31", "valueType": "Savings",
+                "value": 120000000, "realizedPct": 50, "milestone": False, "status": "On Track", "owner": "",
+            },
+            {
+                "id": "ru2", "pillarId": "p1", "wsId": "w1", "name": "Freight exposure",
+                "start": "2027-04-01", "end": "2029-06-30", "valueType": "Avoidance",
+                "value": 80000000, "realizedPct": 25, "milestone": False, "status": "Not Started", "owner": "",
+            },
+            {
+                "id": "ru3", "pillarId": "p2", "wsId": "w2", "name": "Supplier consolidation",
+                "start": "2026-07-01", "end": "2030-12-31", "valueType": "Avoidance",
+                "value": 100000000, "realizedPct": 100, "milestone": False, "status": "Complete", "owner": "",
+            },
+        ],
+    }
+
+
+def narrow_portfolio_rollup_state():
+    state = portfolio_rollup_state()
+    state["fileName"] = "Narrow portfolio rollup"
+    state["structure"] = [
+        {"id": "p1", "name": "Product Requirements", "workstreams": [{"id": "w1", "name": "Packaging"}]},
+    ]
+    state["items"] = [
+        {
+            "id": f"narrow-{index}", "pillarId": "p1", "wsId": "w1", "name": f"Proposed project {index}",
+            "start": "2027-06-01", "end": "2027-06-30", "valueType": "Savings",
+            "value": 0, "realizedPct": "", "milestone": False, "status": "Not Started", "owner": "",
+        }
+        for index in range(1, 4)
+    ]
+    return state
+
+
+def ppt_portfolio_rollup_stage_state():
+    structure = [
+        {"id": "p1", "name": "Cost Council", "workstreams": [{"id": "w1", "name": "Portfolio"}]},
+        {"id": "p2", "name": "Vertical Integration", "workstreams": [{"id": "w2", "name": "Portfolio"}]},
+        {"id": "p3", "name": "Network Design", "workstreams": [{"id": "w3", "name": "Portfolio"}]},
+        {"id": "p4", "name": "Strategic Sourcing", "workstreams": [{"id": "w4", "name": "Portfolio"}]},
+    ]
+    items = []
+
+    def add_bucket(pillar, workstream, approval, count, start, end, values):
+        for index in range(count):
+            value_type, value = values[index % len(values)]
+            items.append({
+                "id": f"{pillar}-{approval.lower()}-{index}",
+                "pillarId": pillar,
+                "wsId": workstream,
+                "name": f"{pillar} {approval} {index + 1}",
+                "start": start,
+                "end": end,
+                "valueType": value_type,
+                "value": value,
+                "realizedPct": 20 if approval == "Approved" else "",
+                "milestone": False,
+                "status": "On Track" if approval == "Approved" else "Not Started",
+                "approval": approval,
+                "owner": "",
+            })
+
+    add_bucket("p1", "w1", "Approved", 2, "2026-01-01", "2026-12-31", [("Savings", 0)])
+    add_bucket("p1", "w1", "Proposed", 5, "2027-01-01", "2027-12-31", [("Savings", 33240000), ("Avoidance", 170000000)])
+    add_bucket("p2", "w2", "Proposed", 3, "2026-07-01", "2026-11-30", [("Savings", 0)])
+    add_bucket("p3", "w3", "Approved", 10, "2026-01-01", "2027-12-31", [("Savings", 2790000), ("Avoidance", 780000)])
+    add_bucket("p3", "w3", "Proposed", 2, "2026-07-01", "2026-07-31", [("Savings", 0)])
+    add_bucket("p4", "w4", "Approved", 1, "2026-01-01", "2026-12-31", [("Savings", 141500000)])
+    add_bucket("p4", "w4", "Proposed", 8, "2027-01-01", "2030-12-31", [("Savings", 49987500), ("Avoidance", 35000000)])
+    return {
+        "v": 1,
+        "savedAt": 1893456000000,
+        "fileName": "Stage portfolio rollup",
+        "fyStart": 6,
+        "structure": structure,
+        "items": items,
+    }
+
+
 def ppt_same_workstream_state():
     return {
         "v": 1,
@@ -310,6 +402,68 @@ def ppt_same_workstream_state():
                 "status": "Not Started",
                 "owner": "",
             },
+        ],
+    }
+
+
+def scenario_portfolio_state():
+    core_structure = [
+        {
+            "id": "p1",
+            "name": "Core Portfolio",
+            "workstreams": [{"id": "w1", "name": "Core Workstream"}],
+        }
+    ]
+    expanded_structure = core_structure + [
+        {
+            "id": "p2",
+            "name": "New Portfolio",
+            "workstreams": [{"id": "w2", "name": "New Workstream"}],
+        }
+    ]
+
+    def initiative(number, value):
+        is_new = number > 40
+        return {
+            "id": f"i{number}",
+            "pillarId": "p2" if is_new else "p1",
+            "wsId": "w2" if is_new else "w1",
+            "name": f"Initiative {number}",
+            "start": "2027-01-01",
+            "end": "2027-12-31",
+            "valueType": "Savings",
+            "value": value,
+            "realizedPct": "",
+            "milestone": False,
+            "status": "Not Started",
+            "owner": "",
+        }
+
+    old_items = [initiative(number, number * 1000) for number in range(1, 41)]
+    current_items = [initiative(number, number * 2000) for number in range(1, 47)]
+    old_payload = {
+        "structure": core_structure,
+        "items": old_items,
+        "fyStart": 6,
+        "collapsedPillars": {},
+    }
+    current_payload = {
+        "structure": expanded_structure,
+        "items": current_items,
+        "fyStart": 6,
+        "collapsedPillars": {},
+    }
+    return {
+        "v": 2,
+        "savedAt": 1893456000000,
+        "fileName": "Scenario portfolio",
+        "fyStart": 6,
+        # Simulate a session that has already been reduced by loading the old scenario.
+        "structure": core_structure,
+        "items": old_items,
+        "scenarios": [
+            {"id": "sc-old", "name": "Older case", "savedAt": 1, "payload": old_payload},
+            {"id": "sc-current", "name": "Current case", "savedAt": 2, "payload": current_payload},
         ],
     }
 
@@ -470,6 +624,11 @@ def ppt_text_boxes(slide_xml, needle):
                 "y": int(off.attrib["y"]) / 914400,
                 "w": int(ext.attrib["cx"]) / 914400,
                 "h": int(ext.attrib["cy"]) / 914400,
+                "font_sizes": [
+                    int(node.attrib["sz"]) / 100
+                    for node in shape.findall(".//*[@sz]", ns)
+                    if node.attrib.get("sz", "").isdigit()
+                ],
             }
         )
     return boxes
@@ -541,7 +700,7 @@ def run_tests():
             ["START-004", "NAV-001", "STRUCT-001"],
             page.locator("#studio").is_visible()
             and page.locator("#segStruct.on").is_visible()
-            and visible_texts(page, ".seg button") == ["Structure", "Initiatives", "Roadmap", "Projected Savings", "Stacked Bar Chart"]
+            and visible_texts(page, ".seg button") == ["Structure", "Initiatives", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
             and "1 pillar" in text(page, "#structMeta")
             and "1 workstream" in text(page, "#structMeta"),
             "Blank start creates one pillar/workstream and opens Structure with tabs ordered Structure, Initiatives, Roadmap, Projected Savings, Stacked Bar Chart.",
@@ -593,6 +752,60 @@ def run_tests():
             page.locator("#studio").is_visible() and page.locator(".pillar-name").first.input_value() == "Product Requirements",
             "Resume last session reloads saved roadmap data.",
             "Resume last session did not restore saved roadmap data.",
+        )
+        ctx.close()
+
+        # Scenario loading must not let an older snapshot delete newer portfolio work.
+        ctx, page = new_context(browser, scenario_portfolio_state())
+        page.on("dialog", lambda dialog: dialog.accept())
+        page.select_option("#scenarioSelect", "sc-current")
+        page.wait_for_timeout(150)
+        recovered = page.evaluate(
+            """() => ({
+                count: S.items.length,
+                unique: new Set(S.items.map(item => item.id)).size,
+                hasNewest: S.items.some(item => item.id === 'i46'),
+                selectedValue: S.items.find(item => item.id === 'i1')?.value,
+                hasNewPillar: S.structure.some(pillar =>
+                    pillar.id === 'p2' && pillar.workstreams.some(workstream => workstream.id === 'w2'))
+            })"""
+        )
+        page.select_option("#scenarioSelect", "sc-old")
+        page.wait_for_timeout(150)
+        older = page.evaluate(
+            """() => ({
+                count: S.items.length,
+                unique: new Set(S.items.map(item => item.id)).size,
+                hasNewest: S.items.some(item => item.id === 'i46'),
+                selectedValue: S.items.find(item => item.id === 'i1')?.value,
+                hasNewPillar: S.structure.some(pillar =>
+                    pillar.id === 'p2' && pillar.workstreams.some(workstream => workstream.id === 'w2'))
+            })"""
+        )
+        page.select_option("#scenarioSelect", "sc-current")
+        page.wait_for_timeout(150)
+        repeated = page.evaluate(
+            """() => ({
+                count: S.items.length,
+                unique: new Set(S.items.map(item => item.id)).size,
+                selectedValue: S.items.find(item => item.id === 'i1')?.value
+            })"""
+        )
+        wait_autosave(page)
+        persisted = page.evaluate(
+            """() => {
+                const saved = JSON.parse(localStorage.getItem('roadmapStudio.v1'));
+                return {count: saved.items.length, unique: new Set(saved.items.map(item => item.id)).size};
+            }"""
+        )
+        runner.check(
+            "SCEN-001",
+            recovered == {"count": 46, "unique": 46, "hasNewest": True, "selectedValue": 2000, "hasNewPillar": True}
+            and older == {"count": 46, "unique": 46, "hasNewest": True, "selectedValue": 1000, "hasNewPillar": True}
+            and repeated == {"count": 46, "unique": 46, "selectedValue": 2000}
+            and persisted == {"count": 46, "unique": 46},
+            "Scenario switching preserves all 46 unique initiatives, restores missing structure, applies selected values, and autosaves the merged portfolio.",
+            f"Scenario switching lost or duplicated initiatives: recovered={recovered}, older={older}, repeated={repeated}, persisted={persisted}",
         )
         ctx.close()
 
@@ -929,6 +1142,50 @@ def run_tests():
 
         ctx, page = new_context(browser, seed_state())
         page.click("#segRoad")
+        inside_label = page.evaluate("""() => {
+          const it=S.items.find(item=>item.id==='i1');
+          it.name='Foil and Cookie Optimization Initiative';it.start=utc(2026,0,1);it.end=utc(2026,1,15);it.value=99000000;renderTimeline();
+          const label=document.querySelector('.bar-label[data-id="i1"]'),bar=document.querySelector('.bar-grab[data-id="i1"]');
+          if(!label||!bar)return null;const text=label.textContent,barWidth=Number(bar.getAttribute('width'));
+          return{placement:label.dataset.placement,text,full:label.dataset.fullLabel,barWidth,estimatedWidth:text.length*6.8,
+            x:Number(label.getAttribute('x')),barX:Number(bar.getAttribute('x'))};
+        }""")
+        page.locator(".bar-grab[data-id='i1']").hover()
+        runner.check(
+            "ROAD-015",
+            isinstance(inside_label, dict)
+            and inside_label.get("placement") == "inside"
+            and inside_label.get("text") != inside_label.get("full")
+            and "…" in inside_label.get("text", "")
+            and inside_label.get("estimatedWidth", 9999) <= inside_label.get("barWidth", 0) - 12
+            and inside_label.get("x", 0) > inside_label.get("barX", 0)
+            and "Foil and Cookie Optimization Initiative" in maybe_text(page, "#tip")
+            and "$99,000,000" in maybe_text(page, "#tip"),
+            "Short ranged initiatives keep a concise label inside the bar while the tooltip preserves full detail.",
+            f"Roadmap label escaped its bar or lost full hover detail: {inside_label}",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser, seed_state())
+        nav_layout = page.evaluate("""() => {const toolbar=document.querySelector('.toolbar'),tabs=document.querySelector('.seg'),brand=document.querySelector('.brand');
+          const tr=toolbar.getBoundingClientRect(),sr=tabs.getBoundingClientRect(),br=brand.getBoundingClientRect();
+          return{height:tr.height,tabsTop:sr.top,brandBottom:br.bottom,tabCount:tabs.querySelectorAll('button').length};}""")
+        page.set_viewport_size({"width": 390, "height": 844})
+        mobile_nav = page.evaluate("""() => ({height:document.querySelector('.toolbar').getBoundingClientRect().height,
+          scrollable:document.querySelector('.toolbar').scrollWidth>document.querySelector('.toolbar').clientWidth})""")
+        runner.check(
+            "NAV-001",
+            nav_layout.get("height", 0) >= 90
+            and nav_layout.get("tabsTop", 0) >= nav_layout.get("brandBottom", 999)
+            and nav_layout.get("tabCount") == 7
+            and mobile_nav == {"height": 54, "scrollable": True},
+            "Desktop view tabs occupy a full-width second row while mobile retains the compact horizontal toolbar.",
+            f"Sub-tab layout was not responsive as specified: desktop={nav_layout}, mobile={mobile_nav}",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser, seed_state())
+        page.click("#segRoad")
         page.evaluate("""() => {
           S.items = [
             {id:'r1', pillarId:'p1', wsId:'w1', name:'Sourcing A', start:utc(2026,0,1), end:utc(2026,2,31), valueType:'Savings', value:97000000, realizedPct:50, milestone:false, status:'On Track', owner:''},
@@ -975,7 +1232,7 @@ def run_tests():
         default_combined = maybe_text(page, "#projCombined")
         runner.check(
             "PROJ-001",
-            tabs == ["Structure", "Initiatives", "Roadmap", "Projected Savings", "Stacked Bar Chart"]
+            tabs == ["Structure", "Initiatives", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
             and projection_visible
             and page.locator("#segProj.on").count() == 1
             and not page.locator("#roadStage").is_visible()
@@ -1157,7 +1414,7 @@ def run_tests():
         stack_stage_text = maybe_text(page, "#stackStage")
         runner.check(
             "STACK-001",
-            tabs == ["Structure", "Initiatives", "Roadmap", "Projected Savings", "Stacked Bar Chart"]
+            tabs == ["Structure", "Initiatives", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
             and stack_visible
             and page.locator("#segStack.on").count() == 1
             and not page.locator("#projStage").is_visible()
@@ -1205,6 +1462,191 @@ def run_tests():
             "No financial values" in maybe_text(page, "#stackEmpty"),
             "Stacked bar tab shows a useful empty state when there are no positive financial values.",
             "Stacked bar empty state was missing.",
+        )
+        ctx.close()
+
+        # Executive summary: one reconciled dollar tracker toward the portfolio goal.
+        ctx, page = new_context(browser, portfolio_rollup_state())
+        tabs = visible_texts(page, ".seg button")
+        has_exec_tab = page.locator("#segExec").count() == 1
+        if has_exec_tab:
+            page.click("#segExec")
+        runner.check(
+            "EXEC-001",
+            tabs == ["Structure", "Initiatives", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
+            and has_exec_tab
+            and page.locator("#segExec.on").count() == 1
+            and page.locator("#execStage").is_visible()
+            and not page.locator("#roadStage").is_visible()
+            and not page.locator("#rollupStage").is_visible(),
+            "Executive Summary renders immediately before Portfolio Rollup and displays only the executive stage.",
+            "Executive Summary was missing, out of order, or did not isolate its stage.",
+        )
+        segment_values = (
+            page.locator("#execTrackerSvg .exec-segment").evaluate_all(
+                "els => els.map(el => Number(el.dataset.value || 0))"
+            )
+            if page.locator("#execTrackerSvg").count() else []
+        )
+        runner.check(
+            "EXEC-002",
+            maybe_text(page, "#execTotal") == "$300M"
+            and maybe_text(page, "#execApproved") == "$220M"
+            and maybe_text(page, "#execProposed") == "$80M"
+            and maybe_text(page, "#execRealized") == "$180M"
+            and len(segment_values) == 6
+            and sum(segment_values) == 300000000
+            and attr(page, "#execTrackerSvg .exec-segment[data-stage='realized'][data-type='Savings']", "data-value") == "60000000"
+            and attr(page, "#execTrackerSvg .exec-segment[data-stage='realized'][data-type='Avoidance']", "data-value") == "120000000"
+            and attr(page, "#execTrackerSvg .exec-segment[data-stage='approved'][data-type='Savings']", "data-value") == "60000000"
+            and attr(page, "#execTrackerSvg .exec-segment[data-stage='proposed'][data-type='Avoidance']", "data-value") == "60000000",
+            "Executive tracker reconciles all six non-overlapping Savings/Avoidance segments exactly to Total Portfolio.",
+            f"Executive tracker double-counted or misclassified value: segments={segment_values}",
+        )
+        initial_goal = page.locator("#execGoalInput").input_value() if page.locator("#execGoalInput").count() else ""
+        initial_axis_text = maybe_text(page, "#execTrackerSvg")
+        if page.locator("#execGoalInput").count():
+            page.locator("#execGoalInput").fill("$250M")
+            page.locator("#execGoalInput").dispatch_event("change")
+        runner.check(
+            "EXEC-003",
+            initial_goal == "$1,000,000,000"
+            and "$0" in initial_axis_text
+            and "$1B" in initial_axis_text
+            and "2026" not in initial_axis_text
+            and page.locator("#execGoalMarker[data-goal='250000000']").count() == 1
+            and "above the $250M goal" in maybe_text(page, "#execHeadline")
+            and page.evaluate("S.projectionTarget") == 250000000,
+            "Executive tracker uses a dollar axis, defaults to $1B, and updates the shared goal and headline when edited.",
+            "Executive goal marker, dollar axis, shared target, or gap headline was incorrect.",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser)
+        page.click("#btnBlank")
+        if page.locator("#segExec").count():
+            page.click("#segExec")
+        runner.check(
+            "EXEC-004",
+            "No portfolio value yet" in maybe_text(page, "#execEmpty")
+            and maybe_text(page, "#execTotal") == "$0"
+            and maybe_text(page, "#execApproved") == "$0"
+            and maybe_text(page, "#execProposed") == "$0"
+            and maybe_text(page, "#execRealized") == "$0",
+            "Executive Summary shows zero metrics and a useful empty state when no financial values exist.",
+            "Executive Summary empty state or zero metrics were missing.",
+        )
+        ctx.close()
+
+        # Portfolio rollup: derived approval, pillar totals, multi-year spans, and realized progress.
+        ctx, page = new_context(browser, portfolio_rollup_state())
+        tabs = visible_texts(page, ".seg button")
+        has_rollup_tab = page.locator("#segRollup").count() == 1
+        if has_rollup_tab:
+            page.click("#segRollup")
+        runner.check(
+            "ROLLUP-001",
+            tabs == ["Structure", "Initiatives", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
+            and has_rollup_tab
+            and page.locator("#segRollup.on").count() == 1
+            and page.locator("#rollupStage").is_visible()
+            and not page.locator("#roadStage").is_visible()
+            and not page.locator("#projStage").is_visible(),
+            "Portfolio Rollup tab renders immediately after Roadmap and displays only the rollup stage.",
+            "Portfolio Rollup tab was missing, out of order, or did not isolate its stage.",
+        )
+        runner.check(
+            "ROLLUP-003",
+            maybe_text(page, "#rollupTotal") == "$300M"
+            and maybe_text(page, "#rollupApproved") == "$220M"
+            and maybe_text(page, "#rollupProposed") == "$80M"
+            and maybe_text(page, "#rollupRealized") == "$180M"
+            and "1 Approved · $120M" in maybe_text(page, ".rollup-pillar[data-pillar='p1']")
+            and "1 Proposed · $80M" in maybe_text(page, ".rollup-pillar[data-pillar='p1']")
+            and "Savings" in maybe_text(page, "#rollupStage")
+            and "Avoidance" in maybe_text(page, "#rollupStage"),
+            "Portfolio and pillar rollup totals include both Savings and Avoidance by approval state.",
+            "Portfolio or pillar approval totals were missing or incorrect.",
+        )
+        runner.check(
+            "ROLLUP-004",
+            page.locator("#rollupSvg .rollup-bar[data-pillar='p1'][data-approval='Approved'][data-count='1'][data-start-year='2026'][data-end-year='2028']").count() == 1
+            and page.locator("#rollupSvg .rollup-bar[data-pillar='p1'][data-approval='Proposed'][data-count='1'][data-start-year='2027'][data-end-year='2029']").count() == 1
+            and page.locator("#rollupSvg .rollup-bar[data-pillar='p2'][data-approval='Approved'][data-count='1'][data-start-year='2026'][data-end-year='2030']").count() == 1,
+            "Aggregate approval bars span the earliest start through latest end in each pillar bucket.",
+            "One or more aggregate approval bars used the wrong count or multi-year span.",
+        )
+        runner.check(
+            "ROLLUP-005",
+            page.locator("#rollupSvg .rollup-realized[data-pillar='p1'][data-approval='Approved'][data-realized-pct='50']").count() == 1
+            and page.locator("#rollupSvg .rollup-realized[data-pillar='p1'][data-approval='Proposed'][data-realized-pct='25']").count() == 1
+            and page.locator("#rollupSvg .rollup-realized[data-pillar='p2'][data-approval='Approved'][data-realized-pct='100']").count() == 1,
+            "Aggregate bars layer the correct realized share of pillar approval value.",
+            "Aggregate realized progress layers were missing or used the wrong percentages.",
+        )
+        rollup_visible_text = " ".join(page.locator("#rollupSvg text").evaluate_all("els => els.map(el => el.textContent || '')"))
+        runner.check(
+            "ROLLUP-006",
+            page.locator("#rollupSvg .rollup-bar").count() == 3
+            and page.locator("#rollupSvg .rollup-bar[data-pillar='p1'][data-approval='Approved']").count() == 1
+            and page.locator("#rollupSvg .rollup-bar[data-pillar='p1'][data-approval='Proposed']").count() == 1
+            and "Packaging redesign" not in rollup_visible_text
+            and "Freight exposure" not in rollup_visible_text
+            and "1 initiative · $120M · Savings $120M · Avoidance $0" in rollup_visible_text,
+            "Portfolio Rollup renders one aggregate bar per non-empty pillar approval bucket without initiative-level labels.",
+            "Portfolio Rollup still showed initiative-level marks or omitted the aggregate financial label.",
+        )
+        page.click("#segData")
+        approval_selects_exist = (
+            page.locator("tr[data-id='ru1'] select[data-f='approval']").count() == 1
+            and page.locator("tr[data-id='ru2'] select[data-f='approval']").count() == 1
+        )
+        initial_approval = (
+            page.locator("tr[data-id='ru1'] select[data-f='approval']").input_value()
+            if approval_selects_exist else ""
+        )
+        initial_proposal = (
+            page.locator("tr[data-id='ru2'] select[data-f='approval']").input_value()
+            if approval_selects_exist else ""
+        )
+        if approval_selects_exist:
+            page.select_option("tr[data-id='ru1'] select[data-f='approval']", "Proposed")
+            page.select_option("tr[data-id='ru2'] select[data-f='approval']", "Approved")
+            wait_autosave(page)
+        persisted_approval = page.evaluate("""() => {
+          const saved=JSON.parse(localStorage.getItem('roadmapStudio.v1')||'{}');
+          return Object.fromEntries((saved.items||[]).map(it=>[it.id,it.approval]));
+        }""")
+        page.click("#segRollup")
+        runner.check(
+            "ROLLUP-002",
+            approval_selects_exist
+            and initial_approval == "Approved"
+            and initial_proposal == "Proposed"
+            and persisted_approval.get("ru1") == "Proposed"
+            and persisted_approval.get("ru2") == "Approved"
+            and maybe_text(page, "#rollupApproved") == "$180M"
+            and maybe_text(page, "#rollupProposed") == "$120M"
+            and page.locator("#rollupSvg .rollup-bar[data-pillar='p1'][data-approval='Proposed'][data-count='1']").count() == 1
+            and page.locator("#rollupSvg .rollup-bar[data-pillar='p1'][data-approval='Approved'][data-count='1']").count() == 1,
+            "Approval is selectable, persists locally, and immediately updates rollup lanes and totals.",
+            "Approval selection was unavailable, did not persist, or did not update the rollup.",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser, narrow_portfolio_rollup_state())
+        page.click("#segRollup")
+        narrow_label = " ".join(page.locator("#rollupSvg text").evaluate_all("els => els.map(el => el.textContent || '')"))
+        narrow_tooltip = maybe_text(page, "#rollupSvg .rollup-bar[data-count='3'] title")
+        runner.check(
+            "ROLLUP-007",
+            page.locator("#rollupSvg .rollup-bar[data-count='3']").count() == 1
+            and page.locator("#rollupSvg text[textLength], #rollupSvg text[lengthAdjust]").count() == 0
+            and "3 · $0" in narrow_label
+            and "3 initiatives · $0 · Savings $0 · Avoidance $0" not in narrow_label
+            and "3 initiatives · $0 · Savings $0 · Avoidance $0" in narrow_tooltip,
+            "Narrow aggregate bars use concise natural-width labels while preserving the full financial summary in the tooltip.",
+            "A narrow aggregate bar compressed the full label or lost its complete tooltip details.",
         )
         ctx.close()
 
@@ -1290,15 +1732,17 @@ def run_tests():
         with zipfile.ZipFile(ppt_path) as zf:
             slide_names = sorted(name for name in zf.namelist() if name.startswith("ppt/slides/slide") and name.endswith(".xml"))
             slide_xml = "\n".join(zf.read(name).decode("utf-8", "ignore") for name in slide_names)
-            projection_slide_xml = zf.read("ppt/slides/slide3.xml").decode("utf-8", "ignore")
-            stacked_slide_xml = zf.read("ppt/slides/slide4.xml").decode("utf-8", "ignore")
+            executive_slide_xml = zf.read("ppt/slides/slide1.xml").decode("utf-8", "ignore") if "ppt/slides/slide6.xml" in zf.namelist() else ""
+            rollup_slide_xml = zf.read("ppt/slides/slide2.xml").decode("utf-8", "ignore") if "ppt/slides/slide6.xml" in zf.namelist() else ""
+            projection_slide_xml = zf.read("ppt/slides/slide5.xml").decode("utf-8", "ignore") if "ppt/slides/slide6.xml" in zf.namelist() else ""
+            stacked_slide_xml = zf.read("ppt/slides/slide6.xml").decode("utf-8", "ignore") if "ppt/slides/slide6.xml" in zf.namelist() else ""
         repair_extents = pptx_negative_extents(ppt_path)
         runner.check(
             "EXPORT-004",
             ppt_path.exists()
             and ppt_path.stat().st_size > 1000
             and ppt_download.suggested_filename.endswith(".pptx")
-            and len(slide_names) == 4
+            and len(slide_names) == 6
             and "Product Requirements" in slide_xml
             and "Vertical Integration" in slide_xml
             and "Foam Cup Damage" in slide_xml
@@ -1312,7 +1756,7 @@ def run_tests():
         )
         runner.check(
             "EXPORT-006",
-            len(slide_names) == 4
+            len(slide_names) == 6
             and "Projected savings trajectory" in slide_xml
             and "Savings only" in slide_xml
             and "Savings + Avoidance" in slide_xml
@@ -1320,6 +1764,37 @@ def run_tests():
             and "Product Requirements" in slide_xml,
             "PowerPoint export includes Projected Savings and Stacked Bar Chart slides after the pillar roadmap slides.",
             "PowerPoint export did not include readable projection and stacked chart slides.",
+        )
+        runner.check(
+            "EXPORT-011",
+            "Portfolio Rollup" in rollup_slide_xml
+            and "APPROVED" in rollup_slide_xml
+            and "PROPOSED" in rollup_slide_xml
+            and "REALIZED" in rollup_slide_xml
+            and "Product Requirements" in rollup_slide_xml
+            and "2 initiatives" in rollup_slide_xml
+            and "Foam Cup Damage" not in rollup_slide_xml
+            and "Carrier Contract Risk" not in rollup_slide_xml,
+            "PowerPoint includes an executive aggregate Portfolio Rollup slide after the pillar roadmap slides.",
+            "PowerPoint Portfolio Rollup slide was missing, misplaced, or incomplete.",
+        )
+        runner.check(
+            "EXPORT-013",
+            "Executive Summary" in executive_slide_xml
+            and "PATH TO PORTFOLIO GOAL" in executive_slide_xml
+            and "Portfolio is $998.6M short of the $1B goal" in executive_slide_xml
+            and "TOTAL PORTFOLIO" in executive_slide_xml
+            and "APPROVED" in executive_slide_xml
+            and "PROPOSED" in executive_slide_xml
+            and "REALIZED" in executive_slide_xml
+            and "How the portfolio builds to $1.4M" in executive_slide_xml
+            and "$1B goal" in executive_slide_xml
+            and "Realized · $820K" in executive_slide_xml
+            and "Approved remaining · $550K" in executive_slide_xml
+            and "Proposed remaining · $0" in executive_slide_xml
+            and "Portfolio Rollup" in rollup_slide_xml,
+            "PowerPoint opens with a web-parity Executive Summary followed by Portfolio Rollup.",
+            "PowerPoint Executive Summary was missing, out of order, or did not mirror the web financial story.",
         )
         runner.check(
             "EXPORT-007",
@@ -1353,6 +1828,69 @@ def run_tests():
             """state => {
                 deserializeInto(state);
                 enterStudio();
+                setTab('rollup');
+            }""",
+            ppt_portfolio_rollup_stage_state(),
+        )
+        with page.expect_download() as dl_info:
+            page.click("#pptBtn")
+        stage_download = dl_info.value
+        stage_path = ARTIFACTS / "downloads" / stage_download.suggested_filename
+        stage_download.save_as(stage_path)
+        with zipfile.ZipFile(stage_path) as zf:
+            stage_exec_xml = zf.read("ppt/slides/slide1.xml").decode("utf-8", "ignore")
+            stage_rollup_xml = zf.read("ppt/slides/slide2.xml").decode("utf-8", "ignore")
+        compact_labels = ppt_text_boxes(stage_rollup_xml, "3 · $0")
+        pillar_boxes = ppt_text_boxes(stage_rollup_xml, "Vertical Integration")
+        title_boxes = ppt_text_boxes(stage_rollup_xml, "Portfolio Rollup")
+        stage_repair_extents = pptx_negative_extents(stage_path)
+        stage_exec_titles = ppt_text_boxes(stage_exec_xml, "Executive Summary")
+        stage_exec_headlines = ppt_text_boxes(stage_exec_xml, "Portfolio is")
+        stage_exec_tracker_titles = ppt_text_boxes(stage_exec_xml, "How the portfolio builds")
+        stage_exec_goal = [box for box in ppt_text_boxes(stage_exec_xml, "$1B goal") if box["text"] == "$1B goal"]
+        runner.check(
+            "EXPORT-014",
+            len(stage_exec_titles) == 1
+            and max(stage_exec_titles[0]["font_sizes"], default=0) >= 24
+            and len(stage_exec_headlines) == 1
+            and max(stage_exec_headlines[0]["font_sizes"], default=0) >= 22
+            and len(stage_exec_tracker_titles) == 1
+            and len(stage_exec_goal) == 1
+            and "Savings $" in stage_exec_xml
+            and "Avoidance $" in stage_exec_xml
+            and "Darker = more certain" in stage_exec_xml
+            and "Realized" in stage_exec_xml
+            and "Approved remaining" in stage_exec_xml
+            and "Proposed remaining" in stage_exec_xml
+            and not stage_repair_extents,
+            "Executive Summary PowerPoint preserves the web hierarchy, readable type, reconciled tracker, and repair-safe geometry.",
+            f"Executive Summary slide diverged from the web view or became unsafe; titles={stage_exec_titles}, headlines={stage_exec_headlines}, tracker={stage_exec_tracker_titles}, goal={stage_exec_goal}, extents={stage_repair_extents[:3]}",
+        )
+        runner.check(
+            "EXPORT-012",
+            stage_path.exists()
+            and stage_path.stat().st_size > 1000
+            and len(title_boxes) == 1
+            and max(title_boxes[0]["font_sizes"], default=0) >= 24
+            and "Selected as approved" in stage_rollup_xml
+            and "Selected as proposed" in stage_rollup_xml
+            and "Captured to date" in stage_rollup_xml
+            and len(compact_labels) == 1
+            and 0.35 <= compact_labels[0]["w"] <= 0.95
+            and max(compact_labels[0]["font_sizes"], default=0) >= 8.5
+            and "3 initiatives · $0 · Savings $0 · Avoidance $0" not in stage_rollup_xml
+            and len(pillar_boxes) == 1
+            and max(pillar_boxes[0]["font_sizes"], default=0) >= 12
+            and "% of portfolio value is approved" not in stage_rollup_xml
+            and not stage_repair_extents,
+            "Portfolio Rollup PowerPoint faithfully mirrors the web tab and uses a readable compact label for short timeline spans.",
+            f"Portfolio Rollup PowerPoint diverged from the web tab or became unreadable; title={title_boxes}, compact={compact_labels}, pillars={pillar_boxes}, extents={stage_repair_extents[:3]}",
+        )
+
+        page.evaluate(
+            """state => {
+                deserializeInto(state);
+                enterStudio();
                 setTab('road');
             }""",
             ppt_same_workstream_state(),
@@ -1364,21 +1902,32 @@ def run_tests():
         same_path = ARTIFACTS / "downloads" / same_download.suggested_filename
         same_download.save_as(same_path)
         with zipfile.ZipFile(same_path) as zf:
-            same_slide_xml = zf.read("ppt/slides/slide1.xml").decode("utf-8", "ignore")
-        same_boxes = ppt_text_boxes(same_slide_xml, "Future Price Renewal Playbook")
+            same_slide_xml = zf.read("ppt/slides/slide3.xml").decode("utf-8", "ignore")
+        same_boxes = ppt_text_boxes(same_slide_xml, "Future")
         readable_same_workstream_labels = (
             len(same_boxes) == 2
             and len({round(box["y"], 2) for box in same_boxes}) == 2
-            and all(box["w"] >= 2.0 for box in same_boxes)
-            and all(box["x"] < 11.0 for box in same_boxes)
+            and len({box["text"] for box in same_boxes}) == 2
+            and all(box["x"] + box["w"] <= 12.65 for box in same_boxes)
         )
         runner.check(
             "EXPORT-005",
             same_path.exists()
             and same_path.stat().st_size > 1000
             and readable_same_workstream_labels,
-            "PowerPoint export keeps two same-workstream initiative labels in readable stacked lanes.",
-            f"Same-workstream PowerPoint labels were not readable; observed boxes: {same_boxes}",
+            "PowerPoint export keeps two same-workstream initiatives in distinct lanes with distinct concise labels.",
+            f"Same-workstream PowerPoint labels were not distinct or readable; observed boxes: {same_boxes}",
+        )
+        compact_boxes = ppt_text_boxes(same_slide_xml, "Future")
+        runner.check(
+            "EXPORT-010",
+            len(compact_boxes) == 2
+            and len({box["text"] for box in compact_boxes}) == 2
+            and len({round(box["y"], 2) for box in compact_boxes}) == 2
+            and all(0.15 <= box["w"] < 1.5 for box in compact_boxes)
+            and all(box["x"] + box["w"] <= 12.65 for box in compact_boxes),
+            "PowerPoint pillar slides keep distinct concise initiative labels inside narrow ranged bars.",
+            f"PowerPoint labels were not distinct, concise, or contained: {compact_boxes}",
         )
 
         # Presentation mode.
