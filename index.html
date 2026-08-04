@@ -233,6 +233,14 @@ table.grid th .col-resizer{position:absolute;right:0;top:0;width:6px;height:100%
 table.grid th .col-resizer:hover{background:rgba(0,113,227,.25)}
 table.grid th.sticky-col,table.grid td.sticky-col{position:sticky;left:0;background:var(--surface);z-index:4;box-shadow:1px 0 0 var(--hairline)}
 table.grid th.sticky-col{z-index:6}
+.total-switch{position:relative;display:inline-flex;align-items:center;justify-content:center;width:34px;height:20px;cursor:pointer}
+.total-switch input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;z-index:1}
+.total-switch span{display:block;width:32px;height:18px;border-radius:999px;background:#d1d1d6;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);transition:background .16s var(--spring)}
+.total-switch span:after{content:"";display:block;width:14px;height:14px;margin:2px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.22);transition:transform .16s var(--spring)}
+.total-switch input:checked+span{background:#188038}
+.total-switch input:checked+span:after{transform:translateX(14px)}
+.total-switch input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+table.grid tr.excluded-from-totals td[data-total-cell]{background:#f5f5f7}
 .grid-meta-row{display:flex;align-items:baseline;gap:14px;margin-bottom:12px;flex-wrap:wrap}
 .grid-meta-row h2{font-size:22px;font-weight:600;letter-spacing:-.02em}
 #gridStage .stage-head{max-width:none}
@@ -603,14 +611,14 @@ table.grid th.sticky-col{z-index:6}
 const S = { view:'start', structure:[], items:[], collapsedPillars:{}, fyStart:6, tab:'struct', projectionEnd:null, projectionTarget:'', projectionShowRealized:true,
   weightConfidence:true, showBaseline:true, roadmapGroup:'structure',
   filters:{q:'',status:'',owner:'',pillarId:'',valueType:''}, tableDensity:'comfortable',
-  colWidths:{name:200,pillar:150,ws:150,start:128,end:128,mile:52,status:118,approval:112,valueType:120,value:120,realized:90,confidence:88,owner:110},
+  colWidths:{name:200,pillar:150,ws:150,start:128,end:128,mile:52,status:118,approval:112,valueType:120,value:120,include:88,realized:90,confidence:88,owner:110},
   scenarios:[], baseline:null, drawerId:null,
   history:[], future:[], presenting:false, dark:false, seq:1, fileName:null };
 const STATUSES = ['Not Started','On Track','At Risk','Complete'];
 const APPROVAL_STATES = ['Approved','Proposed'];
 const VALUE_TYPES = ['Savings','Avoidance'];
 const CONFIDENCE_PRESETS = [{label:'High',pct:100},{label:'Med',pct:70},{label:'Low',pct:40}];
-const DEFAULT_COL_WIDTHS = {name:200,pillar:150,ws:150,start:128,end:128,mile:52,status:118,approval:112,valueType:120,value:120,realized:90,confidence:88,owner:110};
+const DEFAULT_COL_WIDTHS = {name:200,pillar:150,ws:150,start:128,end:128,mile:52,status:118,approval:112,valueType:120,value:120,include:88,realized:90,confidence:88,owner:110};
 const $ = id => document.getElementById(id);
 const MS_DAY = 86400000;
 const uid = p => p + (S.seq++);
@@ -691,6 +699,9 @@ function realizedValue(it,type){ const value=parseMoney(it.value);
 function realizedSavingsValue(it){ return realizedValue(it,'Savings'); }
 function realizedAvoidanceValue(it){ return realizedValue(it,'Avoidance'); }
 function itemValue(it){ const v=parseMoney(it.value); return v===''?0:v; }
+function isIncludedInTotals(it){ return !it||it.includeInTotals!==false; }
+function totalItemValue(it){ return isIncludedInTotals(it)?itemValue(it):0; }
+function totalRealizedItemValue(it,date=todayUtc()){ return isIncludedInTotals(it)?realizedItemValue(it,date):0; }
 function normApproval(v,status='Not Started'){
   const s=textOf(v).trim().toLowerCase();
   if(s==='approved')return'Approved';
@@ -714,6 +725,7 @@ function annualizedValue(it){
 }
 function pillarFinancialTotals(pillarId){ const totals={Savings:0,Avoidance:0,Realized:0};
   S.items.filter(it=>it.pillarId===pillarId).forEach(it=>{
+    if(!isIncludedInTotals(it))return;
     const value=parseMoney(it.value), type=normValueType(it.valueType);
     if(value!=='')totals[type]+=value;
     totals.Realized+=realizedSavingsValue(it)+realizedAvoidanceValue(it);
@@ -744,7 +756,7 @@ function filteredItems(){
 }
 function healthSummary(){
   const out={}; STATUSES.forEach(s=>out[s]={count:0,value:0});
-  S.items.forEach(it=>{ const st=normStatus(it.status); out[st].count++; out[st].value+=itemValue(it); });
+  S.items.forEach(it=>{ const st=normStatus(it.status); out[st].count++; out[st].value+=totalItemValue(it); });
   return out;
 }
 function clonePlanPayload(){
@@ -794,6 +806,7 @@ function applyPlanPayload(o){
       start:raw.start?(raw.start instanceof Date?raw.start:parseAnyDate(raw.start,'start',S.fyStart)):null,
       end:raw.end?(raw.end instanceof Date?raw.end:parseAnyDate(raw.end,'end',S.fyStart)):null,
       valueType:normValueType(raw.valueType), value:parseMoney(raw.value),
+      includeInTotals:raw.includeInTotals!==false,
       realizedPct:parsePercent(raw.realizedPct), confidence:parseConfidence(raw.confidence),
       phases:normalizePhases(raw.phases), milestone:!!raw.milestone,
       status:normStatus(raw.status||'Not Started'), approval:normApproval(raw.approval,raw.status), owner:textOf(raw.owner),
@@ -913,8 +926,8 @@ function renderAll(){ if(S.view!=='studio')return;
 }
 function renderLegendTotals(){
   const totals={RealizedSavings:0,RealizedAvoidance:0,Savings:0,Avoidance:0};
-  S.items.forEach(it=>{ const v=parseMoney(it.value); if(v!=='')totals[normValueType(it.valueType)]+=v; });
-  S.items.forEach(it=>{ totals.RealizedSavings+=realizedSavingsValue(it); totals.RealizedAvoidance+=realizedAvoidanceValue(it); });
+  S.items.filter(isIncludedInTotals).forEach(it=>{ const v=parseMoney(it.value); if(v!=='')totals[normValueType(it.valueType)]+=v; });
+  S.items.filter(isIncludedInTotals).forEach(it=>{ totals.RealizedSavings+=realizedSavingsValue(it); totals.RealizedAvoidance+=realizedAvoidanceValue(it); });
   $('realizedSavingsTotal').textContent=fmtMoneyShort(totals.RealizedSavings,true);
   $('realizedAvoidanceTotal').textContent=fmtMoneyShort(totals.RealizedAvoidance,true);
   $('savingsTotal').textContent=fmtMoneyShort(totals.Savings);
@@ -927,6 +940,7 @@ function projectionDateOf(it,field){ const v=it[field]; return v instanceof Date
 function projectionFinancialItems(items=S.items, opts={}){
   const weight=opts.weightConfidence!=null?opts.weightConfidence:S.weightConfidence!==false;
   return items.map(it=>{
+    if(!isIncludedInTotals(it))return null;
     let value=parseMoney(it.value); const start=projectionDateOf(it,'start'), milestone=!!it.milestone;
     const end=milestone?start:projectionDateOf(it,'end');
     if(value===''||!start||!end||(!milestone&&end<start))return null;
@@ -1139,6 +1153,7 @@ function stackedPillarRows(){
   return S.structure.map((p,idx)=>{
     let savings=0, avoidance=0;
     S.items.filter(it=>it.pillarId===p.id).forEach(it=>{
+      if(!isIncludedInTotals(it))return;
       const value=parseMoney(it.value); if(value===''||value<=0)return;
       if(normValueType(it.valueType)==='Avoidance')avoidance+=value; else savings+=value;
     });
@@ -1195,6 +1210,7 @@ function executiveSummaryData(){
   const buckets={realized:{Savings:0,Avoidance:0},approved:{Savings:0,Avoidance:0},proposed:{Savings:0,Avoidance:0}};
   let count=0;
   S.items.forEach(it=>{
+    if(!isIncludedInTotals(it))return;
     const value=Math.max(0,itemValue(it)); if(value<=0)return;
     const type=normValueType(it.valueType), approval=approvalStatus(it);
     const realized=Math.max(0,Math.min(value,realizedItemValue(it)));
@@ -1283,7 +1299,7 @@ function portfolioRollupData(){
     let end=it.milestone?start:projectionDateOf(it,'end');
     if(!start)return null;
     if(!end||end<start)end=start;
-    const value=itemValue(it), realized=realizedItemValue(it);
+    const value=totalItemValue(it), realized=totalRealizedItemValue(it);
     return{source:it,start,end,value,realized,realizedPct:value?clampPercent(realized/value*100):0,
       approval:approvalStatus(it),type:normValueType(it.valueType)};
   }).filter(Boolean);
@@ -1392,6 +1408,7 @@ function snapshot(){ return JSON.stringify({structure:S.structure,
 function restore(s){ const o=JSON.parse(s); S.structure=o.structure;
   S.items=o.items.map(i=>cleanItem({...i,start:i.start?parseAnyDate(i.start,'start',S.fyStart):null,
     end:i.end?parseAnyDate(i.end,'end',S.fyStart):null,value:parseMoney(i.value),realizedPct:parsePercent(i.realizedPct),
+    includeInTotals:i.includeInTotals!==false,
     confidence:parseConfidence(i.confidence),phases:normalizePhases(i.phases)})); refreshOwners(); renderAll(); }
 function pushUndo(){ S.history.push(snapshot()); if(S.history.length>150)S.history.shift(); S.future=[]; }
 function undo(){ if(!S.history.length)return; S.future.push(snapshot()); restore(S.history.pop()); }
@@ -1590,9 +1607,9 @@ function renderTimeline(){
         const top=H, h=subs*ROW_H+WS_PAD; H+=h;
         wlanes.push({w:{name:items.length?`${items.length} initiative${items.length===1?'':'s'}`:'No initiatives'},items,top,h});
       }
-      const sav=items.reduce((s,it)=>s+(normValueType(it.valueType)==='Savings'?itemValue(it):0),0);
-      const avo=items.reduce((s,it)=>s+(normValueType(it.valueType)==='Avoidance'?itemValue(it):0),0);
-      const real=items.reduce((s,it)=>s+realizedSavingsValue(it)+realizedAvoidanceValue(it),0);
+      const sav=items.reduce((s,it)=>s+(isIncludedInTotals(it)&&normValueType(it.valueType)==='Savings'?itemValue(it):0),0);
+      const avo=items.reduce((s,it)=>s+(isIncludedInTotals(it)&&normValueType(it.valueType)==='Avoidance'?itemValue(it):0),0);
+      const real=items.reduce((s,it)=>s+(isIncludedInTotals(it)?realizedSavingsValue(it)+realizedAvoidanceValue(it):0),0);
       lanes.push({p:{id:'owner:'+owner,name:owner},pTop,wlanes,bottom:H,collapsed,ft:{Savings:sav,Avoidance:avo,Realized:real},ownerMode:true});
     });
   } else {
@@ -1668,7 +1685,7 @@ function bindTimeline(){ const el=$('tlSvg'); if(!el)return; const tip=$('tip');
     const p=pillarOf(it.pillarId), w=wsOf(it.pillarId,it.wsId);
     const money=fmtMoney(it.value);
     const phases=normalizePhases(it.phases);
-    tip.innerHTML=`<b>${esc(it.name)}</b><span class="t2">${esc(p?p.name:'')}${w?' · '+esc(w.name):''}</span><br>${it.milestone?fmtDate(it.start):fmtDate(it.start)+' – '+fmtDate(it.end)}<br>${esc(normValueType(it.valueType))}${money?' · '+esc(money):''} · Conf ${esc(fmtConfidence(it.confidence))}<br>${esc(it.status)}${it.owner?' · '+esc(it.owner):''}${phases.length?`<br>Phases: ${phases.length}`:''}<br><span class="t2">Click to edit</span>`;
+    tip.innerHTML=`<b>${esc(it.name)}</b><span class="t2">${esc(p?p.name:'')}${w?' · '+esc(w.name):''}</span><br>${it.milestone?fmtDate(it.start):fmtDate(it.start)+' – '+fmtDate(it.end)}<br>${esc(normValueType(it.valueType))}${money?' · '+esc(money):''} · Conf ${esc(fmtConfidence(it.confidence))}<br>${esc(it.status)}${it.owner?' · '+esc(it.owner):''}${!isIncludedInTotals(it)?'<br><span class="t2">Excluded from portfolio totals</span>':''}${phases.length?`<br>Phases: ${phases.length}`:''}<br><span class="t2">Click to edit</span>`;
     tip.style.display='block'; const r=tip.getBoundingClientRect(); let x=e.clientX+14,y=e.clientY+14;
     if(x+r.width>innerWidth-8)x=e.clientX-r.width-14; if(y+r.height>innerHeight-8)y=e.clientY-r.height-14;
     tip.style.left=x+'px';tip.style.top=y+'px'; });
@@ -1749,7 +1766,7 @@ function renderGrid(){
     $('addRow').onclick=addRow; return;
   }
   const rows=items.map((it,i)=>`
-    <tr data-id="${it.id}">
+    <tr data-id="${it.id}" class="${isIncludedInTotals(it)?'':'excluded-from-totals'}">
       <td class="rownum">${S.items.indexOf(it)+1}</td>
       <td class="sticky-col" style="width:${colW('name')}px;min-width:${colW('name')}px"><input class="cell-in" data-f="name" value="${esc(it.name)}" aria-label="Initiative"></td>
       <td style="width:${colW('pillar')}px;min-width:${colW('pillar')}px"><select class="cell-in" data-f="pillarId" aria-label="Pillar">${S.structure.map(p=>`<option value="${p.id}" ${p.id===it.pillarId?'selected':''}>${esc(p.name)}</option>`).join('')}</select></td>
@@ -1761,6 +1778,7 @@ function renderGrid(){
       <td style="width:${colW('approval')}px;min-width:${colW('approval')}px"><select class="cell-in" data-f="approval" aria-label="Approval">${APPROVAL_STATES.map(v=>`<option ${v===approvalStatus(it)?'selected':''}>${v}</option>`).join('')}</select></td>
       <td style="width:${colW('valueType')}px;min-width:${colW('valueType')}px"><select class="cell-in" data-f="valueType" aria-label="Savings or avoidance">${VALUE_TYPES.map(v=>`<option ${v===normValueType(it.valueType)?'selected':''}>${v}</option>`).join('')}</select></td>
       <td style="width:${colW('value')}px;min-width:${colW('value')}px"><input class="cell-in money-in" data-f="value" inputmode="decimal" value="${esc(fmtMoney(it.value))}" aria-label="Savings or avoidance dollar value" placeholder="$0"></td>
+      <td data-total-cell style="text-align:center;width:${colW('include')}px;min-width:${colW('include')}px"><label class="total-switch" title="${isIncludedInTotals(it)?'Included in portfolio financial totals':'Excluded from portfolio financial totals'}"><input type="checkbox" data-f="includeInTotals" ${isIncludedInTotals(it)?'checked':''} aria-label="Include ${esc(it.name)} in portfolio totals"><span aria-hidden="true"></span></label></td>
       <td style="width:${colW('realized')}px;min-width:${colW('realized')}px"><input class="cell-in money-in" data-f="realizedPct" inputmode="decimal" value="${esc(fmtPercent(it.realizedPct))}" aria-label="Percentage realized" placeholder="0%" title="${normalizePhases(it.phases).length?'Overridden by time-phased schedule in drawer':''}"></td>
       <td style="width:${colW('confidence')}px;min-width:${colW('confidence')}px"><select class="cell-in" data-f="confidence" aria-label="Confidence">${CONFIDENCE_PRESETS.map(c=>`<option value="${c.pct}" ${parseConfidence(it.confidence)===c.pct?'selected':''}>${c.label} (${c.pct}%)</option>`).join('')}<option value="${parseConfidence(it.confidence)}" ${![100,70,40].includes(parseConfidence(it.confidence))?'selected':''}>Custom ${parseConfidence(it.confidence)}%</option></select></td>
       <td style="width:${colW('owner')}px;min-width:${colW('owner')}px"><input class="cell-in" data-f="owner" list="ownerList" value="${esc(it.owner)}" aria-label="Owner"></td>
@@ -1772,7 +1790,7 @@ function renderGrid(){
       </div></td>
     </tr>`).join('');
   body.innerHTML=`<div class="grid-wrap"><table class="grid${dense}" id="initGrid">
-    <thead><tr><th style="width:34px"></th>${th('Initiative','name')}${th('Pillar','pillar')}${th('Workstream','ws')}${th('Start','start')}${th('End','end')}${th('Mile­stone','mile','text-align:center')}${th('Status','status')}${th('Approval','approval','text-align:center')}${th('Savings / Avoidance','valueType')}${th('$ Value','value')}${th('% Realized','realized')}${th('Conf.','confidence')}${th('Owner','owner')}<th></th></tr></thead>
+    <thead><tr><th style="width:34px"></th>${th('Initiative','name')}${th('Pillar','pillar')}${th('Workstream','ws')}${th('Start','start')}${th('End','end')}${th('Mile­stone','mile','text-align:center')}${th('Status','status')}${th('Approval','approval','text-align:center')}${th('Savings / Avoidance','valueType')}${th('$ Value','value')}${th('In totals','include','text-align:center')}${th('% Realized','realized')}${th('Conf.','confidence')}${th('Owner','owner')}<th></th></tr></thead>
     <tbody>${rows}</tbody></table>
     <div class="grid-foot"><button class="btn" id="addRow">Add initiative</button></div></div>`;
   body.querySelectorAll('.cell-in,input[type=checkbox]').forEach(inp=>inp.addEventListener('change',()=>{
@@ -1781,6 +1799,7 @@ function renderGrid(){
       if(it.milestone&&f==='start')it.end=it.start;
       if(it.start&&it.end&&it.end<it.start){ f==='start'?it.end=it.start:it.start=it.end; } }
     else if(f==='milestone'){ it.milestone=inp.checked; if(inp.checked)it.end=it.start; }
+    else if(f==='includeInTotals')it.includeInTotals=inp.checked;
     else if(f==='pillarId'){ it.pillarId=inp.value; const p=pillarOf(inp.value); it.wsId=p.workstreams[0]?.id; }
     else if(f==='value')it.value=parseMoney(inp.value);
     else if(f==='realizedPct')it.realizedPct=parsePercent(inp.value);
@@ -1822,7 +1841,7 @@ function addRow(){ pushUndo();
   const today=new Date(),t=utc(today.getFullYear(),today.getMonth(),today.getDate());
   const p=S.structure[0]; const w=p.workstreams[0];
   S.items.push({id:uid('i'),pillarId:p.id,wsId:w.id,name:'New initiative',start:t,end:addDays(t,90),
-    valueType:'Savings',value:'',realizedPct:'',confidence:100,phases:[],milestone:false,status:'Not Started',approval:'Proposed',owner:''});
+    valueType:'Savings',value:'',includeInTotals:true,realizedPct:'',confidence:100,phases:[],milestone:false,status:'Not Started',approval:'Proposed',owner:''});
   renderAll();
   $('gridBody').querySelector('tbody tr:last-child input[data-f=name]')?.focus();
 }
@@ -2087,87 +2106,75 @@ function addPptPillarSlide(pptx,p,idx,total){ const slide=pptx.addSlide(), total
 function addPptExecutiveSummarySlide(pptx){
   const slide=pptx.addSlide(), data=executiveSummaryData(), total=data.totals.Total, goal=executiveGoalValue();
   const ink='1D1D1F', ink2='6E6E73', ink3='8E8E93', hair='E5E5EA', bg='FBFBFD', white='FFFFFF';
-  const share=value=>fmtPercent(total?value/total*100:0);
-  const approvedRemaining=data.buckets.approved.Savings+data.buckets.approved.Avoidance;
-  const proposedRemaining=data.buckets.proposed.Savings+data.buckets.proposed.Avoidance;
-  const delta=Math.abs(total-goal), direction=total>=goal?'above':'short of';
-  const headline=total?`Portfolio is ${fmtMoneyShort(delta,true)} ${direction} the ${fmtMoneyShort(goal,true)} goal`:`Build toward the ${fmtMoneyShort(goal,true)} portfolio goal`;
+  const savingsColor='28A745', realizedSavingsColor='0B662E', avoidanceColor='3B73E8', realizedAvoidanceColor='163A8A', gold='B45309', gapColor='E5E5EA';
+  const delta=Math.abs(total-goal);
+  const headline=!total?`Build toward the ${fmtMoneyShort(goal,true)} portfolio goal.`
+    :total>goal?`The portfolio has cleared its ${fmtMoneyShort(goal,true)} goal.`
+    :total<goal?`The portfolio is ${fmtMoneyShort(delta,true)} short of its ${fmtMoneyShort(goal,true)} goal.`
+    :`The portfolio has reached its ${fmtMoneyShort(goal,true)} goal.`;
+  const savings=data.totals.Savings, avoidance=data.totals.Avoidance;
+  const realizedSavings=data.buckets.realized.Savings, realizedAvoidance=data.buckets.realized.Avoidance;
+  const identifiedPct=goal?total/goal*100:0, realizedPct=goal?data.totals.Realized/goal*100:0;
+  const fmtGoalPct=value=>`${value.toFixed(value%1===0?0:1).replace(/\.0$/,'')}%`;
   slide.background={color:bg};
 
-  slide.addText('Executive Summary',{x:.55,y:.22,w:5.25,h:.45,fontFace:'Aptos Display',fontSize:35,bold:true,color:ink,margin:0});
-  slide.addText(`${data.count} financial ${data.count===1?'initiative':'initiatives'}`,{x:5.93,y:.42,w:2.0,h:.14,fontSize:10.5,color:ink2,margin:0});
-  slide.addText('PORTFOLIO GOAL',{x:10.55,y:.26,w:1.12,h:.1,fontSize:7.5,bold:true,color:ink2,align:'right',charSpacing:.8,margin:0});
-  slide.addText(fmtMoneyShort(goal,true),{x:11.78,y:.2,w:1.0,h:.24,fontSize:18,bold:true,color:ink,align:'right',margin:0});
+  slide.addText('ROADMAP STUDIO  /  EXECUTIVE VIEW',{x:.58,y:.3,w:3.3,h:.14,fontSize:8.5,bold:true,color:ink3,charSpacing:1.1,margin:0});
+  slide.addText(headline,{x:.58,y:.72,w:12.15,h:.48,fontFace:'Aptos Display',fontSize:30,bold:true,color:ink,margin:0,fit:'shrink'});
 
-  slide.addShape('roundRect',{x:.55,y:.82,w:12.23,h:1.12,rectRadius:.05,fill:{color:ink},line:{color:ink}});
-  slide.addText('PATH TO PORTFOLIO GOAL',{x:.78,y:1.02,w:2.25,h:.11,fontSize:8.2,bold:true,color:'A1A1A6',charSpacing:1.2,margin:0});
-  slide.addText(headline,{x:.78,y:1.23,w:10.9,h:.33,fontFace:'Aptos Display',fontSize:25,bold:true,color:white,margin:0});
-  slide.addText(`${fmtMoneyShort(data.totals.Realized,true)} realized · ${fmtMoneyShort(approvedRemaining,true)} approved remaining · ${fmtMoneyShort(proposedRemaining,true)} proposed remaining`,
-    {x:.78,y:1.65,w:8.4,h:.14,fontSize:10.5,color:'D1D1D6',margin:0});
+  const blockY=1.45, blockH=1.62, blockW=5.0;
+  const addGoalBlock=(x,fill,label,pctValue,note,labelColor)=>{
+    slide.addShape('roundRect',{x,y:blockY,w:blockW,h:blockH,rectRadius:.08,fill:{color:fill},line:{color:fill}});
+    slide.addText(label,{x:x+.28,y:blockY+.23,w:blockW-.56,h:.15,fontSize:10,bold:true,color:labelColor,charSpacing:.9,align:'center',margin:0,fit:'shrink'});
+    slide.addText(fmtGoalPct(pctValue),{x:x+.28,y:blockY+.55,w:blockW-.56,h:.5,fontFace:'Aptos Display',fontSize:46,bold:true,color:white,align:'center',margin:0,fit:'shrink'});
+    slide.addText(note,{x:x+.28,y:blockY+1.22,w:blockW-.56,h:.18,fontSize:12.5,color:'F2F2F7',align:'center',margin:0,fit:'shrink'});
+  };
+  addGoalBlock(1.25,ink,'IDENTIFIED OPPORTUNITY',identifiedPct,`${fmtMoneyShort(total,true)} identified toward goal`,'D1D1D6');
+  addGoalBlock(7.08,realizedSavingsColor,'REALIZED IN ACTUALS',realizedPct,`${fmtMoneyShort(data.totals.Realized,true)} recognized in actuals`,'DDF4E5');
 
-  const metrics=[
-    {label:'TOTAL PORTFOLIO',value:total,note:`Savings ${fmtMoneyShort(data.totals.Savings,true)} · Avoidance ${fmtMoneyShort(data.totals.Avoidance,true)}`,color:'1D1D1F'},
-    {label:'APPROVED',value:data.totals.Approved,note:`${share(data.totals.Approved)} of portfolio`,color:'0A84FF'},
-    {label:'PROPOSED',value:data.totals.Proposed,note:`${share(data.totals.Proposed)} of portfolio`,color:'AEAEB2'},
-    {label:'REALIZED',value:data.totals.Realized,note:`${share(data.totals.Realized)} captured to date`,color:'166534'},
+  const legend=[
+    {x:.78,color:realizedSavingsColor,label:'Realized savings',w:1.48},
+    {x:3.05,color:savingsColor,label:'Savings',w:.82},
+    {x:4.75,color:realizedAvoidanceColor,label:'Realized avoidance',w:1.65},
+    {x:7.28,color:avoidanceColor,label:'Avoidance',w:.95},
   ];
-  const metricX=.55, metricY=2.08, metricGap=.08, metricW=(12.23-metricGap*3)/4, metricH=.84;
-  metrics.forEach((metric,index)=>{ const x=metricX+index*(metricW+metricGap);
-    slide.addShape('roundRect',{x,y:metricY,w:metricW,h:metricH,rectRadius:.04,fill:{color:white},line:{color:hair,width:.75}});
-    slide.addShape('roundRect',{x:x+.18,y:metricY+.18,w:.16,h:.06,fill:{color:metric.color},line:{color:metric.color}});
-    slide.addText(metric.label,{x:x+.42,y:metricY+.12,w:metricW-.58,h:.12,fontSize:8.2,bold:true,color:ink2,charSpacing:1.0,margin:0});
-    slide.addText(fmtMoneyShort(metric.value,true),{x:x+.18,y:metricY+.35,w:metricW-.36,h:.24,fontSize:20,bold:true,color:ink,margin:0});
-    slide.addText(metric.note,{x:x+.18,y:metricY+.66,w:metricW-.36,h:.1,fontSize:8.5,color:ink2,margin:0});
+  legend.forEach(item=>{
+    slide.addShape('ellipse',{x:item.x,y:3.42,w:.14,h:.14,fill:{color:item.color},line:{color:item.color}});
+    slide.addText(item.label,{x:item.x+.23,y:3.39,w:item.w,h:.18,fontSize:10.5,color:ink2,margin:0,fit:'shrink'});
   });
 
-  const panelX=.55, panelY=3.08, panelW=12.23, panelH=3.9;
-  slide.addShape('roundRect',{x:panelX,y:panelY,w:panelW,h:panelH,rectRadius:.04,fill:{color:white},line:{color:hair,width:.75}});
-  if(!total){
-    slide.addText('No portfolio value yet',{x:.82,y:3.65,w:3.5,h:.3,fontSize:20,bold:true,color:ink,margin:0});
-    slide.addText('Add Savings or Avoidance values to initiatives to build the dollar tracker.',{x:.82,y:4.08,w:5.7,h:.2,fontSize:12,color:ink2,margin:0});
-    return;
-  }
-  slide.addText(`How the portfolio builds to ${fmtMoneyShort(total,true)}`,{x:.78,y:3.32,w:4.0,h:.2,fontSize:15.5,bold:true,color:ink,margin:0});
-  slide.addText('One reconciled path from captured value to the full opportunity.',{x:.78,y:3.58,w:4.3,h:.12,fontSize:9.2,color:ink2,margin:0});
-  const key=[{label:'Savings',color:'188038'},{label:'Avoidance',color:'2563EB'},{label:'Darker = more certain',color:'1D1D1F'}];
-  let keyX=9.1; key.forEach(entry=>{ slide.addShape('roundRect',{x:keyX,y:3.38,w:.17,h:.06,fill:{color:entry.color},line:{color:entry.color}});
-    slide.addText(entry.label,{x:keyX+.23,y:3.33,w:entry.label.length*.07,h:.12,fontSize:8.4,color:ink2,margin:0}); keyX+=entry.label.length*.07+.48; });
-
-  const barX=.98, barY=4.35, barW=11.42, barH=.54, axisMax=niceProjectionMax(Math.max(total,goal));
+  const barX=.76, barY=3.88, barW=11.82, barH=.64, axisMax=Math.max(goal,total,1);
   const X=value=>barX+Math.max(0,Math.min(1,value/axisMax))*barW;
-  slide.addShape('roundRect',{x:barX,y:barY,w:barW,h:barH,rectRadius:.05,fill:{color:'F1F1F3'},line:{color:'F1F1F3'}});
-  let cursor=0;
-  data.segments.forEach(segment=>{ const x=X(cursor), width=Math.max(0,X(cursor+segment.value)-x), color=pptHex(segment.color), inkColor=segment.stage==='proposed'?ink:white;
-    if(width>0)slide.addShape('rect',{x,y:barY,w:width,h:barH,fill:{color},line:{color,transparency:100}});
-    if(segment.value&&width>=1.15)slide.addText(`${segment.type} ${fmtMoneyShort(segment.value,true)}`,{x:x+.05,y:barY+.19,w:width-.1,h:.12,fontSize:8.8,bold:true,color:inkColor,align:'center',margin:0});
-    cursor+=segment.value;
+  const realizedSavingsEnd=X(realizedSavings), savingsEnd=X(savings), realizedAvoidanceEnd=X(savings+realizedAvoidance), totalEnd=X(total), goalX=X(goal), radius=.32;
+  slide.addShape('roundRect',{x:barX,y:barY,w:barW,h:barH,rectRadius:.08,fill:{color:gapColor},line:{color:gapColor}});
+  const segments=[
+    {start:barX,end:realizedSavingsEnd,color:realizedSavingsColor},
+    {start:realizedSavingsEnd,end:savingsEnd,color:savingsColor},
+    {start:savingsEnd,end:realizedAvoidanceEnd,color:realizedAvoidanceColor},
+    {start:realizedAvoidanceEnd,end:totalEnd,color:avoidanceColor},
+  ].filter(seg=>seg.end-seg.start>.001);
+  segments.forEach((seg,index)=>{
+    const width=Math.max(.01,seg.end-seg.start), first=index===0, last=index===segments.length-1&&Math.abs(totalEnd-(barX+barW))<.001;
+    if(first||last){
+      slide.addShape('roundRect',{x:seg.start,y:barY,w:width,h:barH,rectRadius:.08,fill:{color:seg.color},line:{color:seg.color}});
+      if(first&&seg.end<barX+barW)slide.addShape('rect',{x:Math.max(seg.start,seg.end-radius),y:barY,w:Math.min(radius,width),h:barH,fill:{color:seg.color},line:{color:seg.color,transparency:100}});
+      if(last&&seg.start>barX)slide.addShape('rect',{x:seg.start,y:barY,w:Math.min(radius,width),h:barH,fill:{color:seg.color},line:{color:seg.color,transparency:100}});
+    }else slide.addShape('rect',{x:seg.start,y:barY,w:width,h:barH,fill:{color:seg.color},line:{color:seg.color,transparency:100}});
   });
-  let stageCursor=0;
-  ['realized','approved','proposed'].forEach(stage=>{ const value=data.buckets[stage].Savings+data.buckets[stage].Avoidance, x1=X(stageCursor), x2=X(stageCursor+value);
-    const label=stage==='realized'?'Realized':stage==='approved'?'Approved remaining':'Proposed remaining';
-    if(value&&x2-x1>=1.05)slide.addText(`${label} · ${fmtMoneyShort(value,true)}`,{x:x1,y:4.08,w:x2-x1,h:.12,fontSize:8.5,bold:true,color:ink2,align:'center',margin:0});
-    stageCursor+=value;
-  });
-  const goalX=X(goal), totalX=X(total);
-  addPptSafeLine(slide,goalX,3.94,goalX,5.14,'D97706',1.5);
-  slide.addText(`${fmtMoneyShort(goal,true)} goal`,{x:Math.max(barX,Math.min(goalX-.45,barX+barW-.9)),y:3.77,w:.9,h:.13,fontSize:9.2,bold:true,color:'B45309',align:'center',margin:0});
-  addPptSafeLine(slide,totalX,barY+barH,totalX,5.06,ink,1.4);
-  slide.addText(`Current ${fmtMoneyShort(total,true)}`,{x:Math.max(barX,Math.min(totalX-.5,barX+barW-1)),y:5.08,w:1,h:.13,fontSize:8.5,bold:true,color:ink,align:'center',margin:0});
-  const axisY=5.32; addPptSafeLine(slide,barX,axisY,barX+barW,axisY,'D1D1D6',.7);
-  for(let i=0;i<=4;i++){ const value=axisMax*i/4, x=X(value); addPptSafeLine(slide,x,axisY-.04,x,axisY+.04,'AEAEB2',.6);
-    slide.addText(fmtMoneyShort(value,true),{x:x-.35,y:axisY+.09,w:.7,h:.1,fontSize:7.8,color:ink2,align:'center',margin:0}); }
 
-  const breakdownY=5.66, colW=3.82, colGap=.18;
-  ['realized','approved','proposed'].forEach((stage,index)=>{ const x=.78+index*(colW+colGap), rows=data.segments.filter(segment=>segment.stage===stage), value=rows.reduce((sum,row)=>sum+row.value,0);
-    if(index)addPptSafeLine(slide,x-.12,breakdownY,x-.12,6.76,hair,.7);
-    const label=stage==='realized'?'Realized':stage==='approved'?'Approved remaining':'Proposed remaining';
-    slide.addText(`${label} · ${fmtMoneyShort(value,true)}`,{x,y:breakdownY,w:colW,h:.12,fontSize:8.5,bold:true,color:ink2,charSpacing:.45,margin:0});
-    rows.forEach((row,rowIndex)=>{ const y=breakdownY+.32+rowIndex*.29;
-      slide.addShape('rect',{x,y:y+.02,w:.09,h:.09,fill:{color:pptHex(row.color)},line:{color:pptHex(row.color)}});
-      slide.addText(row.type,{x:x+.16,y,w:1.05,h:.12,fontSize:9.2,color:ink2,margin:0});
-      slide.addText(fmtMoneyShort(row.value,true),{x:x+2.5,y,w:1.08,h:.12,fontSize:9.5,bold:true,color:ink,align:'right',margin:0});
-    });
-  });
+  const savingsW=savingsEnd-barX, avoidanceW=totalEnd-savingsEnd;
+  if(savingsW>=1.55)slide.addText(`SAVINGS  ${fmtMoneyShort(savings,true)}`,{x:barX+.12,y:barY+.23,w:savingsW-.24,h:.16,fontSize:11.5,bold:true,color:white,align:'center',margin:0,fit:'shrink'});
+  if(avoidanceW>=1.65)slide.addText(`AVOIDANCE  ${fmtMoneyShort(avoidance,true)}`,{x:savingsEnd+.12,y:barY+.23,w:avoidanceW-.24,h:.16,fontSize:11.5,bold:true,color:white,align:'center',margin:0,fit:'shrink'});
+
+  addPptSafeLine(slide,goalX,barY-.4,goalX,barY+barH+.42,gold,1.7);
+  slide.addText(`${fmtMoneyShort(goal,true)} GOAL`,{x:Math.max(barX,Math.min(goalX-1.05,barX+barW-1.05)),y:barY-.46,w:1.0,h:.15,fontSize:9.5,bold:true,color:gold,align:'right',margin:0});
+
+  slide.addText(`${fmtMoneyShort(realizedSavings,true)} realized savings`,{x:.78,y:4.82,w:3.5,h:.28,fontSize:19,bold:true,color:realizedSavingsColor,margin:0,fit:'shrink'});
+  slide.addText(`${fmtMoneyShort(realizedAvoidance,true)} realized avoidance`,{x:5.05,y:4.82,w:3.65,h:.28,fontSize:19,bold:true,color:realizedAvoidanceColor,margin:0,fit:'shrink'});
+  const goalDetail=total<goal?`${fmtMoneyShort(goal-total,true)} to goal`:total>goal?`${fmtMoneyShort(total-goal,true)} above goal`:'Goal reached';
+  slide.addText(goalDetail,{x:9.25,y:4.82,w:3.33,h:.28,fontSize:19,bold:true,color:ink,align:'right',margin:0,fit:'shrink'});
+
+  addPptSafeLine(slide,.78,5.72,12.58,5.72,hair,.75);
+  slide.addText('Realized values are included within identified opportunity, not added on top.',{x:.78,y:6.08,w:7.5,h:.18,fontSize:10.5,color:ink2,margin:0,fit:'shrink'});
 }
 function addPptPortfolioRollupSlide(pptx){
   const slide=pptx.addSlide(), data=portfolioRollupData();
@@ -2350,7 +2357,7 @@ function addPptStackedSlide(pptx){ const slide=pptx.addSlide(), stack=pptStackRo
   const title=top?`${top.p.name} carries ${fmtShare(top.pct)} of total value`:'Pillar value concentration';
   slide.background={color:bg};
   slide.addText('ROADMAP STUDIO',{x:.58,y:.18,w:1.55,h:.09,fontSize:6.4,bold:true,color:ink3,margin:0});
-  slide.addText(title,{x:.55,y:.44,w:7.85,h:.35,fontFace:'Aptos Display',fontSize:24.5,bold:true,color:ink,margin:0,fit:'shrink'});
+  slide.addText(title,{x:.55,y:.44,w:12.0,h:.35,fontFace:'Aptos Display',fontSize:24.5,bold:true,color:ink,margin:0,fit:'shrink'});
   slide.addText('Pillar value concentration compares Savings-only with total impact after Avoidance.',{x:.58,y:.88,w:5.2,h:.14,fontSize:8.8,color:ink2,margin:0,fit:'shrink'});
   addPptExecutiveStackBar(slide,savings,stack.colors,1.18,'Savings-only','TOTAL SAVINGS');
   addPptExecutiveStackBar(slide,combined,stack.colors,3.72,'Savings + Avoidance','TOTAL IMPACT');
@@ -2445,6 +2452,7 @@ function deserializeInto(o){
     valueType:normValueType(i.valueType),
     approval:normApproval(i.approval,i.status),
     value:parseMoney(i.value),
+    includeInTotals:i.includeInTotals!==false,
     realizedPct:parsePercent(i.realizedPct),
     confidence:parseConfidence(i.confidence),
     phases:normalizePhases(i.phases)}));
