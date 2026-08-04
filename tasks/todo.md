@@ -202,3 +202,170 @@
 - The stage stress-test rendered a `$939M` portfolio against the `$1B` goal with 35pt title type and a 25pt goal-gap headline; every section remained readable at 1600×900.
 - The eight-slide rendered deck passed `slides_test.py` with no overflow, and OOXML checks found no repair-prone negative geometry.
 - Strict RED-GREEN verification finished at **105 passed / 0 failed / 0 untested**.
+
+# Executive View Preview Only
+
+## Plan
+- [x] Freeze production code, remote publishing, and deployment work.
+- [x] Define a one-glance executive narrative with a plain-language takeaway, one primary visual, and mutually exclusive metrics.
+- [x] Create a review-only visual prototype using non-production placeholder values.
+- [x] Render and inspect the prototype at presentation size.
+- [ ] Obtain explicit approval before changing Roadmap Studio or publishing any build.
+
+## Review
+- Created `/tmp/roadmap-studio-exec-preview/executive-view-preview.pptx` and a direct 1920×1080 PNG render for review only.
+- The design uses one takeaway title, one portfolio-to-goal bar, and three mutually exclusive segments: Savings, Avoidance, and Remaining to goal. Labels and color meanings appear directly on the bar and again in one short key.
+- The deck ZIP structure validates without errors. The standard Office renderer is unavailable in this environment, so the prototype was visually checked from the artifact engine's direct PNG output.
+- No production source code, GitHub state, or here.now deployment changed in this preview-only phase.
+
+# Executive View Preview Revision
+
+## Plan
+- [x] Reject the placeholder-led dashboard composition.
+- [x] Reframe the slide around one source-derived executive takeaway.
+- [x] Build one dominant portfolio-to-goal visual with directly labeled Savings and Avoidance.
+- [x] Render at full presentation size and remove any clipping or visual noise.
+- [x] Share the review artifact without implementing or deploying it.
+
+## Review
+- Revised preview uses the latest visible Roadmap Studio values: $701.3M Savings, $344.4M Avoidance, a $1B goal, $197.2M Approved, $846M Proposed, and $80.1M Realized.
+- The slide now has one stage-readable claim, one directly labeled value bar, and a small secondary approval/status line. The Savings/Avoidance split and goal marker require no separate legend.
+- The 1920×1080 direct render was inspected at full size. All text is single-line, labels are contained, and the PowerPoint archive validates without errors.
+- Production source, GitHub, and here.now remain unchanged pending approval.
+
+# Executive View Keynote Revision
+
+## Plan
+- [x] Remove the analytics-screen visual language from the revised preview.
+- [x] Build a high-contrast keynote composition with one message and one visual.
+- [x] Keep the source-derived values and clarify the approval/realized relationship.
+- [x] Inspect the full-size render and PowerPoint package.
+- [x] Share for approval without implementing or deploying.
+
+## Review
+- Rebuilt the preview as a dark keynote slide with one spoken takeaway, a single Savings/Avoidance value bar, and one goal marker.
+- Approved, Proposed, and Realized are subordinate to the main story; Realized is explicitly labeled as within Approved to prevent additive misreading.
+- The 1920×1080 render was inspected at full size. The title, bar labels, goal marker, and status values are contained and single-line.
+- The PowerPoint archive validates without errors. Production source, GitHub, and here.now remain unchanged pending approval.
+
+# Executive View Bar Geometry
+
+## Plan
+- [x] Replace independently rounded category segments with one continuous bar.
+- [x] Keep only the outer left and right corners rounded.
+- [x] Render and verify the square Savings/Avoidance junction.
+
+## Review
+- The Savings/Avoidance bar now has one rounded left edge, one rounded right edge, and a square internal junction.
+- The corrected 1920×1080 render was inspected and the PowerPoint archive validates without errors.
+
+# Executive View PowerPoint Integration
+
+## Plan
+- [x] Preserve the approved one-bar narrative and adapt it to the existing light PowerPoint design system.
+- [x] Add failing regression coverage for the live opening slide and export order.
+- [x] Replace the old dashboard-style Executive Summary PowerPoint slide.
+- [x] Verify dynamic above/below-goal copy, live values, and repair-safe geometry.
+- [x] Render the full deck and inspect the Executive View beside Portfolio Rollup.
+
+## Review
+- Every PowerPoint export now opens with a light, keynote-style Executive View that matches the existing deck and uses the project's live portfolio values.
+- The slide leads with one dynamic above/below-goal takeaway, one continuous Savings/Avoidance bar, a direct goal marker, and a subordinate Approved/Proposed/Realized-to-date status line.
+- The bar has rounded outer ends and a square internal Savings/Avoidance junction; direct labels keep the meaning legible without relying on color alone.
+- Portfolio Rollup remains slide 2. All eight slides in the generated deck were rendered and visually inspected, and the PowerPoint archive validates without repair errors.
+- Strict RED-GREEN verification finished at **106 passed / 0 failed / 0 untested**. No deployment or GitHub publish was performed.
+
+# Initiative Total Exclusion
+
+## Plan
+- [x] Add tracker rows and failing coverage for the row control, backward-compatible persistence, financial views, and PowerPoint.
+- [x] Add an `In totals` switch to each initiative row, defaulted on for existing and newly created initiatives.
+- [x] Exclude opted-out values from all Savings, Avoidance, Realized, projection, rollup, concentration, roadmap header, and PowerPoint totals.
+- [x] Keep excluded initiatives visible on roadmaps and preserve their entered values, dates, status, approval, and initiative counts.
+- [x] Run the full browser suite, visually inspect desktop/mobile behavior, and validate the generated PowerPoint package.
+- [x] Publish the verified single-file build to a new here.now URL and verify the live page.
+
+## Review
+- Every initiative row now has an accessible `In totals` switch. It defaults on for new and legacy items and persists through project saves, autosave, undo/redo, and scenario payloads.
+- Switching it off preserves the initiative, entered value, timing, roadmap mark, approval, and counts while contributing zero to every financial aggregation and PowerPoint total.
+- Desktop and 390px mobile browser QA found no console errors or page overflow. The excluded state is visually distinct and the switch remains operable by pointer and keyboard.
+- The generated six-slide exclusion deck was rendered and inspected: `$450K` remains on the excluded initiative's pillar roadmap while Executive View, Portfolio Rollup, pillar metrics, Projected Savings, and Value Concentration reconcile to `$920K`.
+- A long dominant-pillar PowerPoint title uncovered during QA was widened to prevent wrapping into the subtitle. The `.pptx` archive validates without errors.
+- Strict RED-GREEN verification finished at **109 passed / 0 failed / 0 untested**.
+- Published the exact verified `index.html` to `https://opaque-tinsel-x3cf.here.now/`; the live file hash matches local and returns HTTP 200. This anonymous build expires in 24 hours unless claimed.
+
+# Hosted PowerPoint Runtime Fix
+
+## Plan
+- [x] Reproduce the hosted export failure and identify the missing runtime asset.
+- [x] Confirm the local PowerPoint bundle exists and the prior live asset URL returns 404.
+- [x] Publish `index.html` together with the complete vendored PowerPoint runtime path.
+- [x] Verify the live page, runtime asset, and an actual PowerPoint download.
+
+## Review
+- Root cause: the previous here.now package contained only `index.html`, but the CSP-compliant app loads `vendor/pptxgen.bundle.js` from the same origin. The missing file left `PptxGenJS` undefined.
+- Republished the complete runtime package to `https://topaz-parcel-zzpb.here.now/`; live `index.html` and `vendor/pptxgen.bundle.js` hashes match local exactly.
+- Hosted browser smoke testing confirms `PptxGenJS` is a function, PowerPoint downloads successfully, the six-slide archive has no negative extents, and there are no console errors.
+
+# Executive View Realization Preview
+
+## Plan
+- [x] Keep production source unchanged and create a review-only slide artifact.
+- [x] Show Identified Opportunity and Realized in Actuals as percentages of the $1B goal above the bar.
+- [x] Split the continuous bar into Savings, Realized Savings, Avoidance, and Realized Avoidance without double counting.
+- [x] Add a direct four-color legend and retain the neutral remaining-to-goal segment.
+- [x] Render and inspect the full-size preview before sharing it for approval.
+
+## Review
+- Built the review-only slide from the existing portfolio fixture: `$939.0M` identified (`93.9%` of the `$1B` goal) and `$31.9M` realized (`3.2%` of goal).
+- The continuous bar separates realized savings, remaining savings, realized avoidance, remaining avoidance, and the `$61.0M` goal gap without double counting realized value.
+- Added a direct four-color legend plus numeric realized labels so the very small realized-avoidance segment remains understandable.
+- Rendered and visually inspected the slide at full size. The presentation overflow test passes and the PPTX package validates without errors.
+- No production implementation, commit, push, or deployment was performed.
+
+# Executive View Centered KPI Preview
+
+## Plan
+- [x] Keep this revision isolated to the review artifact.
+- [x] Recompose Identified Opportunity and Realized in Actuals as two equal, centered blocks.
+- [x] Render and inspect the revised slide for hierarchy, clipping, and overlap.
+- [x] Share a temporary image preview without modifying or committing Roadmap Studio.
+
+## Review
+- Reframed the two requested measures as equal 470px-wide center blocks with 52pt percentage figures and plain-language dollar subtitles.
+- Kept the four-color legend and continuous goal bar immediately below the blocks so the slide reads from outcome to composition.
+- Full-size visual inspection found no clipping or overlap. The presentation overflow test and PPTX archive validation both pass.
+- This remains a review-only artifact; Roadmap Studio production code was not modified or committed.
+
+# Centered Executive View Implementation And Publish
+
+## Plan
+- [x] Add regression coverage for the centered Identified Opportunity and Realized in Actuals blocks in the Executive View PowerPoint slide.
+- [x] Implement the approved centered-block composition using live portfolio values and the existing four-part financial color system.
+- [x] Run the full Roadmap Studio test suite and validate the generated PowerPoint package.
+- [x] Render and visually inspect the exported Executive View slide at full size.
+- [x] Publish the complete app package, including the vendored PowerPoint runtime, to a new here.now URL.
+- [x] Verify the live app assets and an actual hosted PowerPoint download before reporting the URL.
+
+## Review
+- Executive View now centers two equal large blocks for Identified Opportunity and Realized in Actuals, each calculated as a percentage of the live portfolio goal with its corresponding dollar value.
+- The continuous bar and legend distinguish realized savings, remaining savings, realized avoidance, and remaining avoidance without double counting realized value.
+- Corrected sub-1% goal percentage formatting uncovered by the new export test; `$1.4M` against `$1B` now reads `0.1%`, not `13.7%`.
+- Full regression suite passes at **110 passed / 0 failed / 0 untested**. The browser-generated deck passes overflow and ZIP integrity validation and was visually inspected at full size.
+- Published the complete package to `https://ebony-cobble-bphm.here.now/`. Hosted `index.html` and `vendor/pptxgen.bundle.js` hashes match the verified local package.
+- Live browser smoke testing confirms the PowerPoint runtime loads, an eight-slide deck downloads, the centered blocks and four legend labels are present, no negative extents exist, and no console errors occur.
+
+# GitHub Publish Latest Roadmap Studio
+
+## Plan
+- [x] Audit the working tree and exclude generated cache files.
+- [x] Confirm GitHub authentication, repository, default branch, and current PR state.
+- [x] Verify the complete intentional diff and final test result.
+- [x] Commit the latest Roadmap Studio product, tests, tracker, and documentation changes.
+- [x] Push the feature branch and open a pull request against `main`.
+- [x] Confirm checks and merge into `main` when safe.
+
+## Review
+- Committed the complete intentional scope as `28f9d65` and excluded generated `tasks/__pycache__/` files.
+- Pushed `agent/executive-view-export` and opened PR `#4` against `main`.
+- GitHub reports the PR as cleanly mergeable with no required checks or review blocks; the locally recorded regression suite remains **110 passed / 0 failed / 0 untested**.

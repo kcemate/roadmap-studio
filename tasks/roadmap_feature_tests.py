@@ -104,6 +104,13 @@ def seed_state():
     }
 
 
+def exclusion_state():
+    state = seed_state()
+    state["fileName"] = "Exclusion roadmap"
+    state["items"][1]["includeInTotals"] = False
+    return state
+
+
 def projection_state():
     state = seed_state()
     state["fileName"] = "Projection roadmap"
@@ -941,6 +948,7 @@ def run_tests():
             and page.locator("input[data-f='name']").input_value() == "New initiative"
             and page.locator("select[data-f='valueType']").input_value() == "Savings"
             and page.locator("select[data-f='status']").input_value() == "Not Started"
+            and page.locator("input[data-f='includeInTotals']").is_checked()
             and page.locator("input[data-f='realizedPct']").input_value() == "",
             "Add initiative creates the expected default row and values.",
             "Add initiative defaults were wrong.",
@@ -998,6 +1006,22 @@ def run_tests():
         page.locator("input[data-f='value']").fill("$250,000")
         blur(page)
         runner.check("INIT-010", page.locator("input[data-f='value']").input_value() == "$250,000", "Dollar value parses and formats as USD.", "Dollar value did not format as expected.")
+        page.locator("input[data-f='includeInTotals']").uncheck()
+        exclusion_persistence = page.evaluate(
+            """() => ({
+                active: S.items[0].includeInTotals,
+                saved: serializeState().items[0].includeInTotals,
+                scenario: clonePlanPayload().items[0].includeInTotals,
+                value: S.items[0].value
+            })"""
+        )
+        runner.check(
+            "INIT-015",
+            exclusion_persistence
+            == {"active": False, "saved": False, "scenario": False, "value": 250000},
+            "In totals defaults on, can be switched off, and persists without clearing the initiative value.",
+            f"In totals did not persist correctly: {exclusion_persistence}",
+        )
         page.locator("input[data-f='realizedPct']").fill("0.5")
         blur(page)
         runner.check(
@@ -1019,6 +1043,79 @@ def run_tests():
         deleted_row = page.locator("tbody tr").count() == 1
         runner.check("INIT-012", moved_row, "Initiative row up/down control reorders rows.", "Initiative row move failed.")
         runner.check("INIT-013", deleted_row, "Initiative row delete removes the row.", "Initiative row delete failed.")
+        ctx.close()
+
+        # Initiative values can remain visible while being excluded from every aggregate.
+        ctx, page = new_context(browser, exclusion_state())
+        page.click("#segRoad")
+        page.wait_for_selector("#tlSvg")
+        exclusion_totals = page.evaluate(
+            """() => {
+                const rollup = portfolioRollupData();
+                const excluded = rollup.items.find(row => row.source.id === 'i2');
+                return {
+                    legacyIncluded: isIncludedInTotals(S.items.find(it => it.id === 'i1')),
+                    pillar: pillarFinancialTotals('p1'),
+                    health: healthSummary()['At Risk'].value,
+                    projectionIds: projectionFinancialItems().map(row => row.source.id),
+                    stacked: stackedBreakdown('combined').total,
+                    executive: executiveSummaryData().totals,
+                    rollup: rollup.totals,
+                    rollupCount: rollup.items.length,
+                    excludedRollupValue: excluded && excluded.value,
+                    excludedLabel: roadmapLabel(S.items.find(it => it.id === 'i2')),
+                    excludedVisible: !!document.querySelector('#tlSvg [data-id="i2"]')
+                };
+            }"""
+        )
+        runner.check(
+            "TOTAL-001",
+            exclusion_totals["legacyIncluded"] is True
+            and exclusion_totals["pillar"] == {"Savings": 920000, "Avoidance": 0, "Realized": 460000}
+            and exclusion_totals["health"] == 0
+            and exclusion_totals["projectionIds"] == ["i1", "i3"]
+            and exclusion_totals["stacked"] == 920000
+            and exclusion_totals["executive"]["Total"] == 920000
+            and exclusion_totals["executive"]["Savings"] == 920000
+            and exclusion_totals["executive"]["Avoidance"] == 0
+            and exclusion_totals["executive"]["Realized"] == 460000
+            and exclusion_totals["rollup"]["Total"] == 920000
+            and exclusion_totals["rollup"]["Realized"] == 460000
+            and exclusion_totals["rollupCount"] == 3
+            and exclusion_totals["excludedRollupValue"] == 0
+            and "$450K" in exclusion_totals["excludedLabel"]
+            and exclusion_totals["excludedVisible"] is True,
+            "Excluded values are omitted from every financial aggregate while the initiative remains visible and counted.",
+            f"Excluded initiative totals or visibility were wrong: {exclusion_totals}",
+        )
+        with page.expect_download() as dl_info:
+            page.click("#pptBtn")
+        exclusion_download = dl_info.value
+        exclusion_ppt = ARTIFACTS / "downloads" / exclusion_download.suggested_filename
+        exclusion_download.save_as(exclusion_ppt)
+        with zipfile.ZipFile(exclusion_ppt) as zf:
+            exclusion_exec = zf.read("ppt/slides/slide1.xml").decode("utf-8", "ignore")
+            exclusion_rollup = zf.read("ppt/slides/slide2.xml").decode("utf-8", "ignore")
+            exclusion_pillar = zf.read("ppt/slides/slide3.xml").decode("utf-8", "ignore")
+            exclusion_projection = zf.read("ppt/slides/slide5.xml").decode("utf-8", "ignore")
+            exclusion_stack = zf.read("ppt/slides/slide6.xml").decode("utf-8", "ignore")
+        exclusion_extents = pptx_negative_extents(exclusion_ppt)
+        runner.check(
+            "EXPORT-016",
+            "$920K" in exclusion_exec
+            and "$920K" in exclusion_rollup
+            and "$920K" in exclusion_projection
+            and "$920K" in exclusion_stack
+            and "$1.4M" not in exclusion_exec
+            and "$1.4M" not in exclusion_rollup
+            and "$1.4M" not in exclusion_projection
+            and "$1.4M" not in exclusion_stack
+            and "Carrier Contract Risk" in exclusion_pillar
+            and "$450K" in exclusion_pillar
+            and not exclusion_extents,
+            "PowerPoint totals omit excluded value while its initiative remains on the pillar roadmap.",
+            f"PowerPoint exclusion handling was incorrect; extents={exclusion_extents[:3]}",
+        )
         ctx.close()
 
         # Roadmap rendering, totals, tooltip, drag, resize, and status visuals.
@@ -1736,6 +1833,7 @@ def run_tests():
             rollup_slide_xml = zf.read("ppt/slides/slide2.xml").decode("utf-8", "ignore") if "ppt/slides/slide6.xml" in zf.namelist() else ""
             projection_slide_xml = zf.read("ppt/slides/slide5.xml").decode("utf-8", "ignore") if "ppt/slides/slide6.xml" in zf.namelist() else ""
             stacked_slide_xml = zf.read("ppt/slides/slide6.xml").decode("utf-8", "ignore") if "ppt/slides/slide6.xml" in zf.namelist() else ""
+        stacked_title_boxes = ppt_text_boxes(stacked_slide_xml, "carries")
         repair_extents = pptx_negative_extents(ppt_path)
         runner.check(
             "EXPORT-004",
@@ -1780,21 +1878,17 @@ def run_tests():
         )
         runner.check(
             "EXPORT-013",
-            "Executive Summary" in executive_slide_xml
-            and "PATH TO PORTFOLIO GOAL" in executive_slide_xml
-            and "Portfolio is $998.6M short of the $1B goal" in executive_slide_xml
-            and "TOTAL PORTFOLIO" in executive_slide_xml
-            and "APPROVED" in executive_slide_xml
-            and "PROPOSED" in executive_slide_xml
-            and "REALIZED" in executive_slide_xml
-            and "How the portfolio builds to $1.4M" in executive_slide_xml
-            and "$1B goal" in executive_slide_xml
-            and "Realized · $820K" in executive_slide_xml
-            and "Approved remaining · $550K" in executive_slide_xml
-            and "Proposed remaining · $0" in executive_slide_xml
+            "The portfolio is $998.6M short of its $1B goal." in executive_slide_xml
+            and "IDENTIFIED OPPORTUNITY" in executive_slide_xml
+            and "REALIZED IN ACTUALS" in executive_slide_xml
+            and "Realized savings" in executive_slide_xml
+            and "Realized avoidance" in executive_slide_xml
+            and "0.1%" in executive_slide_xml
+            and "13.7%" not in executive_slide_xml
+            and "$1B GOAL" in executive_slide_xml
             and "Portfolio Rollup" in rollup_slide_xml,
-            "PowerPoint opens with a web-parity Executive Summary followed by Portfolio Rollup.",
-            "PowerPoint Executive Summary was missing, out of order, or did not mirror the web financial story.",
+            "PowerPoint opens with a live Executive View followed by Portfolio Rollup.",
+            "PowerPoint Executive View was missing, out of order, or did not use the live financial story.",
         )
         runner.check(
             "EXPORT-007",
@@ -1819,9 +1913,11 @@ def run_tests():
             and "Dominant pillar" in stacked_slide_xml
             and "Savings-only" in stacked_slide_xml
             and "Total impact" in stacked_slide_xml
-            and "Pillar value concentration" in stacked_slide_xml,
+            and "Pillar value concentration" in stacked_slide_xml
+            and len(stacked_title_boxes) == 1
+            and stacked_title_boxes[0]["w"] >= 11.5,
             "PowerPoint stacked chart slide uses an insight title, dominant-pillar callout, and shared ranked table.",
-            "PowerPoint stacked chart slide did not include the redesigned executive comparison story.",
+            f"PowerPoint stacked chart slide did not include a readable executive comparison story: {stacked_title_boxes}",
         )
 
         page.evaluate(
@@ -1844,27 +1940,66 @@ def run_tests():
         pillar_boxes = ppt_text_boxes(stage_rollup_xml, "Vertical Integration")
         title_boxes = ppt_text_boxes(stage_rollup_xml, "Portfolio Rollup")
         stage_repair_extents = pptx_negative_extents(stage_path)
-        stage_exec_titles = ppt_text_boxes(stage_exec_xml, "Executive Summary")
-        stage_exec_headlines = ppt_text_boxes(stage_exec_xml, "Portfolio is")
-        stage_exec_tracker_titles = ppt_text_boxes(stage_exec_xml, "How the portfolio builds")
-        stage_exec_goal = [box for box in ppt_text_boxes(stage_exec_xml, "$1B goal") if box["text"] == "$1B goal"]
+        stage_exec_titles = ppt_text_boxes(stage_exec_xml, "The portfolio")
+        stage_exec_total = ppt_text_boxes(stage_exec_xml, "IDENTIFIED OPPORTUNITY")
+        stage_exec_realized = ppt_text_boxes(stage_exec_xml, "REALIZED IN ACTUALS")
+        stage_exec_goal = [box for box in ppt_text_boxes(stage_exec_xml, "$1B GOAL") if box["text"] == "$1B GOAL"]
         runner.check(
             "EXPORT-014",
             len(stage_exec_titles) == 1
-            and max(stage_exec_titles[0]["font_sizes"], default=0) >= 24
-            and len(stage_exec_headlines) == 1
-            and max(stage_exec_headlines[0]["font_sizes"], default=0) >= 22
-            and len(stage_exec_tracker_titles) == 1
+            and max(stage_exec_titles[0]["font_sizes"], default=0) >= 28
+            and len(stage_exec_total) == 1
+            and len(stage_exec_realized) == 1
             and len(stage_exec_goal) == 1
-            and "Savings $" in stage_exec_xml
-            and "Avoidance $" in stage_exec_xml
-            and "Darker = more certain" in stage_exec_xml
-            and "Realized" in stage_exec_xml
-            and "Approved remaining" in stage_exec_xml
-            and "Proposed remaining" in stage_exec_xml
+            and "SAVINGS" in stage_exec_xml
+            and "AVOIDANCE" in stage_exec_xml
+            and "Realized savings" in stage_exec_xml
+            and "Realized avoidance" in stage_exec_xml
             and not stage_repair_extents,
-            "Executive Summary PowerPoint preserves the web hierarchy, readable type, reconciled tracker, and repair-safe geometry.",
-            f"Executive Summary slide diverged from the web view or became unsafe; titles={stage_exec_titles}, headlines={stage_exec_headlines}, tracker={stage_exec_tracker_titles}, goal={stage_exec_goal}, extents={stage_repair_extents[:3]}",
+            "Executive View PowerPoint uses readable type, a direct value bar, and repair-safe geometry.",
+            f"Executive View slide became unreadable or unsafe; titles={stage_exec_titles}, total={stage_exec_total}, goal={stage_exec_goal}, extents={stage_repair_extents[:3]}",
+        )
+        keynote_titles = ppt_text_boxes(stage_exec_xml, "The portfolio")
+        runner.check(
+            "EXPORT-015",
+            len(keynote_titles) == 1
+            and max(keynote_titles[0]["font_sizes"], default=0) >= 28
+            and "The portfolio is $61M short of its $1B goal." in stage_exec_xml
+            and "IDENTIFIED OPPORTUNITY" in stage_exec_xml
+            and "REALIZED IN ACTUALS" in stage_exec_xml
+            and "SAVINGS" in stage_exec_xml
+            and "AVOIDANCE" in stage_exec_xml
+            and "Realized savings" in stage_exec_xml
+            and "Realized avoidance" in stage_exec_xml
+            and "$1B GOAL" in stage_exec_xml
+            and "Portfolio Rollup" in stage_rollup_xml
+            and "PATH TO PORTFOLIO GOAL" not in stage_exec_xml
+            and "How the portfolio builds" not in stage_exec_xml
+            and "Darker = more certain" not in stage_exec_xml
+            and "Approved remaining" not in stage_exec_xml
+            and not stage_repair_extents,
+            "Every PowerPoint opens with a live, keynote-style Executive View followed by Portfolio Rollup.",
+            f"Executive View was missing, stale, dashboard-like, or unsafe; title={keynote_titles}, extents={stage_repair_extents[:3]}",
+        )
+        identified_pct = ppt_text_boxes(stage_exec_xml, "93.9%")
+        realized_pct = ppt_text_boxes(stage_exec_xml, "3.2%")
+        runner.check(
+            "EXPORT-017",
+            len(stage_exec_total) == 1
+            and len(stage_exec_realized) == 1
+            and stage_exec_total[0]["w"] >= 4.0
+            and stage_exec_realized[0]["w"] >= 4.0
+            and stage_exec_total[0]["x"] < stage_exec_realized[0]["x"]
+            and len(identified_pct) == 1
+            and len(realized_pct) == 1
+            and max(identified_pct[0]["font_sizes"], default=0) >= 44
+            and max(realized_pct[0]["font_sizes"], default=0) >= 44
+            and "Realized savings" in stage_exec_xml
+            and "Savings" in stage_exec_xml
+            and "Realized avoidance" in stage_exec_xml
+            and "Avoidance" in stage_exec_xml,
+            "Executive View centers two large goal-percentage blocks above a four-part financial legend.",
+            f"Centered Executive View hierarchy was missing or undersized; identified={stage_exec_total}, realized={stage_exec_realized}, percentages={identified_pct + realized_pct}",
         )
         runner.check(
             "EXPORT-012",
