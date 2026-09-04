@@ -396,8 +396,11 @@
 - [x] Fetch GitHub and confirm the branch starts from current `origin/main`.
 - [x] Confirm the working tree contains only the intended product, test, tracker, and review changes.
 - [x] Verify the recorded full-suite result and check the diff for formatting errors.
-- [ ] Commit and push `agent/reliability-first-ux`.
-- [ ] Open and verify a pull request against `main`.
+- [x] Commit and push `agent/reliability-first-ux`.
+- [x] Open and verify a pull request against `main`.
 
 ## Review
-- Publication in progress.
+- Committed the intentional five-file upgrade as `a6d5ebc` and pushed `agent/reliability-first-ux` to GitHub.
+- Opened pull request `#5`, **Harden Roadmap Studio editing and data safety**, against `main`.
+- GitHub reports the PR as `MERGEABLE` with a `CLEAN` merge state and no configured status checks.
+- The branch retains the verified **120 passed / 0 failed / 0 untested** result and contains no unrelated files.
