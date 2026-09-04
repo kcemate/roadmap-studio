@@ -56,6 +56,11 @@ input,select{font:inherit;color:inherit}
   border-bottom:1px solid var(--hairline);position:sticky;top:0;z-index:20;
   flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 .brand{font-size:14px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
+.project-shell{display:flex;align-items:center;gap:8px;min-width:0;flex:none}
+.project-name{width:148px;min-width:92px;border:1px solid transparent;border-radius:6px;background:transparent;padding:5px 7px;font-size:13px;font-weight:600}
+.project-name:hover{background:rgba(0,0,0,.035)}
+.project-name:focus{background:var(--surface);border-color:var(--accent);outline:none}
+.save-status{font-size:11px;color:var(--ink2);white-space:nowrap;min-width:70px}
 .spacer{flex:1}
 .seg{display:flex;background:rgba(0,0,0,.05);border-radius:9px;padding:2px}
 .seg button{padding:5px 15px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink2);transition:all .18s var(--spring)}
@@ -196,10 +201,12 @@ table.grid tr:hover td{background:#fafafa}
 .money-in{text-align:right;font-variant-numeric:tabular-nums}
 td.rownum{color:var(--ink3);font-size:11px;text-align:right;padding-right:10px;width:34px}
 .row-tools{display:flex;gap:2px;opacity:0;transition:opacity .15s}
-tr:hover .row-tools{opacity:1}
+tr:hover .row-tools,tr:focus-within .row-tools{opacity:1}
+tr:focus-within .row-tools{transition:none}
 .row-tools button{padding:5px;border-radius:6px;color:var(--ink2);display:inline-flex}
 .row-tools button:hover{background:rgba(0,0,0,.06);color:var(--ink)}
 .grid-foot{padding:14px}
+#gridStage .grid-wrap .grid-foot{position:sticky;bottom:0;left:0;background:var(--surface);border-top:1px solid var(--hairline);z-index:4}
 .empty-note{padding:64px;text-align:center;color:var(--ink2)}
 
 body.presenting{background:var(--pbg,#fbfbfd)}
@@ -218,6 +225,9 @@ body.presenting.dark{--pbg:#070708}
   opacity:0;pointer-events:none;transition:opacity .3s,transform .3s}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
 .toast button{color:#2997ff;font-weight:600;font-size:13px}
+.save-warning{display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 18px;background:#fff7ed;border-bottom:1px solid #fed7aa;color:#9a3412;font-size:13px;font-weight:500}
+.save-warning[hidden]{display:none}
+.save-warning button{color:#9a3412;text-decoration:underline;font-weight:700}
 
 /* ---------- filters / table density ---------- */
 .grid-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
@@ -228,7 +238,7 @@ body.presenting.dark{--pbg:#070708}
 table.grid.compact{font-size:12px;min-width:1200px}
 table.grid.compact th{padding:8px 6px}
 table.grid.compact .cell-in{padding:4px 6px}
-table.grid th{position:relative;user-select:none}
+table.grid th{user-select:none}
 table.grid th .col-resizer{position:absolute;right:0;top:0;width:6px;height:100%;cursor:col-resize;user-select:none}
 table.grid th .col-resizer:hover{background:rgba(0,113,227,.25)}
 table.grid th.sticky-col,table.grid td.sticky-col{position:sticky;left:0;background:var(--surface);z-index:4;box-shadow:1px 0 0 var(--hairline)}
@@ -306,6 +316,12 @@ table.grid tr.excluded-from-totals td[data-total-cell]{background:#f5f5f7}
   .toolbar>.seg{order:2;flex:1 0 100%;justify-content:center}
   .toolbar>.seg button{flex:none}
 }
+@media (max-width:860px){
+  .project-name{width:118px}
+  .save-status{display:none}
+  .toast{top:auto;bottom:16px;max-width:calc(100vw - 32px)}
+}
+@media (min-width:861px){.toast{top:106px}}
 
 /* ---------- structure dnd ---------- */
 .pillar.dragging,.ws-row.dragging{opacity:.45}
@@ -399,6 +415,10 @@ table.grid tr.excluded-from-totals td[data-total-cell]{background:#f5f5f7}
 <section id="studio">
   <div class="toolbar">
     <button class="brand" id="brandHome" title="Start a new roadmap (your session stays saved)">Roadmap Studio</button>
+    <div class="project-shell">
+      <input id="projectName" class="project-name" aria-label="Project name" value="Roadmap" maxlength="120">
+      <span id="saveStatus" class="save-status" aria-live="polite">Saved locally</span>
+    </div>
     <div class="spacer"></div>
     <div class="seg" role="tablist">
       <button id="segStruct" class="on" role="tab">Structure</button>
@@ -415,14 +435,20 @@ table.grid tr.excluded-from-totals td[data-total-cell]{background:#f5f5f7}
     <select class="fy-select" id="fySelect" title="Fiscal year start"></select>
     <div class="scenario-bar" role="group" aria-label="Scenarios and baseline">
       <select id="scenarioSelect" aria-label="Load scenario" title="Load a saved scenario"><option value="">Scenarios</option></select>
-      <button type="button" class="scenario-action" id="scenarioSaveBtn" title="Save current plan as a named scenario">Save</button>
+      <button type="button" class="scenario-action" id="scenarioSaveBtn" title="Capture current plan as a named scenario">Snapshot</button>
+      <button type="button" class="scenario-action" id="scenarioDeleteBtn" title="Delete selected scenario" aria-label="Delete selected scenario" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-9 0 1 13h8l1-13"/></svg></button>
       <button type="button" class="scenario-action" id="baselineBtn" title="Freeze current plan as baseline for comparison">Baseline</button>
       <span class="baseline-pill off" id="baselinePill" title="No baseline set" tabindex="0">Off</span>
     </div>
-    <button class="btn" id="saveBtn" title="Download a project file you can reopen on any machine">Save</button>
+    <button class="btn" id="saveBtn" title="Download a project file you can reopen on any machine">Download</button>
     <button class="btn" id="pngBtn">PNG</button>
     <button class="btn" id="pptBtn">PowerPoint</button>
     <button class="btn btn-primary" id="presentBtn">Present</button>
+  </div>
+
+  <div id="saveWarning" class="save-warning" role="alert" hidden>
+    Autosave failed. Download a project file now to protect your work.
+    <button type="button" id="recoveryDownload">Download project</button>
   </div>
 
   <div class="stage">
@@ -497,7 +523,7 @@ table.grid tr.excluded-from-totals td[data-total-cell]{background:#f5f5f7}
         <div class="projection-title"><h2>Projected Savings</h2><span class="meta" id="projMeta"></span></div>
         <div class="projection-controls">
           <label class="projection-control">Project to <input type="date" id="projectionEndDate" aria-label="Projection end date"></label>
-          <label class="projection-control">Target <input class="money-in" id="projectionTarget" inputmode="decimal" placeholder="$0" aria-label="Projection target"></label>
+          <label class="projection-control">Portfolio goal <input class="money-in" id="projectionTarget" inputmode="decimal" placeholder="$0" aria-label="Portfolio goal"></label>
           <div class="proj-toggles">
             <label class="projection-control"><input type="checkbox" id="projectionRealizedToggle" checked aria-label="Show realized projection">Show realized</label>
             <label class="projection-control"><input type="checkbox" id="projectionConfidenceToggle" checked aria-label="Weight by confidence">Weight confidence</label>
@@ -592,7 +618,7 @@ table.grid tr.excluded-from-totals td[data-total-cell]{background:#f5f5f7}
     <div class="drawer-body" id="drawerBody"></div>
     <div class="drawer-foot">
       <button class="btn btn-quiet" id="drawerDelete" type="button">Delete</button>
-      <button class="btn btn-primary" id="drawerDone" type="button">Done</button>
+      <button class="btn btn-primary" id="drawerDone" type="button">Save changes</button>
     </div>
   </aside>
 
@@ -612,7 +638,7 @@ const S = { view:'start', structure:[], items:[], collapsedPillars:{}, fyStart:6
   weightConfidence:true, showBaseline:true, roadmapGroup:'structure',
   filters:{q:'',status:'',owner:'',pillarId:'',valueType:''}, tableDensity:'comfortable',
   colWidths:{name:200,pillar:150,ws:150,start:128,end:128,mile:52,status:118,approval:112,valueType:120,value:120,include:88,realized:90,confidence:88,owner:110},
-  scenarios:[], baseline:null, drawerId:null,
+  scenarios:[], baseline:null, activeScenarioId:null, drawerId:null, drawerDirty:false, drawerReturnFocus:null,
   history:[], future:[], presenting:false, dark:false, seq:1, fileName:null };
 const STATUSES = ['Not Started','On Track','At Risk','Complete'];
 const APPROVAL_STATES = ['Approved','Proposed'];
@@ -866,7 +892,7 @@ $('btnBlank').onclick = () => {
   S.items=[]; S.collapsedPillars={}; S.projectionEnd=null; S.projectionTarget=''; S.projectionShowRealized=true;
   S.weightConfidence=true; S.showBaseline=true; S.roadmapGroup='structure';
   S.filters={q:'',status:'',owner:'',pillarId:'',valueType:''}; S.tableDensity='comfortable';
-  S.scenarios=[]; S.baseline=null; S.drawerId=null;
+  S.scenarios=[]; S.baseline=null; S.activeScenarioId=null; S.drawerId=null; S.drawerDirty=false;
   S.fileName='Untitled roadmap'; enterStudio();
 };
 function showErr(m){ const e=$('err'); e.textContent=m; e.style.display='block'; }
@@ -878,6 +904,12 @@ function enterStudio(){
   fy.innerHTML=['January','February','March','April','May','June','July','August','September','October','November','December']
     .map((m,i)=>`<option value="${i}" ${i===S.fyStart?'selected':''}>FY starts ${m.slice(0,3)}</option>`).join('');
   fy.onchange=()=>{S.fyStart=+fy.value;renderAll();};
+  const projectName=$('projectName');
+  projectName.value=S.fileName||'Roadmap';
+  if(!projectName._bound){
+    projectName._bound=true;
+    projectName.addEventListener('change',()=>{ S.fileName=projectName.value.trim()||'Untitled roadmap'; projectName.value=S.fileName; scheduleSave(); });
+  }
   refreshOwners(); bindScenarioControls(); renderScenarioUI(); show('studio'); setTab('struct');
 }
 function refreshOwners(){ $('ownerList').innerHTML=[...new Set(S.items.map(i=>i.owner).filter(Boolean))].map(o=>`<option value="${esc(o)}">`).join(''); }
@@ -917,6 +949,7 @@ function renderAll(){ if(S.view!=='studio')return;
   if(S.tab==='proj')renderProjection();
   if(S.tab==='stack')renderStackedCharts();
   $('undoBtn').disabled=!S.history.length; $('redoBtn').disabled=!S.future.length;
+  if(document.activeElement!==$('projectName'))$('projectName').value=S.fileName||'Roadmap';
   const nw=S.structure.reduce((a,p)=>a+p.workstreams.length,0);
   $('structMeta').textContent=`${S.structure.length} ${S.structure.length===1?'pillar':'pillars'} · ${nw} ${nw===1?'workstream':'workstreams'}`;
   const dated=S.items.filter(i=>i.start).length;
@@ -1415,7 +1448,12 @@ function undo(){ if(!S.history.length)return; S.future.push(snapshot()); restore
 function redo(){ if(!S.future.length)return; S.history.push(snapshot()); restore(S.future.pop()); }
 $('undoBtn').onclick=undo; $('redoBtn').onclick=redo;
 document.addEventListener('keydown',e=>{ const m=e.metaKey||e.ctrlKey;
-  if(m&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo();} });
+  if(!m)return;
+  if(e.target.closest?.('input,select,textarea,[contenteditable="true"]'))return;
+  const key=e.key.toLowerCase();
+  if(key==='z'){e.preventDefault();e.shiftKey?redo():undo();}
+  else if(key==='y'){e.preventDefault();redo();}
+});
 
 /* ============ STRUCTURE OUTLINE ============ */
 const ICON={up:'<path d="m6 14 6-6 6 6"/>',down:'<path d="m6 10 6 6 6-6"/>',
@@ -1467,17 +1505,33 @@ function renderOutline(){
         const w={id:uid('w'),name:''}; p.workstreams.splice(idx+1,0,w); renderAll();
         const nx=root.querySelector(`.ws-name[data-w="${w.id}"]`); nx&&nx.focus(); }
       else if(e.key==='Backspace'&&inp.value===''){ const p=pillarOf(inp.dataset.p);
-        if(p.workstreams.length>1){ e.preventDefault(); pushUndo();
+        if(p.workstreams.length>1){ e.preventDefault();
+          const affected=itemsForWs(inp.dataset.w);
+          if(affected.length&&!confirm(`Delete this workstream and its ${affected.length} ${affected.length===1?'initiative':'initiatives'}?`))return;
+          pushUndo();
           const idx=p.workstreams.findIndex(w=>w.id===inp.dataset.w);
           S.items=S.items.filter(i=>i.wsId!==inp.dataset.w);
           p.workstreams.splice(idx,1); renderAll();
+          showUndoToast('Workstream deleted');
           const prev=root.querySelectorAll('.ws-name')[Math.max(0,[...root.querySelectorAll('.ws-name')].indexOf(inp)-1)];
           prev&&prev.focus(); } }
     });
   });
   // tools
   root.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{
-    const act=b.dataset.act, pid=b.dataset.p, wid=b.dataset.w; pushUndo();
+    const act=b.dataset.act, pid=b.dataset.p, wid=b.dataset.w;
+    let deleted='';
+    if(act==='pdel'){
+      const p=pillarOf(pid), wids=new Set((p?.workstreams||[]).map(w=>w.id));
+      const count=S.items.filter(i=>wids.has(i.wsId)).length;
+      if(count&&!confirm(`Delete “${p.name}” and its ${count} ${count===1?'initiative':'initiatives'}?`))return;
+      deleted='Pillar deleted';
+    } else if(act==='wdel'){
+      const count=itemsForWs(wid).length;
+      if(count&&!confirm(`Delete this workstream and its ${count} ${count===1?'initiative':'initiatives'}?`))return;
+      deleted='Workstream deleted';
+    }
+    pushUndo();
     if(act==='pup'||act==='pdown'){ const i=S.structure.findIndex(p=>p.id===pid); const j=act==='pup'?i-1:i+1;
       [S.structure[i],S.structure[j]]=[S.structure[j],S.structure[i]]; }
     else if(act==='pdel'){ const p=pillarOf(pid); const wids=new Set(p.workstreams.map(w=>w.id));
@@ -1489,6 +1543,7 @@ function renderOutline(){
       p.workstreams=p.workstreams.filter(w=>w.id!==wid);
       if(!p.workstreams.length)p.workstreams=[{id:uid('w'),name:'New workstream'}]; }
     renderAll();
+    if(deleted)showUndoToast(deleted);
   });
   root.querySelectorAll('.add-ws').forEach(b=>b.onclick=()=>{ pushUndo();
     const p=pillarOf(b.dataset.p); const w={id:uid('w'),name:''}; p.workstreams.push(w); renderAll();
@@ -1730,7 +1785,7 @@ function syncFilterControls(){
   $('tableDensity').value=S.tableDensity||'comfortable';
   const vis=filteredItems().length;
   $('filterCount').innerHTML=vis===S.items.length?`<b>${S.items.length}</b> initiatives`:`Showing <b>${vis}</b> of ${S.items.length}`;
-  if($('gridMeta'))$('gridMeta').textContent='Add the dated work that lives under each workstream. This is the part owners fill in.';
+  if($('gridMeta'))$('gridMeta').textContent='Add dated work under each workstream. Filters apply to this table only.';
 }
 function bindGridToolbar(){
   if(!$('filterSearch')||$('filterSearch')._bound)return;
@@ -1752,18 +1807,23 @@ function bindGridToolbar(){
 function th(label,key,extra=''){
   const w=colW(key); return`<th class="${key==='name'?'sticky-col':''}" data-col="${key}" style="width:${w}px;min-width:${w}px;${extra}">${label}<span class="col-resizer" data-col="${key}"></span></th>`;
 }
+function fitGridHeight(){
+  const wrap=document.querySelector('#gridStage .grid-wrap'); if(!wrap)return;
+  const top=wrap.getBoundingClientRect().top;
+  wrap.style.maxHeight=Math.max(240,innerHeight-top-24)+'px';
+}
 function renderGrid(){
   bindGridToolbar(); syncFilterControls();
   const body=$('gridBody');
   const items=filteredItems();
   if(!S.items.length){
     body.innerHTML=`<div class="grid-wrap"><div class="empty-note">No initiatives yet. Add the first one and assign it to a workstream — it appears on the roadmap the moment it has a start date.</div><div class="grid-foot"><button class="btn btn-primary" id="addRow">Add initiative</button></div></div>`;
-    $('addRow').onclick=addRow; return;
+    $('addRow').onclick=addRow; fitGridHeight(); return;
   }
   const dense=S.tableDensity==='compact'?' compact':'';
   if(!items.length){
     body.innerHTML=`<div class="grid-wrap"><div class="empty-note">No initiatives match these filters.</div><div class="grid-foot"><button class="btn" id="addRow">Add initiative</button></div></div>`;
-    $('addRow').onclick=addRow; return;
+    $('addRow').onclick=addRow; fitGridHeight(); return;
   }
   const rows=items.map((it,i)=>`
     <tr data-id="${it.id}" class="${isIncludedInTotals(it)?'':'excluded-from-totals'}">
@@ -1793,8 +1853,16 @@ function renderGrid(){
     <thead><tr><th style="width:34px"></th>${th('Initiative','name')}${th('Pillar','pillar')}${th('Workstream','ws')}${th('Start','start')}${th('End','end')}${th('Mile­stone','mile','text-align:center')}${th('Status','status')}${th('Approval','approval','text-align:center')}${th('Savings / Avoidance','valueType')}${th('$ Value','value')}${th('In totals','include','text-align:center')}${th('% Realized','realized')}${th('Conf.','confidence')}${th('Owner','owner')}<th></th></tr></thead>
     <tbody>${rows}</tbody></table>
     <div class="grid-foot"><button class="btn" id="addRow">Add initiative</button></div></div>`;
-  body.querySelectorAll('.cell-in,input[type=checkbox]').forEach(inp=>inp.addEventListener('change',()=>{
-    const it=S.items.find(i=>i.id===inp.closest('tr').dataset.id); if(!it)return; pushUndo(); const f=inp.dataset.f;
+  body.querySelectorAll('.cell-in,input[type=checkbox]').forEach(inp=>{
+    inp.addEventListener('keydown',e=>{
+      if(e.key!=='Tab')return;
+      const controls=[...inp.closest('tr').querySelectorAll('.cell-in,input[type=checkbox]')].filter(el=>!el.disabled);
+      const index=controls.indexOf(inp), next=controls[index+(e.shiftKey?-1:1)];
+      inp._focusAfterChange=next?.dataset.f||'';
+    });
+    inp.addEventListener('change',()=>{
+    const rowId=inp.closest('tr').dataset.id;
+    const it=S.items.find(i=>i.id===rowId); if(!it)return; pushUndo(); const f=inp.dataset.f;
     if(f==='start'||f==='end'){ it[f]=inp.value?parseAnyDate(inp.value,f,S.fyStart):null;
       if(it.milestone&&f==='start')it.end=it.start;
       if(it.start&&it.end&&it.end<it.start){ f==='start'?it.end=it.start:it.start=it.end; } }
@@ -1805,18 +1873,24 @@ function renderGrid(){
     else if(f==='realizedPct')it.realizedPct=parsePercent(inp.value);
     else if(f==='confidence')it.confidence=parseConfidence(inp.value);
     else it[f]=inp.value;
+    const focusField=inp._focusAfterChange;
     if(f==='owner')refreshOwners(); renderAll();
-  }));
+    if(focusField)document.querySelector(`tr[data-id="${CSS.escape(rowId)}"] [data-f="${CSS.escape(focusField)}"]`)?.focus();
+  }); });
   body.querySelectorAll('.row-tools button').forEach(b=>b.onclick=()=>{
     const id=b.closest('tr').dataset.id; const i=S.items.findIndex(x=>x.id===id); if(i<0)return;
     if(b.dataset.act==='edit'){ openDrawer(id); return; }
+    if(b.dataset.act==='del'&&!confirm(`Delete “${S.items[i].name||'this initiative'}”?`))return;
     pushUndo();
     if(b.dataset.act==='del')S.items.splice(i,1);
     else if(b.dataset.act==='up'&&i>0)[S.items[i-1],S.items[i]]=[S.items[i],S.items[i-1]];
     else if(b.dataset.act==='down'&&i<S.items.length-1)[S.items[i+1],S.items[i]]=[S.items[i],S.items[i+1]];
-    renderAll(); });
+    renderAll();
+    if(b.dataset.act==='del')showUndoToast('Initiative deleted');
+  });
   $('addRow').onclick=addRow;
   bindColumnResize(body);
+  fitGridHeight();
 }
 function bindColumnResize(root){
   root.querySelectorAll('.col-resizer').forEach(handle=>{
@@ -1839,17 +1913,21 @@ function bindColumnResize(root){
 }
 function addRow(){ pushUndo();
   const today=new Date(),t=utc(today.getFullYear(),today.getMonth(),today.getDate());
-  const p=S.structure[0]; const w=p.workstreams[0];
-  S.items.push({id:uid('i'),pillarId:p.id,wsId:w.id,name:'New initiative',start:t,end:addDays(t,90),
-    valueType:'Savings',value:'',includeInTotals:true,realizedPct:'',confidence:100,phases:[],milestone:false,status:'Not Started',approval:'Proposed',owner:''});
+  const p=pillarOf(S.filters.pillarId)||S.structure[0]; const w=p.workstreams[0];
+  const status=S.filters.status||'Not Started', id=uid('i');
+  S.items.push({id,pillarId:p.id,wsId:w.id,name:'New initiative',start:t,end:addDays(t,90),
+    valueType:S.filters.valueType||'Savings',value:'',includeInTotals:true,realizedPct:'',confidence:100,phases:[],milestone:false,status,approval:normApproval('',status),owner:S.filters.owner||''});
+  const clearedSearch=!!S.filters.q; S.filters.q='';
   renderAll();
-  $('gridBody').querySelector('tbody tr:last-child input[data-f=name]')?.focus();
+  document.querySelector(`tr[data-id="${CSS.escape(id)}"] input[data-f=name]`)?.focus();
+  if(clearedSearch)showToast('Search cleared to show the new initiative');
 }
+window.addEventListener('resize',fitGridHeight);
 
 /* ============ EDIT DRAWER ============ */
 function openDrawer(id){
   const it=S.items.find(i=>i.id===id); if(!it)return;
-  S.drawerId=id;
+  S.drawerReturnFocus=document.activeElement; S.drawerId=id; S.drawerDirty=false;
   $('drawerTitle').textContent=it.name||'Edit initiative';
   const phases=normalizePhases(it.phases);
   $('drawerBody').innerHTML=`
@@ -1888,14 +1966,19 @@ function openDrawer(id){
   $('dPillar').onchange=()=>{ const p=pillarOf($('dPillar').value); $('dWs').innerHTML=wsOptions(p.id,p.workstreams[0]?.id); };
   $('dMile').onchange=()=>{ $('dEnd').disabled=$('dMile').value==='1'; };
   $('dAddPhase').onclick=()=>{
+    S.drawerDirty=true;
     const tbody=$('dPhases');
     if(tbody.querySelector('[colspan]'))tbody.innerHTML='';
     const tr=document.createElement('tr');
     tr.innerHTML=`<td><input type="date" data-ph="date" value="${isoDate(todayUtc())}"></td><td><input data-ph="pct" value="25%"></td><td><button type="button" data-phdel>✕</button></td>`;
     tbody.appendChild(tr);
-    tr.querySelector('[data-phdel]').onclick=()=>tr.remove();
+    tr.querySelector('[data-phdel]').onclick=()=>{ S.drawerDirty=true; tr.remove(); };
   };
-  $('dPhases').querySelectorAll('[data-phdel]').forEach(b=>b.onclick=()=>b.closest('tr').remove());
+  $('dPhases').querySelectorAll('[data-phdel]').forEach(b=>b.onclick=()=>{ S.drawerDirty=true; b.closest('tr').remove(); });
+  $('drawerBody').querySelectorAll('input,select,textarea,button').forEach(el=>{
+    el.addEventListener(el.tagName==='SELECT'?'change':'input',()=>{ S.drawerDirty=true; });
+  });
+  $('dName').focus();
 }
 function readPhasesFromDrawer(){
   return normalizePhases([...$('dPhases').querySelectorAll('tr')].map(tr=>{
@@ -1905,7 +1988,8 @@ function readPhasesFromDrawer(){
   }).filter(Boolean));
 }
 function commitDrawer(){
-  const it=S.items.find(i=>i.id===S.drawerId); if(!it)return closeDrawer();
+  const it=S.items.find(i=>i.id===S.drawerId); if(!it)return closeDrawer(true);
+  const returnId=S.drawerId;
   pushUndo();
   it.name=$('dName').value||'New initiative';
   it.pillarId=$('dPillar').value;
@@ -1922,27 +2006,35 @@ function commitDrawer(){
   it.owner=$('dOwner').value;
   it.phases=readPhasesFromDrawer();
   if(it.phases.length)it.realizedPct=it.phases[it.phases.length-1].pct;
-  refreshOwners(); closeDrawer(); renderAll();
+  refreshOwners(); closeDrawer(true); renderAll();
+  document.querySelector(`tr[data-id="${CSS.escape(returnId)}"] [data-act=edit]`)?.focus();
 }
-function closeDrawer(){
+function closeDrawer(force=false){
+  if(!force&&S.drawerDirty&&!confirm('Discard unsaved changes?'))return false;
+  const returnFocus=S.drawerReturnFocus;
   S.drawerId=null;
+  S.drawerDirty=false; S.drawerReturnFocus=null;
   $('itemDrawer').classList.remove('on'); $('itemDrawer').setAttribute('aria-hidden','true');
   $('drawerBackdrop').classList.remove('on');
+  if(returnFocus?.isConnected)returnFocus.focus();
+  return true;
 }
 function deleteDrawerItem(){
-  const i=S.items.findIndex(x=>x.id===S.drawerId); if(i<0)return closeDrawer();
-  pushUndo(); S.items.splice(i,1); closeDrawer(); renderAll();
+  const i=S.items.findIndex(x=>x.id===S.drawerId); if(i<0)return closeDrawer(true);
+  if(!confirm(`Delete “${S.items[i].name||'this initiative'}”?`))return;
+  pushUndo(); S.items.splice(i,1); closeDrawer(true); renderAll(); showUndoToast('Initiative deleted');
 }
 
 /* ============ SCENARIOS / BASELINE ============ */
 function renderScenarioUI(){
   const sel=$('scenarioSelect'); if(!sel)return;
-  const cur=sel.value;
   const n=(S.scenarios||[]).length;
   sel.innerHTML=`<option value="">Scenarios${n?` (${n})`:''}</option>`+
-    (S.scenarios||[]).map(sc=>`<option value="${esc(sc.id)}">${esc(sc.name)}</option>`).join('')+
-    (n?`<option value="__delete__">Delete…</option>`:'');
-  if(cur&&[...sel.options].some(o=>o.value===cur))sel.value=cur;
+    (S.scenarios||[]).map(sc=>`<option value="${esc(sc.id)}">${esc(sc.name)}</option>`).join('');
+  if(S.activeScenarioId&&[...sel.options].some(o=>o.value===S.activeScenarioId))sel.value=S.activeScenarioId;
+  else { S.activeScenarioId=null; sel.value=''; }
+  const del=$('scenarioDeleteBtn');
+  if(del){ del.disabled=!S.activeScenarioId; del.title=S.activeScenarioId?'Delete selected scenario':'Select a scenario to delete'; }
   const pill=$('baselinePill'), btn=$('baselineBtn');
   if(S.baseline){
     pill.textContent='On';
@@ -1961,21 +2053,25 @@ function saveScenario(){
   if(!name)return;
   pushUndo();
   S.scenarios=S.scenarios||[];
-  S.scenarios.push({id:uid('sc'),name:name.trim(),savedAt:Date.now(),payload:clonePlanPayload()});
+  const id=uid('sc');
+  S.scenarios.push({id,name:name.trim(),savedAt:Date.now(),payload:clonePlanPayload()});
+  S.activeScenarioId=id;
   renderScenarioUI(); scheduleSave();
   showToast(`Saved scenario “${name.trim()}”`);
 }
 function loadScenario(id){
-  const sc=(S.scenarios||[]).find(s=>s.id===id); if(!sc)return;
+  const sc=(S.scenarios||[]).find(s=>s.id===id); if(!sc)return false;
   const merged=mergeScenarioPortfolio(sc.payload);
-  if(!confirm(`Load scenario “${sc.name}”? Scenario values will be applied while all portfolio initiatives remain (undo available).`))return;
-  pushUndo(); applyPlanPayload(merged.payload); renderAll(); renderScenarioUI();
+  if(!confirm(`Load scenario “${sc.name}”? Scenario values will be applied while all portfolio initiatives remain (undo available).`))return false;
+  pushUndo(); S.activeScenarioId=id; applyPlanPayload(merged.payload); renderAll(); renderScenarioUI();
   showToast(`Loaded “${sc.name}”${merged.retainedCount?` · kept ${merged.retainedCount} portfolio initiatives`:''}`);
+  return true;
 }
 function deleteScenario(id){
   const sc=(S.scenarios||[]).find(s=>s.id===id); if(!sc)return;
   if(!confirm(`Delete scenario “${sc.name}”?`))return;
-  S.scenarios=S.scenarios.filter(s=>s.id!==id); renderScenarioUI(); scheduleSave();
+  S.scenarios=S.scenarios.filter(s=>s.id!==id); S.activeScenarioId=null; renderScenarioUI(); scheduleSave();
+  showToast(`Deleted scenario “${sc.name}”`);
 }
 function setBaseline(){
   pushUndo();
@@ -1993,23 +2089,29 @@ function showToast(msg){
   const t=$('toast'); t.innerHTML=esc(msg); t.classList.add('on');
   clearTimeout(showToast._t); showToast._t=setTimeout(()=>t.classList.remove('on'),3200);
 }
+function showUndoToast(msg){
+  const t=$('toast');
+  t.innerHTML=`<span>${esc(msg)}</span><button type="button" data-toast-action="undo">Undo</button>`;
+  t.classList.add('on');
+  t.querySelector('[data-toast-action=undo]').onclick=()=>{ clearTimeout(showToast._t); t.classList.remove('on'); undo(); };
+  clearTimeout(showToast._t); showToast._t=setTimeout(()=>t.classList.remove('on'),7000);
+}
 function bindScenarioControls(){
   if(!$('scenarioSaveBtn')||$('scenarioSaveBtn')._bound)return;
   $('scenarioSaveBtn')._bound=true;
   $('scenarioSaveBtn').onclick=saveScenario;
+  $('scenarioDeleteBtn').onclick=()=>{ if(S.activeScenarioId)deleteScenario(S.activeScenarioId); };
   $('baselineBtn').onclick=()=>{ if(S.baseline&&confirm('Replace existing baseline with current plan?')===false)return; setBaseline(); };
   $('baselinePill').onclick=()=>{ if(S.baseline)clearBaseline(); };
   $('scenarioSelect').onchange=()=>{
     const v=$('scenarioSelect').value;
     if(!v)return;
-    if(v==='__delete__'){ const prev=[...$('scenarioSelect').options].find(o=>o.value&&o.value!=='__delete__');
-      if(prev)deleteScenario(prev.value); $('scenarioSelect').value=''; return; }
-    loadScenario(v); $('scenarioSelect').value='';
+    if(!loadScenario(v))renderScenarioUI();
   };
   $('groupStruct').onclick=()=>{ S.roadmapGroup='structure'; renderAll(); scheduleSave(); };
   $('groupOwner').onclick=()=>{ S.roadmapGroup='owner'; renderAll(); scheduleSave(); };
-  $('drawerClose').onclick=closeDrawer;
-  $('drawerBackdrop').onclick=closeDrawer;
+  $('drawerClose').onclick=()=>closeDrawer();
+  $('drawerBackdrop').onclick=()=>closeDrawer();
   $('drawerDone').onclick=commitDrawer;
   $('drawerDelete').onclick=deleteDrawerItem;
   document.addEventListener('keydown',e=>{
@@ -2444,6 +2546,7 @@ function deserializeInto(o){
   S.tableDensity=o.tableDensity==='compact'?'compact':'comfortable';
   S.colWidths=Object.assign({},DEFAULT_COL_WIDTHS,o.colWidths||{});
   S.scenarios=Array.isArray(o.scenarios)?o.scenarios:[];
+  S.activeScenarioId=null;
   S.baseline=o.baseline&&typeof o.baseline==='object'?o.baseline:null;
   S.structure=Array.isArray(o.structure)?o.structure:[];
   S.items=(Array.isArray(o.items)?o.items:[]).map(i=>cleanItem({...i,
@@ -2463,8 +2566,20 @@ function deserializeInto(o){
   S.seq=mx+1;
 }
 let _saveT=null;
-function autosave(){ try{ localStorage.setItem(LS_KEY,JSON.stringify(serializeState())); }catch(e){} }
-function scheduleSave(){ clearTimeout(_saveT); _saveT=setTimeout(autosave,400); }
+function setSaveStatus(message){ if($('saveStatus'))$('saveStatus').textContent=message; }
+function autosave(){
+  try{
+    localStorage.setItem(LS_KEY,JSON.stringify(serializeState()));
+    $('saveWarning').hidden=true; setSaveStatus('Saved just now');
+  }catch(e){
+    $('saveWarning').hidden=false; setSaveStatus('Not saved');
+  }
+}
+function scheduleSave(){ clearTimeout(_saveT); setSaveStatus('Saving…'); _saveT=setTimeout(autosave,400); }
+window.addEventListener('beforeunload',e=>{
+  if(!S.drawerDirty&&$('saveWarning').hidden)return;
+  e.preventDefault(); e.returnValue='';
+});
 function loadAutosave(){ try{ const s=localStorage.getItem(LS_KEY); if(!s)return null;
   const o=JSON.parse(s); return (o&&Array.isArray(o.structure)&&o.structure.length)?o:null; }catch(e){ return null; } }
 function relTime(ts){ if(!ts)return''; const s=Math.floor((Date.now()-ts)/1000);
@@ -2476,7 +2591,12 @@ function renderStart(){ show('start'); const s=loadAutosave(); const b=$('btnRes
   else { b.style.display='none'; $('btnBlank').classList.add('btn-primary'); } }
 $('btnResume').onclick=()=>{ const s=loadAutosave(); if(s){ deserializeInto(s); enterStudio(); } };
 $('brandHome').onclick=()=>renderStart();
-$('saveBtn').onclick=()=>{ dl(new Blob([JSON.stringify(serializeState(),null,2)],{type:'application/json'}),(S.fileName||'roadmap')+'.roadmap.json'); };
+function downloadProjectFile(){
+  dl(new Blob([JSON.stringify(serializeState(),null,2)],{type:'application/json'}),(S.fileName||'roadmap')+'.roadmap.json');
+  if($('saveWarning').hidden)setSaveStatus('Downloaded just now');
+}
+$('saveBtn').onclick=downloadProjectFile;
+$('recoveryDownload').onclick=downloadProjectFile;
 $('btnOpenProj').onclick=()=>$('projIn').click();
 $('projIn').onchange=e=>{ const f=e.target.files[0];
   if(f){ const r=new FileReader(); r.onload=()=>{ try{ const o=JSON.parse(r.result);

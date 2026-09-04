@@ -1039,6 +1039,7 @@ def run_tests():
         blur(page)
         safe_click(page.locator("tbody tr").nth(1).locator("[data-act='up']"))
         moved_row = page.locator("tbody tr").first.locator("input[data-f='name']").input_value() == "Second Initiative"
+        page.once("dialog", lambda dialog: dialog.accept())
         safe_click(page.locator("tbody tr").first.locator("[data-act='del']"))
         deleted_row = page.locator("tbody tr").count() == 1
         runner.check("INIT-012", moved_row, "Initiative row up/down control reorders rows.", "Initiative row move failed.")
@@ -2086,6 +2087,191 @@ def run_tests():
             "1 item" in counts or "2 items" in counts,
             "Structure workstreams show initiative counts for populated lanes.",
             "Workstream initiative counts were not visible.",
+        )
+        ctx.close()
+
+        # Reliability-first data entry and data safety regressions.
+        ctx, page = new_context(browser, seed_state())
+        page.click("#segData")
+        name_cell = page.locator("tr[data-id='i1'] [data-f='name']")
+        name_cell.click()
+        name_cell.press("End")
+        name_cell.type(" updated")
+        name_cell.press("Tab")
+        focus_after_edit = page.evaluate(
+            """() => ({id: document.activeElement?.closest('tr')?.dataset.id || '', field: document.activeElement?.dataset.f || ''})"""
+        )
+        runner.check(
+            "GRID-001",
+            focus_after_edit == {"id": "i1", "field": "pillarId"},
+            "After an edited cell rerenders the table, keyboard focus continues to the next cell in the same row.",
+            f"Grid focus did not continue after edit: {focus_after_edit}",
+        )
+        page.evaluate(
+            """() => {
+                const base={...S.items[0]};
+                S.items=Array.from({length:60},(_,i)=>({...base,id:'bulk-'+i,name:'Bulk initiative '+(i+1)}));
+                renderAll();
+            }"""
+        )
+        grid_layout = page.evaluate(
+            """() => {
+                const wrap=document.querySelector('#gridStage .grid-wrap');
+                const th=wrap?.querySelector('th');
+                const foot=wrap?.querySelector('.grid-foot');
+                return {bottom:wrap?.getBoundingClientRect().bottom||0, viewport:innerHeight,
+                    maxHeight:getComputedStyle(wrap).maxHeight,
+                    header:getComputedStyle(th).position, footer:getComputedStyle(foot).position};
+            }"""
+        )
+        runner.check(
+            "GRID-002",
+            grid_layout["bottom"] <= grid_layout["viewport"]
+            and grid_layout["maxHeight"] != "none"
+            and grid_layout["header"] == "sticky"
+            and grid_layout["footer"] == "sticky",
+            "Large initiative grids keep both scrollbars, the sticky header, and the footer within the viewport.",
+            f"Grid was not viewport-contained: {grid_layout}",
+        )
+        page.select_option("#filterPillar", "p2")
+        page.click("#addRow")
+        new_row = page.evaluate(
+            """() => { const it=S.items.at(-1); return {pillarId:it.pillarId, visible:!!document.querySelector(`tr[data-id='${it.id}']`), focused:document.activeElement?.closest('tr')?.dataset.id===it.id}; }"""
+        )
+        runner.check(
+            "GRID-003",
+            new_row == {"pillarId": "p2", "visible": True, "focused": True},
+            "A new initiative inherits the active pillar filter and remains visible and focused.",
+            f"Filtered row creation was not contextual: {new_row}",
+        )
+        page.select_option("#filterPillar", "")
+        edit_action = page.locator("tr[data-id='bulk-0'] .row-tools button[data-act='edit']")
+        edit_action.focus()
+        row_action_opacity = page.evaluate("getComputedStyle(document.querySelector(`tr[data-id='bulk-0'] .row-tools`)).opacity")
+        runner.check(
+            "A11Y-003",
+            row_action_opacity == "1",
+            "Row actions become visible when keyboard focus enters the action group.",
+            f"Focused row actions remained hidden at opacity {row_action_opacity}.",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser)
+        page.click("#btnBlank")
+        pillar_input = page.locator(".pillar-name").first
+        pillar_input.click()
+        pillar_input.press("Meta+A")
+        pillar_input.press_sequentially("Native undo")
+        pillar_input.press("Meta+Z")
+        native_undo_ok = pillar_input.input_value() == "New pillar"
+        pillar_input.fill("App redo")
+        blur(page)
+        page.evaluate("document.activeElement?.blur()")
+        page.keyboard.press("Control+Z")
+        page.keyboard.press("Control+Y")
+        app_redo_ok = page.locator(".pillar-name").first.input_value() == "App redo"
+        runner.check(
+            "UNDO-003",
+            native_undo_ok and app_redo_ok,
+            "Native text undo remains available in fields and Ctrl+Y redoes application changes outside fields.",
+            f"Undo routing failed: native={native_undo_ok}, app_redo={app_redo_ok}",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser, seed_state())
+        page.click("#segData")
+        page.click("tr[data-id='i1'] .row-tools button[data-act='edit']")
+        page.fill("#dName", "Unsaved drawer edit")
+        page.once("dialog", lambda dialog: dialog.dismiss())
+        page.click("#drawerBackdrop", position={"x": 4, "y": 4})
+        drawer_protected = page.locator("#itemDrawer.on").count() == 1 and page.locator("#dName").input_value() == "Unsaved drawer edit"
+        if page.locator("#itemDrawer.on").count():
+            page.click("#drawerDone")
+        drawer_saved = page.evaluate("S.items.find(i=>i.id==='i1').name") == "Unsaved drawer edit"
+        runner.check(
+            "DRAWER-001",
+            drawer_protected and drawer_saved and text(page, "#drawerDone") == "Save changes",
+            "Dirty drawer edits require discard confirmation and Save changes commits them.",
+            f"Drawer protection failed: protected={drawer_protected}, saved={drawer_saved}",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser, seed_state())
+        page.evaluate("Object.defineProperty(Storage.prototype,'setItem',{value:function(){ throw new DOMException('Quota exceeded','QuotaExceededError'); },configurable:true})")
+        page.evaluate("scheduleSave()")
+        page.wait_for_timeout(550)
+        persistence_state = {
+            "warning": page.locator("#saveWarning").is_visible() if page.locator("#saveWarning").count() else False,
+            "download": page.locator("#saveWarning button").count() == 1,
+            "status": text(page, "#saveStatus") if page.locator("#saveStatus").count() else "",
+        }
+        runner.check(
+            "PERSIST-003",
+            persistence_state == {"warning": True, "download": True, "status": "Not saved"},
+            "Autosave failure shows a persistent warning, recovery download action, and Not saved status.",
+            f"Autosave failure remained silent: {persistence_state}",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser, seed_state())
+        page.evaluate(
+            """() => {
+                const payload=clonePlanPayload();
+                S.scenarios=[{id:'sc-one',name:'First',savedAt:1,payload},{id:'sc-two',name:'Second',savedAt:2,payload}];
+                renderScenarioUI();
+            }"""
+        )
+        page.once("dialog", lambda dialog: dialog.accept())
+        page.select_option("#scenarioSelect", "sc-two")
+        has_scenario_delete = page.locator("#scenarioDeleteBtn").count() == 1
+        if has_scenario_delete:
+            page.once("dialog", lambda dialog: dialog.accept())
+            page.click("#scenarioDeleteBtn")
+        scenarios_left = page.evaluate("S.scenarios.map(s=>s.id)")
+        runner.check(
+            "SCEN-002",
+            has_scenario_delete and scenarios_left == ["sc-one"],
+            "The dedicated scenario delete action removes only the currently selected scenario.",
+            f"Scenario deletion targeted the wrong item or lacked an explicit action: {scenarios_left}",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser, seed_state())
+        page.once("dialog", lambda dialog: dialog.dismiss())
+        page.click(".pillar[data-p='p1'] [data-act='pdel']")
+        cancelled_delete = page.locator(".pillar[data-p='p1']").count() == 1 and page.evaluate("S.items.length") == 3
+        if cancelled_delete:
+            page.once("dialog", lambda dialog: dialog.accept())
+            page.click(".pillar[data-p='p1'] [data-act='pdel']")
+        undo_action = page.locator("#toast button[data-toast-action='undo']")
+        undo_visible = undo_action.count() == 1 and undo_action.is_visible()
+        if undo_visible:
+            undo_action.click()
+        restored_delete = page.locator(".pillar[data-p='p1']").count() == 1 and page.evaluate("S.items.length") == 3
+        runner.check(
+            "SAFETY-001",
+            cancelled_delete and undo_visible and restored_delete,
+            "Populated destructive actions require confirmation and provide an immediate Undo action.",
+            f"Destructive delete protection failed: cancelled={cancelled_delete}, undo={undo_visible}, restored={restored_delete}",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser, seed_state())
+        shell_exists = all(page.locator(sel).count() == 1 for sel in ["#projectName", "#saveStatus", "#scenarioSaveBtn", "#saveBtn"])
+        if shell_exists:
+            page.fill("#projectName", "Leadership roadmap")
+            blur(page)
+            wait_autosave(page)
+        saved_title = page.evaluate("JSON.parse(localStorage.getItem('roadmapStudio.v1')).fileName") if shell_exists else ""
+        runner.check(
+            "SHELL-001",
+            shell_exists
+            and saved_title == "Leadership roadmap"
+            and text(page, "#scenarioSaveBtn") == "Snapshot"
+            and text(page, "#saveBtn") == "Download"
+            and text(page, "#saveStatus") in ["Saved just now", "Saving…"],
+            "The toolbar clearly identifies the project, save state, scenario Snapshot, and project Download actions.",
+            f"Project shell remained ambiguous: exists={shell_exists}, title={saved_title}",
         )
         ctx.close()
 

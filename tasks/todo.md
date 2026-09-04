@@ -369,3 +369,35 @@
 - Committed the complete intentional scope as `28f9d65` and excluded generated `tasks/__pycache__/` files.
 - Pushed `agent/executive-view-export` and opened PR `#4` against `main`.
 - GitHub reports the PR as cleanly mergeable with no required checks or review blocks; the locally recorded regression suite remains **110 passed / 0 failed / 0 untested**.
+
+# Reliability-First Product Upgrade
+
+## Plan
+- [x] Verify the current `main` baseline and add tracker rows for the reliability improvements.
+- [x] Add failing browser tests for grid focus retention, bounded scrolling, sticky headers, and filter-aware row creation.
+- [x] Add failing browser tests for native text undo, drawer dismissal protection, autosave failure visibility, scenario deletion selection, and destructive-action confirmation.
+- [x] Add failing browser tests for clearer save language, editable project title, save-state feedback, and keyboard-visible row actions.
+- [x] Implement the smallest shared interaction and persistence changes needed to pass the new tests.
+- [x] Run the full regression suite and inspect desktop/mobile interaction states in the browser.
+- [x] Run the frontend design detector and document final verification results.
+
+## Review
+- Strict RED-GREEN verification began at **110 passed / 10 expected failures** and finished at **120 passed / 0 failed / 0 untested**.
+- Initiative editing now preserves Tab flow, keeps large tables and both scrollbars inside the viewport, restores sticky headers, and creates new rows in the active pillar/filter context.
+- Native text undo is no longer intercepted; application redo supports Ctrl/Cmd+Y outside editable controls; keyboard-focused row actions are visible.
+- Dirty drawer edits require confirmation before dismissal, destructive deletes require confirmation and offer a seven-second Undo action, and the drawer returns focus after saving.
+- Autosave failures now surface a persistent recovery warning with a project download action. The toolbar shows an editable persisted project name, save state, distinct `Snapshot` and `Download` actions, and an explicit selected-scenario delete control.
+- Desktop QA at 1440×900 verified the 60-row grid remains inside the viewport (`bottom 876px`) with no body overflow. Mobile QA at 390×844 verified contained horizontal grid scrolling and a collision-free horizontally scrollable toolbar.
+- The Impeccable detector ran in degraded regex mode because its optional HTML parser modules were unavailable; it reported only two pre-existing easing-token warnings and no new targeted UI anti-patterns.
+
+# GitHub Publish Reliability Upgrade
+
+## Plan
+- [x] Fetch GitHub and confirm the branch starts from current `origin/main`.
+- [x] Confirm the working tree contains only the intended product, test, tracker, and review changes.
+- [x] Verify the recorded full-suite result and check the diff for formatting errors.
+- [ ] Commit and push `agent/reliability-first-ux`.
+- [ ] Open and verify a pull request against `main`.
+
+## Review
+- Publication in progress.
