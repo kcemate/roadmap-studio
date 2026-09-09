@@ -1,0 +1,179 @@
+{
+  "browser": "chromium",
+  "results": [
+    {
+      "test": "__main__.AuditRegressionTests.test_01_percentage_roundtrip",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_02_import_is_inert",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_03_import_atomic_and_bounded",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_04_undated_totals_reconcile",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_05_actuals_do_not_change_with_confidence",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_06_scenario_drafts_and_deletions",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_07_deletion_undo_is_specific",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_08_baseline_undo",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_09_incomplete_dates_do_not_crash",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_10_invalid_money_is_not_silently_coerced",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_11_uncommitted_draft_survives_reload",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_12_recorded_actual_asof",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_13_benefit_basis_and_recognition",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_14_new_financial_fields_roundtrip",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_15_money_and_percent_invariants",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_16_legacy_fraction_import_explicit",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_17_unsupported_or_orphan_import_keeps_project",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_18_undo_redo_preserves_configuration",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_19_actuals_drawer_roundtrip",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_20_recovery_before_replacement",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_21_long_name_and_owner_collapse",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_22_drawer_accessible_focus",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_23_draft_drawer_reopens",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_24_phase_and_benefit_date_validation",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_25_actuals_percentage_is_derived",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_26_import_rejects_reversed_dates",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_27_legacy_confidence_names",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_28_calendar_year_recurring_value",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_29_wide_letters_stay_inside_timeline_bounds",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_30_optional_costs_and_net_benefit",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_31_drawer_preserves_custom_confidence",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_32_accessible_tabs_and_baseline_control",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_33_project_name_is_undoable",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_34_invalid_drawer_draft_import_is_atomic",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_35_editable_stretch_fields_and_measurements",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_36_stretch_save_open_autosave_and_undo",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_37_stretch_scenarios_baseline_and_legacy",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_38_stretch_invalid_and_clear",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_39_stretch_independent_of_goal_and_responsive",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_40_stretch_goal_label_preserves_entered_precision",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_41_active_category_labels_and_legacy_roundtrip",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_42_active_import_alias_preserves_explicit_classification",
+      "status": "Passed"
+    },
+    {
+      "test": "__main__.AuditRegressionTests.test_43_active_drawer_and_financial_drilldown",
+      "status": "Passed"
+    }
+  ],
+  "passed": 43,
+  "failed": 0
+}

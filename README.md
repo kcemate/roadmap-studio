@@ -1,100 +1,105 @@
-# Roadmap Studio
+# Roadmap Studio 1.6.6
 
-Roadmap Studio is a local-first browser app for turning pillars, workstreams, and initiatives into an executive-ready roadmap and financial story.
+A local-first app for turning strategic pillars, workstreams, and initiatives into an executive roadmap and a defensible financial story.
 
-It is designed for sensitive planning work: roadmap data stays in the browser, project files are saved locally as JSON, and the app does not need a backend or build step.
+Open `index.html` in a browser. No server or account is required. Keep the adjacent `vendor/` folder: it contains the offline PowerPoint writer. Use **Download** for a portable `.roadmap.json` project file; browser autosave is not a substitute for a backup.
 
-## Current Feature Set
+## What's New
 
-- Build a roadmap from editable pillars and workstreams.
-- **Drag-and-drop** pillars and workstreams to reorder structure (button reorder still available).
-- Track initiatives by pillar, workstream, start/end date, milestone flag, status, owner, financial type, dollar value, realized percentage, and **confidence**.
-- Choose `Approved` or `Proposed` for each initiative; legacy projects default `Not Started` to Proposed and started work to Approved.
-- **Initiative filters + search** by text, status, owner, pillar, and Savings/Avoidance.
-- **Resizable columns** and comfortable/compact density on the initiatives table.
-- Classify financial impact as `Savings` or `Avoidance`.
-- Show planned and realized totals for Savings and Avoidance in the roadmap header.
-- **Health / risk summary panel** with counts and $ impact by status.
-- Show each expanded pillar's Savings, Avoidance, and Realized rollups directly inside the roadmap view.
-- Collapse or expand roadmap pillars (or owner lanes) to showcase one group at a time.
-- **Owner swimlane view** — group the roadmap by owner instead of structure.
-- Render `Not Started` initiatives in black so they are distinct from savings and avoidance work.
-- Drag roadmap bars and edges to adjust initiative timing.
-- Keep ranged initiative names inside their roadmap bars with concise, distinguishing labels and full details on hover.
-- **Click a roadmap bar** to open a side **edit drawer** (dates, finance, confidence, time-phased realization).
-- **Time-phased realization** schedule (cumulative % by date) with single-% fallback.
-- **Confidence / probability weighting** (High / Med / Low) for expected-value projections.
-- **Scenario snapshots** and a frozen **baseline** for plan-vs-baseline comparison.
-- Save and reopen roadmap project files locally.
-- Export the roadmap view to PNG.
-- Export a PowerPoint deck with one slide per pillar plus financial summary slides.
+- Initiative Register: every initiative, grouped by pillar and Active/Proposed, with full names, financial values, realization, timing, and owner. Print / PDF creates a landscape report using the browser's local Save as PDF; register PowerPoints are available alone or as an opt-in full-deck appendix.
 
-## Analytics Views
+- Active replaces Approved in initiative controls, summaries, comparisons, and PowerPoint. Legacy project classifications and financial totals are preserved.
 
-Roadmap Studio includes dedicated executive analytics tabs:
+- Optional, editable Stretch goal beneath Portfolio goal, saved with each plan. Executive web and PowerPoint views show both targets and identified/realized progress against each, with no automatic multiplier.
+- Row-selection checkboxes and numbers stay vertically centered with initiative fields, including taller rows.
+- Correct, round-trip-safe percentages and strict financial/date validation.
+- Atomic, bounded project imports with safe identifiers and consistent references.
+- Reconciled portfolio totals, including explicit unscheduled and excluded value.
+- Recorded actual dollars and an as-of date, independent of forecast confidence.
+- Per-scenario working drafts, intentional deletion semantics, comprehensive undo, and local recovery.
+- Persisted unfinished grid/drawer edits, protected across reloads.
+- Recurring/one-time benefits, annual/lifetime inputs, recognition rules, optional implementation costs, and linked exclusions.
+- Sortable initiatives, filtered bulk edits, custom column layouts, and reporting-date controls.
+- Clickable financial totals with contributing initiatives and calculation context.
+- A compact Review workspace for exceptions, scenario comparisons, and recovery.
+- Responsive metrics, labeled controls, modal focus handling, and measured timeline labels.
+- Paginated PowerPoints, explicit export scope, report context, and readable presentation scrolling.
+- Visible version, reproducible offline releases, rollback tooling, and automated verification gates.
 
-- `Executive Summary`: reconciles the full portfolio into one dollar tracker toward an editable goal, split into Realized, Approved Remaining, and Proposed Remaining Savings/Avoidance value.
-- `Portfolio Rollup`: shows one aggregate Approved and Proposed timeline bar per pillar, including initiative count, Savings/Avoidance breakdown, and realized progress.
-- `Projected Savings`: projects cumulative value through a selected date.
-- `Savings only` trajectory: includes only Savings initiatives.
-- `Savings + Avoidance` trajectory: includes both Savings and Avoidance initiatives.
-- Milestone initiatives recognize full value on the milestone date.
-- Ranged initiatives accrue value linearly from start through end.
-- Optional realized overlay compares planned value with realized value (supports time-phased phases).
-- Optional **confidence weighting** and **baseline** trajectory overlay.
-- **Expected** (confidence-weighted) and **annualized run-rate** metric cards.
-- Top drivers identify the initiatives carrying the selected-date projection.
-- `Stacked Bar Chart`: shows pillar concentration as percent of total value.
-- Stacked bars are available for both Savings only and Savings + Avoidance.
+## Views
 
-## PowerPoint Export
+**Structure** manages pillars and workstreams. **Initiatives** holds names, timing, approval, status, owners, financial type/value, realization, confidence, and inclusion in totals. The detail drawer contains actuals, benefit economics, recognition, exclusion links, and dated realization phases.
 
-The PowerPoint export is built for leadership review:
+**Roadmap** groups work by pillar or owner, supports collapsing groups and drag-based timing, and keeps full details available from each bar. Not Started remains black; Savings and Avoidance retain their financial color distinction.
 
-- Executive Summary opens the deck with the portfolio goal gap, four headline metrics, and the reconciled Savings/Avoidance dollar tracker.
-- Portfolio Rollup follows as slide 2 before the pillar-level roadmap detail.
-- One readable roadmap slide per pillar.
-- Fiscal-year and quarter headers.
-- Savings, Avoidance, and Realized metric cards.
-- Multiple initiatives in the same workstream stack into readable lanes.
-- Narrow PowerPoint roadmap bars use contained, single-line initiative labels.
-- Portfolio approval slide with pillar lanes, Approved/Proposed value, realized progress, and calendar-year spans.
-- Projected Savings slide with endpoint labels and Avoidance lift.
-- Pillar value concentration slide with stacked bars and ranked contribution.
-- Repair-safe PowerPoint geometry for generated trajectory lines.
+**Executive Summary** shows identified opportunity and realized actuals against the goal. **Portfolio Rollup** shows aggregate Active and Proposed lanes per pillar. **Projected Savings** shows planned Savings and combined trajectories, with confidence, actuals, target, and baseline context. **Stacked Bar Chart** compares pillar contributions for Savings only and combined value.
 
-## Privacy And Security
+**Review**, accessible from Initiatives, contains exceptions, scenario comparison, and local recovery. Financial drilldowns show contributors and calculation rules.
 
-- No backend.
-- No project data upload.
-- No external runtime scripts.
-- No ExcelJS/CDN dependency.
-- Local PowerPoint writer vendored in `vendor/`.
-- Browser-enforced Content Security Policy blocks network egress APIs.
-- Project save/open uses local JSON files selected by the user.
+## Financial Definitions
 
-## Tech Notes
+| Concept | Definition |
+| --- | --- |
+| Portfolio value | Included lifetime Savings plus Avoidance; unscheduled work remains in the portfolio. |
+| Annual recurring input | Converted to full dated duration using calendar-year proration. Requires complete dates. |
+| One-time value | Full entered benefit, not an annual run-rate. |
+| Planned recognition | Linear across the range, full value at completion, or full value upfront. Milestones recognize on their date. Undated work cannot be projected. |
+| Recorded actuals | Explicit dollars through the reporting date; never confidence-discounted or added on top of opportunity. |
+| Legacy realization | Without explicit actual dollars, dated cumulative phases take precedence over a single percentage. |
+| Expected value | Planned value multiplied by confidence; recorded actuals are unchanged. |
+| Net benefit | Lifetime planned value minus optional total implementation cost. Gross headlines are not silently netted. |
+| Excluded work | Visible on the roadmap but excluded from financial totals; a credited initiative and reason explain why. |
 
-- Single-file HTML/CSS/JavaScript app in `index.html`.
-- Native SVG rendering for roadmap, portfolio rollup, projection, and stacked bar charts.
-- Local persistence through browser storage.
-- PowerPoint export via local `vendor/pptxgen.bundle.js`.
-- Playwright-based regression suite in `tasks/roadmap_feature_tests.py`.
+Stored percentages are percentage points: numeric `1` means 1%. Explicit `0.5%` means half a percent. Existing direct-entry shorthand `0.5` means 50% only when parsing new text; stored numbers are never reinterpreted. Fractional legacy files must explicitly declare `percentageUnit: "fraction"`.
 
-## Run Locally
+## Scenarios And Recovery
 
-Open `index.html` in a browser.
+Switching scenarios saves outgoing changes to its working draft. New initiatives remain in a shared portfolio catalog; deletion markers prevent another scenario resurrecting deleted work. A baseline is a frozen comparison plan. Download separate files when independent portfolio membership is needed.
 
-The app stores autosave data in your browser. Use `Save` to download a `.roadmap.json` project file and `Open` to load it into a newer version.
+Undo/redo restores configuration as well as initiative data. Deletion Undo preserves newer unrelated edits. Replacement imports/new projects retain up to five size-bounded recovery copies. Invalid imports leave the current project untouched. Autosave failure shows a persistent warning with a download action.
 
-## Test
+Project formats v1, v2, and v3 pass through validation; downloads use v3. Unsupported, oversized, malformed, or inconsistent files are rejected. Keep the original when import fails. Browser storage belongs to the current browser/profile/origin and can be cleared.
 
-```bash
-python3 tasks/roadmap_feature_tests.py
+## Exports
+
+Choose **Full deck** or **Current view**. The full PowerPoint tells the story in this order: Executive Summary, Portfolio Rollup, Projected Savings, Pillar Contribution, then detailed roadmap pages. Reports identify project, scenario, reporting date, baseline, and confidence basis; notes retain the version and grouping context.
+
+The 1.6.1 export uses two centered executive metric blocks, balanced two-pillar rollup pages, continuous projection lines with direct labels, and separate dollar/share contribution columns. A distant target stays visible above the projection without flattening the chart. Both contribution bars represent 100%, with consistent pillar order and colors.
+
+Dense roadmaps continue across slides at up to four initiatives per page instead of shrinking labels. Short bars use numbered references to a readable initiative column. Unscheduled work is identified, while complete names and financial details remain in slide notes. Savings is green and Avoidance is blue; approval lanes use labeled neutral colors, and composition colors identify pillars rather than financial types. PNG export and browser presentation remain local; oversized presentation views scroll at readable size.
+
+## Privacy
+
+No backend, analytics, project upload, external runtime script, or CDN. Content Security Policy blocks application network connections, objects, forms, and remote frames. Imports, scenarios, baselines, and preferences are validated before replacement. Exports are generated locally.
+
+This does not protect against browser extensions, a compromised device, or sharing downloaded files. Hosting receives ordinary application-asset requests, not entered project data.
+
+## Source And Build
+
+Edit `src/app.html` (core app), `src/model.js` (validation/finance/recovery), `src/workspace.js` and `src/workspace.css` (review/editing), or `src/exports.js` (exports/presentation). Do not manually edit generated `index.html`.
+
+```sh
+python3 tasks/build.py
+python3 tasks/build.py --check
 ```
 
-Latest local verification:
+Users opening a release do not need a build tool.
 
-- `98 passed`
-- `0 failed`
-- `0 untested`
+## Verification
+
+```sh
+python3 -m pip install playwright==1.58.0 Pillow==12.1.1 PyMuPDF==1.27.2.2
+python3 -m playwright install chromium webkit firefox
+npm install --prefix /tmp/roadmap-audit-tools --no-save axe-core@4.10.3
+python3 tasks/verify_all.py
+```
+
+The gate runs the existing feature suite, core regressions in Chromium/WebKit/Firefox, workspace tests, axe accessibility scans, export and presentation-design checks, and release/rollback validation. The axe bundle is a test-only dependency, never part of the shipped app. Set \`AXE_PATH\` to use another local installation.
+
+Tracker/result files and \`tasks/audit-integration-results.json\` record actual output. Failures return nonzero. PowerPoint checks include dense fixtures and geometric bounds; visual renders are reviewed before release. Native PowerPoint repair-dialog behavior requires verification in Microsoft PowerPoint, not only XML inspection.
+
+## Releases
+
+See [release and rollback instructions](docs/releases.md). Packages contain only app assets, the vendored PowerPoint writer/license, version metadata, and checksums. Project data and test artifacts are excluded.
+
+The manual GitHub Pages workflow prepares a stable public address. Enabling and publishing that site is a separate approval step; local packaging or pushing code does not automatically deploy it.

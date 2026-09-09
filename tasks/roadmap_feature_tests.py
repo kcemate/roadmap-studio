@@ -3,6 +3,7 @@ import csv
 import json
 import re
 import shutil
+import sys
 import xml.etree.ElementTree as ET
 import zipfile
 from datetime import datetime, timezone
@@ -609,6 +610,11 @@ def pptx_negative_extents(path):
     return issues
 
 
+def ppt_neutral_color(color):
+    channels = [int(color[index:index + 2], 16) for index in (0, 2, 4)]
+    return max(channels) - min(channels) <= 16
+
+
 def ppt_text_boxes(slide_xml, needle):
     ns = {
         "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
@@ -622,11 +628,13 @@ def ppt_text_boxes(slide_xml, needle):
             continue
         off = shape.find(".//a:xfrm/a:off", ns)
         ext = shape.find(".//a:xfrm/a:ext", ns)
+        properties = shape.find("./p:nvSpPr/p:cNvPr", ns)
         if off is None or ext is None:
             continue
         boxes.append(
             {
                 "text": text_value,
+                "object_name": properties.attrib.get("name", "") if properties is not None else "",
                 "x": int(off.attrib["x"]) / 914400,
                 "y": int(off.attrib["y"]) / 914400,
                 "w": int(ext.attrib["cx"]) / 914400,
@@ -635,6 +643,11 @@ def ppt_text_boxes(slide_xml, needle):
                     int(node.attrib["sz"]) / 100
                     for node in shape.findall(".//*[@sz]", ns)
                     if node.attrib.get("sz", "").isdigit()
+                ],
+                "text_colors": [
+                    node.attrib["val"].upper()
+                    for node in shape.findall(".//p:txBody//a:solidFill/a:srgbClr", ns)
+                    if node.attrib.get("val")
                 ],
             }
         )
@@ -707,7 +720,7 @@ def run_tests():
             ["START-004", "NAV-001", "STRUCT-001"],
             page.locator("#studio").is_visible()
             and page.locator("#segStruct.on").is_visible()
-            and visible_texts(page, ".seg button") == ["Structure", "Initiatives", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
+            and visible_texts(page, ".seg button") == ["Structure", "Initiatives", "Initiative Register", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
             and "1 pillar" in text(page, "#structMeta")
             and "1 workstream" in text(page, "#structMeta"),
             "Blank start creates one pillar/workstream and opens Structure with tabs ordered Structure, Initiatives, Roadmap, Projected Savings, Stacked Bar Chart.",
@@ -987,10 +1000,11 @@ def run_tests():
         blur(page)
         runner.check(
             "INIT-006",
-            page.locator("input[data-f='start']").input_value() == "2026-04-01"
-            and page.locator("input[data-f='end']").input_value() == "2026-04-01",
-            "Date edits clamp start/end to prevent negative duration.",
-            "Date clamping failed when end was set before start.",
+            page.locator("input[data-f='start']").input_value() == "2026-04-15"
+            and page.locator("input[data-f='end']").get_attribute('aria-invalid') == 'true'
+            and page.evaluate('S.items[0].end >= S.items[0].start'),
+            "An end before start is rejected visibly without silently moving either saved date.",
+            "Invalid date edit changed the saved schedule or lacked a visible error.",
         )
         page.locator("input[data-f='milestone']").check()
         runner.check(
@@ -1039,6 +1053,7 @@ def run_tests():
         blur(page)
         safe_click(page.locator("tbody tr").nth(1).locator("[data-act='up']"))
         moved_row = page.locator("tbody tr").first.locator("input[data-f='name']").input_value() == "Second Initiative"
+        page.once("dialog", lambda dialog: dialog.accept())
         safe_click(page.locator("tbody tr").first.locator("[data-act='del']"))
         deleted_row = page.locator("tbody tr").count() == 1
         runner.check("INIT-012", moved_row, "Initiative row up/down control reorders rows.", "Initiative row move failed.")
@@ -1094,22 +1109,40 @@ def run_tests():
         exclusion_ppt = ARTIFACTS / "downloads" / exclusion_download.suggested_filename
         exclusion_download.save_as(exclusion_ppt)
         with zipfile.ZipFile(exclusion_ppt) as zf:
-            exclusion_exec = zf.read("ppt/slides/slide1.xml").decode("utf-8", "ignore")
-            exclusion_rollup = zf.read("ppt/slides/slide2.xml").decode("utf-8", "ignore")
-            exclusion_pillar = zf.read("ppt/slides/slide3.xml").decode("utf-8", "ignore")
-            exclusion_projection = zf.read("ppt/slides/slide5.xml").decode("utf-8", "ignore")
-            exclusion_stack = zf.read("ppt/slides/slide6.xml").decode("utf-8", "ignore")
+            exclusion_slide_names = sorted(
+                (name for name in zf.namelist() if name.startswith("ppt/slides/slide") and name.endswith(".xml")),
+                key=lambda name: int(Path(name).stem.replace("slide", "")),
+            )
+            exclusion_slide_xmls = [zf.read(name).decode("utf-8", "ignore") for name in exclusion_slide_names]
+        exclusion_boxes = [ppt_text_boxes(xml, "") for xml in exclusion_slide_xmls]
+        exclusion_exec = exclusion_slide_xmls[0]
+        exclusion_rollup = "\n".join(
+            xml for xml, boxes in zip(exclusion_slide_xmls, exclusion_boxes)
+            if any(box["object_name"] == "slide-title" and box["text"].startswith("Portfolio Rollup") for box in boxes)
+        )
+        exclusion_projection = "\n".join(
+            xml for xml, boxes in zip(exclusion_slide_xmls, exclusion_boxes)
+            if any(box["object_name"].startswith("projection-line:") for box in boxes)
+        )
+        exclusion_contribution = "\n".join(
+            xml for xml, boxes in zip(exclusion_slide_xmls, exclusion_boxes)
+            if any(box["object_name"].startswith("contribution-dollar:") for box in boxes)
+        )
+        exclusion_pillar = "\n".join(
+            xml for xml, boxes in zip(exclusion_slide_xmls, exclusion_boxes)
+            if any(box["object_name"] == "initiative-label:i2" for box in boxes)
+        )
         exclusion_extents = pptx_negative_extents(exclusion_ppt)
         runner.check(
             "EXPORT-016",
             "$920K" in exclusion_exec
             and "$920K" in exclusion_rollup
             and "$920K" in exclusion_projection
-            and "$920K" in exclusion_stack
+            and "$920K" in exclusion_contribution
             and "$1.4M" not in exclusion_exec
             and "$1.4M" not in exclusion_rollup
             and "$1.4M" not in exclusion_projection
-            and "$1.4M" not in exclusion_stack
+            and "$1.4M" not in exclusion_contribution
             and "Carrier Contract Risk" in exclusion_pillar
             and "$450K" in exclusion_pillar
             and not exclusion_extents,
@@ -1274,7 +1307,7 @@ def run_tests():
             "NAV-001",
             nav_layout.get("height", 0) >= 90
             and nav_layout.get("tabsTop", 0) >= nav_layout.get("brandBottom", 999)
-            and nav_layout.get("tabCount") == 7
+            and nav_layout.get("tabCount") == 8
             and mobile_nav == {"height": 54, "scrollable": True},
             "Desktop view tabs occupy a full-width second row while mobile retains the compact horizontal toolbar.",
             f"Sub-tab layout was not responsive as specified: desktop={nav_layout}, mobile={mobile_nav}",
@@ -1329,7 +1362,7 @@ def run_tests():
         default_combined = maybe_text(page, "#projCombined")
         runner.check(
             "PROJ-001",
-            tabs == ["Structure", "Initiatives", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
+            tabs == ["Structure", "Initiatives", "Initiative Register", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
             and projection_visible
             and page.locator("#segProj.on").count() == 1
             and not page.locator("#roadStage").is_visible()
@@ -1511,7 +1544,7 @@ def run_tests():
         stack_stage_text = maybe_text(page, "#stackStage")
         runner.check(
             "STACK-001",
-            tabs == ["Structure", "Initiatives", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
+            tabs == ["Structure", "Initiatives", "Initiative Register", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
             and stack_visible
             and page.locator("#segStack.on").count() == 1
             and not page.locator("#projStage").is_visible()
@@ -1570,7 +1603,7 @@ def run_tests():
             page.click("#segExec")
         runner.check(
             "EXEC-001",
-            tabs == ["Structure", "Initiatives", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
+            tabs == ["Structure", "Initiatives", "Initiative Register", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
             and has_exec_tab
             and page.locator("#segExec.on").count() == 1
             and page.locator("#execStage").is_visible()
@@ -1643,7 +1676,7 @@ def run_tests():
             page.click("#segRollup")
         runner.check(
             "ROLLUP-001",
-            tabs == ["Structure", "Initiatives", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
+            tabs == ["Structure", "Initiatives", "Initiative Register", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
             and has_rollup_tab
             and page.locator("#segRollup.on").count() == 1
             and page.locator("#rollupStage").is_visible()
@@ -1658,7 +1691,7 @@ def run_tests():
             and maybe_text(page, "#rollupApproved") == "$220M"
             and maybe_text(page, "#rollupProposed") == "$80M"
             and maybe_text(page, "#rollupRealized") == "$180M"
-            and "1 Approved · $120M" in maybe_text(page, ".rollup-pillar[data-pillar='p1']")
+            and "1 Active · $120M" in maybe_text(page, ".rollup-pillar[data-pillar='p1']")
             and "1 Proposed · $80M" in maybe_text(page, ".rollup-pillar[data-pillar='p1']")
             and "Savings" in maybe_text(page, "#rollupStage")
             and "Avoidance" in maybe_text(page, "#rollupStage"),
@@ -1827,20 +1860,43 @@ def run_tests():
         ppt_path = ARTIFACTS / "downloads" / ppt_download.suggested_filename
         ppt_download.save_as(ppt_path)
         with zipfile.ZipFile(ppt_path) as zf:
-            slide_names = sorted(name for name in zf.namelist() if name.startswith("ppt/slides/slide") and name.endswith(".xml"))
-            slide_xml = "\n".join(zf.read(name).decode("utf-8", "ignore") for name in slide_names)
-            executive_slide_xml = zf.read("ppt/slides/slide1.xml").decode("utf-8", "ignore") if "ppt/slides/slide6.xml" in zf.namelist() else ""
-            rollup_slide_xml = zf.read("ppt/slides/slide2.xml").decode("utf-8", "ignore") if "ppt/slides/slide6.xml" in zf.namelist() else ""
-            projection_slide_xml = zf.read("ppt/slides/slide5.xml").decode("utf-8", "ignore") if "ppt/slides/slide6.xml" in zf.namelist() else ""
-            stacked_slide_xml = zf.read("ppt/slides/slide6.xml").decode("utf-8", "ignore") if "ppt/slides/slide6.xml" in zf.namelist() else ""
-        stacked_title_boxes = ppt_text_boxes(stacked_slide_xml, "carries")
+            slide_names = sorted(
+                (name for name in zf.namelist() if name.startswith("ppt/slides/slide") and name.endswith(".xml")),
+                key=lambda name: int(Path(name).stem.replace("slide", "")),
+            )
+            slide_xmls = [zf.read(name).decode("utf-8", "ignore") for name in slide_names]
+            slide_xml = "\n".join(slide_xmls)
+            notes_xml = "\n".join(
+                zf.read(name).decode("utf-8", "ignore")
+                for name in zf.namelist()
+                if name.startswith("ppt/notesSlides/notesSlide") and name.endswith(".xml")
+            )
+        slide_boxes = [ppt_text_boxes(xml, "") for xml in slide_xmls]
+        slide_texts = ["\n".join(box["text"] for box in boxes) for boxes in slide_boxes]
+        executive_slide_xml = slide_xmls[0]
+        rollup_indexes = [index for index, boxes in enumerate(slide_boxes)
+                          if any(box["object_name"] == "slide-title" and box["text"].startswith("Portfolio Rollup") for box in boxes)]
+        projection_indexes = [index for index, boxes in enumerate(slide_boxes)
+                              if any(box["object_name"].startswith("projection-line:") for box in boxes)]
+        contribution_indexes = [index for index, boxes in enumerate(slide_boxes)
+                                if any(box["object_name"].startswith("contribution-dollar:") for box in boxes)]
+        roadmap_indexes = [index for index, boxes in enumerate(slide_boxes)
+                           if any(box["object_name"].startswith("initiative-label:") for box in boxes)]
+        rollup_slide_xml = "\n".join(slide_xmls[index] for index in rollup_indexes)
+        projection_slide_xml = slide_xmls[projection_indexes[0]] if len(projection_indexes) == 1 else ""
+        contribution_slide_xml = "\n".join(slide_xmls[index] for index in contribution_indexes)
+        initiative_labels = [box for boxes in slide_boxes for box in boxes
+                             if box["object_name"].startswith("initiative-label:")]
         repair_extents = pptx_negative_extents(ppt_path)
         runner.check(
             "EXPORT-004",
             ppt_path.exists()
             and ppt_path.stat().st_size > 1000
             and ppt_download.suggested_filename.endswith(".pptx")
-            and len(slide_names) == 6
+            and {box["object_name"] for box in initiative_labels} >= {
+                "initiative-label:i1", "initiative-label:i2", "initiative-label:i3"
+            }
+            and all(min(box["font_sizes"] or [0]) >= 18 for box in initiative_labels)
             and "Product Requirements" in slide_xml
             and "Vertical Integration" in slide_xml
             and "Foam Cup Damage" in slide_xml
@@ -1854,51 +1910,70 @@ def run_tests():
         )
         runner.check(
             "EXPORT-006",
-            len(slide_names) == 6
-            and "Projected savings trajectory" in slide_xml
-            and "Savings only" in slide_xml
+            len(rollup_indexes) >= 1
+            and len(projection_indexes) == 1
+            and len(contribution_indexes) >= 1
+            and len(roadmap_indexes) >= 1
+            and max(rollup_indexes) < projection_indexes[0] < min(contribution_indexes) <= max(contribution_indexes) < min(roadmap_indexes)
+            and "Savings only" in projection_slide_xml
             and "Savings + Avoidance" in slide_xml
-            and "Pillar value concentration" in slide_xml
+            and contribution_slide_xml.count("100% composition") >= 2
+            and "Both bars represent 100%, not equal dollar values" in contribution_slide_xml
             and "Product Requirements" in slide_xml,
-            "PowerPoint export includes Projected Savings and Stacked Bar Chart slides after the pillar roadmap slides.",
-            "PowerPoint export did not include readable projection and stacked chart slides.",
+            "PowerPoint export follows Executive, Rollup, Projection, Contribution, then Roadmaps.",
+            "PowerPoint export did not follow the approved full-deck narrative order.",
         )
+        rollup_boxes = [box for index in rollup_indexes for box in slide_boxes[index]]
+        approval_boxes = [box for box in rollup_boxes if box["text"] in {"Active", "Proposed"}]
         runner.check(
             "EXPORT-011",
-            "Portfolio Rollup" in rollup_slide_xml
-            and "APPROVED" in rollup_slide_xml
-            and "PROPOSED" in rollup_slide_xml
-            and "REALIZED" in rollup_slide_xml
-            and "Product Requirements" in rollup_slide_xml
+            len(rollup_indexes) >= 1
+            and {box["object_name"] for box in rollup_boxes} >= {"rollup-pillar:p1", "rollup-pillar:p2"}
+            and all(min(box["font_sizes"] or [0]) >= 18 for box in rollup_boxes if box["object_name"].startswith("rollup-pillar:"))
+            and approval_boxes
+            and all(box["text_colors"] and all(ppt_neutral_color(color) for color in box["text_colors"])
+                    for box in approval_boxes)
+            and any(box["text"].lower().startswith("realized") for box in rollup_boxes)
             and "2 initiatives" in rollup_slide_xml
             and "Foam Cup Damage" not in rollup_slide_xml
             and "Carrier Contract Risk" not in rollup_slide_xml,
-            "PowerPoint includes an executive aggregate Portfolio Rollup slide after the pillar roadmap slides.",
+            "PowerPoint includes a balanced aggregate Rollup with neutral approval labels and explicit realized context.",
             "PowerPoint Portfolio Rollup slide was missing, misplaced, or incomplete.",
         )
+        executive_boxes = ppt_text_boxes(executive_slide_xml, "")
+        expected_goal_labels = {
+            "executive-goal-amount": "$1B", "executive-goal-label": "GOAL",
+        }
+        executive_goal_labels = {box["object_name"]: box["text"] for box in executive_boxes
+                                 if box["object_name"].startswith("executive-") and box["text"]}
+        opportunity_headlines = [box for box in executive_boxes
+                                 if "opportun" in box["text"].lower() and max(box["font_sizes"] or [0]) >= 26]
         runner.check(
             "EXPORT-013",
-            "The portfolio is $998.6M short of its $1B goal." in executive_slide_xml
-            and "IDENTIFIED OPPORTUNITY" in executive_slide_xml
-            and "REALIZED IN ACTUALS" in executive_slide_xml
+            opportunity_headlines
+            and all("achiev" not in box["text"].lower() for box in opportunity_headlines)
+            and "OPPORTUNITY" in executive_slide_xml.upper()
+            and "REALIZED" in executive_slide_xml.upper()
             and "Realized savings" in executive_slide_xml
             and "Realized avoidance" in executive_slide_xml
             and "0.1%" in executive_slide_xml
             and "13.7%" not in executive_slide_xml
-            and "$1B GOAL" in executive_slide_xml
+            and executive_goal_labels == expected_goal_labels
             and "Portfolio Rollup" in rollup_slide_xml,
             "PowerPoint opens with a live Executive View followed by Portfolio Rollup.",
             "PowerPoint Executive View was missing, out of order, or did not use the live financial story.",
         )
         runner.check(
             "EXPORT-007",
-            "Projected by" in projection_slide_xml
-            and "Avoidance lift" in projection_slide_xml
-            and "Value added by Avoidance" in projection_slide_xml
-            and "$1.6M" in projection_slide_xml
-            and "$2M" not in projection_slide_xml,
-            "PowerPoint projection slide uses a tighter axis, endpoint headline, and Avoidance lift story label.",
-            "PowerPoint projection slide did not include the redesigned executive chart story.",
+            "Savings only" in projection_slide_xml
+            and "Savings + Avoidance" in projection_slide_xml
+            and "<a:custGeom" in projection_slide_xml
+            and "Expected" not in projection_slide_xml
+            and "Annualized" not in projection_slide_xml
+            and "Expected" in notes_xml
+            and "Annualized" in notes_xml,
+            "PowerPoint projection uses two native lines and a smooth area while retaining run-rate metadata in notes.",
+            "PowerPoint projection did not preserve the approved core chart and notes-only metadata.",
         )
         runner.check(
             "EXPORT-009",
@@ -1908,16 +1983,15 @@ def run_tests():
         )
         runner.check(
             "EXPORT-008",
-            "carries" in stacked_slide_xml
-            and "Ranked contribution" in stacked_slide_xml
-            and "Dominant pillar" in stacked_slide_xml
-            and "Savings-only" in stacked_slide_xml
-            and "Total impact" in stacked_slide_xml
-            and "Pillar value concentration" in stacked_slide_xml
-            and len(stacked_title_boxes) == 1
-            and stacked_title_boxes[0]["w"] >= 11.5,
-            "PowerPoint stacked chart slide uses an insight title, dominant-pillar callout, and shared ranked table.",
-            f"PowerPoint stacked chart slide did not include a readable executive comparison story: {stacked_title_boxes}",
+            contribution_slide_xml.count("100% composition") >= 2
+            and "Both bars represent 100%, not equal dollar values" in contribution_slide_xml
+            and {box["object_name"] for index in contribution_indexes for box in slide_boxes[index]} >= {
+                "contribution-dollar:savings:p1", "contribution-share:savings:p1",
+                "contribution-dollar:combined:p1", "contribution-share:combined:p1",
+            }
+            and not re.search(r"\$[^<]*(?:·|\|)[^<]*%", contribution_slide_xml),
+            "PowerPoint contribution uses normalized bars and separate dollar and share columns.",
+            "PowerPoint contribution did not preserve normalized composition or separate table columns.",
         )
 
         page.evaluate(
@@ -1934,16 +2008,29 @@ def run_tests():
         stage_path = ARTIFACTS / "downloads" / stage_download.suggested_filename
         stage_download.save_as(stage_path)
         with zipfile.ZipFile(stage_path) as zf:
-            stage_exec_xml = zf.read("ppt/slides/slide1.xml").decode("utf-8", "ignore")
-            stage_rollup_xml = zf.read("ppt/slides/slide2.xml").decode("utf-8", "ignore")
-        compact_labels = ppt_text_boxes(stage_rollup_xml, "3 · $0")
-        pillar_boxes = ppt_text_boxes(stage_rollup_xml, "Vertical Integration")
-        title_boxes = ppt_text_boxes(stage_rollup_xml, "Portfolio Rollup")
+            stage_slide_names = sorted(
+                (name for name in zf.namelist() if name.startswith("ppt/slides/slide") and name.endswith(".xml")),
+                key=lambda name: int(Path(name).stem.replace("slide", "")),
+            )
+            stage_slide_xmls = [zf.read(name).decode("utf-8", "ignore") for name in stage_slide_names]
+        stage_slide_boxes = [ppt_text_boxes(xml, "") for xml in stage_slide_xmls]
+        stage_exec_xml = stage_slide_xmls[0]
+        stage_rollup_indexes = [index for index, boxes in enumerate(stage_slide_boxes)
+                                if any(box["object_name"] == "slide-title" and box["text"].startswith("Portfolio Rollup") for box in boxes)]
+        stage_rollup_xml = "\n".join(stage_slide_xmls[index] for index in stage_rollup_indexes)
+        stage_rollup_boxes = [box for index in stage_rollup_indexes for box in stage_slide_boxes[index]]
+        pillar_boxes = [box for box in stage_rollup_boxes if box["object_name"].startswith("rollup-pillar:")]
+        title_boxes = [box for box in stage_rollup_boxes
+                       if box["object_name"] == "slide-title" and box["text"].startswith("Portfolio Rollup")]
         stage_repair_extents = pptx_negative_extents(stage_path)
-        stage_exec_titles = ppt_text_boxes(stage_exec_xml, "The portfolio")
-        stage_exec_total = ppt_text_boxes(stage_exec_xml, "IDENTIFIED OPPORTUNITY")
-        stage_exec_realized = ppt_text_boxes(stage_exec_xml, "REALIZED IN ACTUALS")
-        stage_exec_goal = [box for box in ppt_text_boxes(stage_exec_xml, "$1B GOAL") if box["text"] == "$1B GOAL"]
+        stage_exec_titles = [box for box in ppt_text_boxes(stage_exec_xml, "")
+                             if "opportun" in box["text"].lower() and max(box["font_sizes"] or [0]) >= 26]
+        stage_exec_total = [box for box in ppt_text_boxes(stage_exec_xml, "OPPORTUNITY") if box["w"] >= 3.5]
+        stage_exec_realized = [box for box in ppt_text_boxes(stage_exec_xml, "REALIZED") if box["w"] >= 3.5]
+        stage_exec_goal = [box for box in stage_slide_boxes[0]
+                           if box["object_name"] == "executive-goal-amount" and box["text"] == "$1B"]
+        stage_goal_labels = {box["object_name"]: box["text"] for box in stage_slide_boxes[0]
+                             if box["object_name"].startswith("executive-") and box["text"]}
         runner.check(
             "EXPORT-014",
             len(stage_exec_titles) == 1
@@ -1951,6 +2038,7 @@ def run_tests():
             and len(stage_exec_total) == 1
             and len(stage_exec_realized) == 1
             and len(stage_exec_goal) == 1
+            and stage_goal_labels == expected_goal_labels
             and "SAVINGS" in stage_exec_xml
             and "AVOIDANCE" in stage_exec_xml
             and "Realized savings" in stage_exec_xml
@@ -1959,24 +2047,25 @@ def run_tests():
             "Executive View PowerPoint uses readable type, a direct value bar, and repair-safe geometry.",
             f"Executive View slide became unreadable or unsafe; titles={stage_exec_titles}, total={stage_exec_total}, goal={stage_exec_goal}, extents={stage_repair_extents[:3]}",
         )
-        keynote_titles = ppt_text_boxes(stage_exec_xml, "The portfolio")
+        keynote_titles = stage_exec_titles
         runner.check(
             "EXPORT-015",
             len(keynote_titles) == 1
             and max(keynote_titles[0]["font_sizes"], default=0) >= 28
-            and "The portfolio is $61M short of its $1B goal." in stage_exec_xml
-            and "IDENTIFIED OPPORTUNITY" in stage_exec_xml
-            and "REALIZED IN ACTUALS" in stage_exec_xml
+            and all("achiev" not in box["text"].lower() for box in keynote_titles)
+            and "OPPORTUNITY" in stage_exec_xml.upper()
+            and "REALIZED" in stage_exec_xml.upper()
             and "SAVINGS" in stage_exec_xml
             and "AVOIDANCE" in stage_exec_xml
             and "Realized savings" in stage_exec_xml
             and "Realized avoidance" in stage_exec_xml
-            and "$1B GOAL" in stage_exec_xml
-            and "Portfolio Rollup" in stage_rollup_xml
+            and stage_goal_labels == expected_goal_labels
+            and len(stage_rollup_indexes) == 2
             and "PATH TO PORTFOLIO GOAL" not in stage_exec_xml
             and "How the portfolio builds" not in stage_exec_xml
             and "Darker = more certain" not in stage_exec_xml
             and "Approved remaining" not in stage_exec_xml
+            and "Active remaining" not in stage_exec_xml
             and not stage_repair_extents,
             "Every PowerPoint opens with a live, keynote-style Executive View followed by Portfolio Rollup.",
             f"Executive View was missing, stale, dashboard-like, or unsafe; title={keynote_titles}, extents={stage_repair_extents[:3]}",
@@ -2005,21 +2094,20 @@ def run_tests():
             "EXPORT-012",
             stage_path.exists()
             and stage_path.stat().st_size > 1000
-            and len(title_boxes) == 1
-            and max(title_boxes[0]["font_sizes"], default=0) >= 24
-            and "Selected as approved" in stage_rollup_xml
-            and "Selected as proposed" in stage_rollup_xml
-            and "Captured to date" in stage_rollup_xml
-            and len(compact_labels) == 1
-            and 0.35 <= compact_labels[0]["w"] <= 0.95
-            and max(compact_labels[0]["font_sizes"], default=0) >= 8.5
-            and "3 initiatives · $0 · Savings $0 · Avoidance $0" not in stage_rollup_xml
-            and len(pillar_boxes) == 1
-            and max(pillar_boxes[0]["font_sizes"], default=0) >= 12
-            and "% of portfolio value is approved" not in stage_rollup_xml
+            and len(title_boxes) == 2
+            and all(max(box["font_sizes"], default=0) >= 24 for box in title_boxes)
+            and len(pillar_boxes) == 4
+            and sorted(sum(box in stage_slide_boxes[index] for box in pillar_boxes) for index in stage_rollup_indexes) == [2, 2]
+            and all(min(box["font_sizes"] or [0]) >= 18 for box in pillar_boxes)
+            and all(any(box["text"] == label for box in stage_rollup_boxes) for label in ["Active", "Proposed"])
+            and any(box["text"].lower().startswith("realized") for box in stage_rollup_boxes)
+            and all(
+                box["text_colors"] and all(ppt_neutral_color(color) for color in box["text_colors"])
+                for box in stage_rollup_boxes if box["text"] in {"Active", "Proposed"}
+            )
             and not stage_repair_extents,
-            "Portfolio Rollup PowerPoint faithfully mirrors the web tab and uses a readable compact label for short timeline spans.",
-            f"Portfolio Rollup PowerPoint diverged from the web tab or became unreadable; title={title_boxes}, compact={compact_labels}, pillars={pillar_boxes}, extents={stage_repair_extents[:3]}",
+            "Portfolio Rollup paginates four pillars 2+2 with readable neutral row labels.",
+            f"Portfolio Rollup pagination or typography was wrong; title={title_boxes}, pillars={pillar_boxes}, extents={stage_repair_extents[:3]}",
         )
 
         page.evaluate(
@@ -2037,13 +2125,27 @@ def run_tests():
         same_path = ARTIFACTS / "downloads" / same_download.suggested_filename
         same_download.save_as(same_path)
         with zipfile.ZipFile(same_path) as zf:
-            same_slide_xml = zf.read("ppt/slides/slide3.xml").decode("utf-8", "ignore")
-        same_boxes = ppt_text_boxes(same_slide_xml, "Future")
+            same_slide_xmls = [
+                zf.read(name).decode("utf-8", "ignore")
+                for name in sorted(
+                    (name for name in zf.namelist() if name.startswith("ppt/slides/slide") and name.endswith(".xml")),
+                    key=lambda name: int(Path(name).stem.replace("slide", "")),
+                )
+            ]
+            same_notes = "\n".join(
+                zf.read(name).decode("utf-8", "ignore")
+                for name in zf.namelist()
+                if name.startswith("ppt/notesSlides/notesSlide") and name.endswith(".xml")
+            )
+        same_all_boxes = [box for xml in same_slide_xmls for box in ppt_text_boxes(xml, "")]
+        same_boxes = [box for box in same_all_boxes if box["object_name"] in {
+            "initiative-label:sw1", "initiative-label:sw2"
+        }]
         readable_same_workstream_labels = (
             len(same_boxes) == 2
             and len({round(box["y"], 2) for box in same_boxes}) == 2
             and len({box["text"] for box in same_boxes}) == 2
-            and all(box["x"] + box["w"] <= 12.65 for box in same_boxes)
+            and all(min(box["font_sizes"] or [0]) >= 18 for box in same_boxes)
         )
         runner.check(
             "EXPORT-005",
@@ -2053,16 +2155,16 @@ def run_tests():
             "PowerPoint export keeps two same-workstream initiatives in distinct lanes with distinct concise labels.",
             f"Same-workstream PowerPoint labels were not distinct or readable; observed boxes: {same_boxes}",
         )
-        compact_boxes = ppt_text_boxes(same_slide_xml, "Future")
+        compact_boxes = [box for box in same_all_boxes if box["object_name"] in {
+            "initiative-bar:sw1", "initiative-bar:sw2"
+        }]
         runner.check(
             "EXPORT-010",
             len(compact_boxes) == 2
-            and len({box["text"] for box in compact_boxes}) == 2
-            and len({round(box["y"], 2) for box in compact_boxes}) == 2
-            and all(0.15 <= box["w"] < 1.5 for box in compact_boxes)
-            and all(box["x"] + box["w"] <= 12.65 for box in compact_boxes),
-            "PowerPoint pillar slides keep distinct concise initiative labels inside narrow ranged bars.",
-            f"PowerPoint labels were not distinct, concise, or contained: {compact_boxes}",
+            and all(box["text"].strip() not in {"...", "…"} for box in same_all_boxes)
+            and all(name in same_notes for name in ["Future Price Renewal Playbook A", "Future Price Renewal Playbook B"]),
+            "PowerPoint roadmap uses named bar objects, readable external labels, and complete notes without ellipsis-only labels.",
+            f"PowerPoint roadmap references or notes were incomplete: bars={compact_boxes}",
         )
 
         # Presentation mode.
@@ -2089,6 +2191,191 @@ def run_tests():
         )
         ctx.close()
 
+        # Reliability-first data entry and data safety regressions.
+        ctx, page = new_context(browser, seed_state())
+        page.click("#segData")
+        name_cell = page.locator("tr[data-id='i1'] [data-f='name']")
+        name_cell.click()
+        name_cell.press("End")
+        name_cell.type(" updated")
+        name_cell.press("Tab")
+        focus_after_edit = page.evaluate(
+            """() => ({id: document.activeElement?.closest('tr')?.dataset.id || '', field: document.activeElement?.dataset.f || ''})"""
+        )
+        runner.check(
+            "GRID-001",
+            focus_after_edit == {"id": "i1", "field": "pillarId"},
+            "After an edited cell rerenders the table, keyboard focus continues to the next cell in the same row.",
+            f"Grid focus did not continue after edit: {focus_after_edit}",
+        )
+        page.evaluate(
+            """() => {
+                const base={...S.items[0]};
+                S.items=Array.from({length:60},(_,i)=>({...base,id:'bulk-'+i,name:'Bulk initiative '+(i+1)}));
+                renderAll();
+            }"""
+        )
+        grid_layout = page.evaluate(
+            """() => {
+                const wrap=document.querySelector('#gridStage .grid-wrap');
+                const th=wrap?.querySelector('th');
+                const foot=wrap?.querySelector('.grid-foot');
+                return {bottom:wrap?.getBoundingClientRect().bottom||0, viewport:innerHeight,
+                    maxHeight:getComputedStyle(wrap).maxHeight,
+                    header:getComputedStyle(th).position, footer:getComputedStyle(foot).position};
+            }"""
+        )
+        runner.check(
+            "GRID-002",
+            grid_layout["bottom"] <= grid_layout["viewport"]
+            and grid_layout["maxHeight"] != "none"
+            and grid_layout["header"] == "sticky"
+            and grid_layout["footer"] == "sticky",
+            "Large initiative grids keep both scrollbars, the sticky header, and the footer within the viewport.",
+            f"Grid was not viewport-contained: {grid_layout}",
+        )
+        page.select_option("#filterPillar", "p2")
+        page.click("#addRow")
+        new_row = page.evaluate(
+            """() => { const it=S.items.at(-1); return {pillarId:it.pillarId, visible:!!document.querySelector(`tr[data-id='${it.id}']`), focused:document.activeElement?.closest('tr')?.dataset.id===it.id}; }"""
+        )
+        runner.check(
+            "GRID-003",
+            new_row == {"pillarId": "p2", "visible": True, "focused": True},
+            "A new initiative inherits the active pillar filter and remains visible and focused.",
+            f"Filtered row creation was not contextual: {new_row}",
+        )
+        page.select_option("#filterPillar", "")
+        edit_action = page.locator("tr[data-id='bulk-0'] .row-tools button[data-act='edit']")
+        edit_action.focus()
+        row_action_opacity = page.evaluate("getComputedStyle(document.querySelector(`tr[data-id='bulk-0'] .row-tools`)).opacity")
+        runner.check(
+            "A11Y-003",
+            row_action_opacity == "1",
+            "Row actions become visible when keyboard focus enters the action group.",
+            f"Focused row actions remained hidden at opacity {row_action_opacity}.",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser)
+        page.click("#btnBlank")
+        pillar_input = page.locator(".pillar-name").first
+        pillar_input.click()
+        pillar_input.press("ControlOrMeta+A")
+        pillar_input.press_sequentially("Native undo")
+        pillar_input.press("ControlOrMeta+Z")
+        native_undo_ok = pillar_input.input_value() == "New pillar"
+        pillar_input.fill("App redo")
+        blur(page)
+        page.evaluate("document.activeElement?.blur()")
+        page.keyboard.press("Control+Z")
+        page.keyboard.press("Control+Y")
+        app_redo_ok = page.locator(".pillar-name").first.input_value() == "App redo"
+        runner.check(
+            "UNDO-003",
+            native_undo_ok and app_redo_ok,
+            "Native text undo remains available in fields and Ctrl+Y redoes application changes outside fields.",
+            f"Undo routing failed: native={native_undo_ok}, app_redo={app_redo_ok}",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser, seed_state())
+        page.click("#segData")
+        page.click("tr[data-id='i1'] .row-tools button[data-act='edit']")
+        page.fill("#dName", "Unsaved drawer edit")
+        page.once("dialog", lambda dialog: dialog.dismiss())
+        page.click("#drawerBackdrop", position={"x": 4, "y": 4})
+        drawer_protected = page.locator("#itemDrawer.on").count() == 1 and page.locator("#dName").input_value() == "Unsaved drawer edit"
+        if page.locator("#itemDrawer.on").count():
+            page.click("#drawerDone")
+        drawer_saved = page.evaluate("S.items.find(i=>i.id==='i1').name") == "Unsaved drawer edit"
+        runner.check(
+            "DRAWER-001",
+            drawer_protected and drawer_saved and text(page, "#drawerDone") == "Save changes",
+            "Dirty drawer edits require discard confirmation and Save changes commits them.",
+            f"Drawer protection failed: protected={drawer_protected}, saved={drawer_saved}",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser, seed_state())
+        page.evaluate("Object.defineProperty(Storage.prototype,'setItem',{value:function(){ throw new DOMException('Quota exceeded','QuotaExceededError'); },configurable:true})")
+        page.evaluate("scheduleSave()")
+        page.wait_for_timeout(550)
+        persistence_state = {
+            "warning": page.locator("#saveWarning").is_visible() if page.locator("#saveWarning").count() else False,
+            "download": page.locator("#saveWarning button").count() == 1,
+            "status": text(page, "#saveStatus") if page.locator("#saveStatus").count() else "",
+        }
+        runner.check(
+            "PERSIST-003",
+            persistence_state == {"warning": True, "download": True, "status": "Not saved"},
+            "Autosave failure shows a persistent warning, recovery download action, and Not saved status.",
+            f"Autosave failure remained silent: {persistence_state}",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser, seed_state())
+        page.evaluate(
+            """() => {
+                const payload=clonePlanPayload();
+                S.scenarios=[{id:'sc-one',name:'First',savedAt:1,payload},{id:'sc-two',name:'Second',savedAt:2,payload}];
+                renderScenarioUI();
+            }"""
+        )
+        page.once("dialog", lambda dialog: dialog.accept())
+        page.select_option("#scenarioSelect", "sc-two")
+        has_scenario_delete = page.locator("#scenarioDeleteBtn").count() == 1
+        if has_scenario_delete:
+            page.once("dialog", lambda dialog: dialog.accept())
+            page.click("#scenarioDeleteBtn")
+        scenarios_left = page.evaluate("S.scenarios.map(s=>s.id)")
+        runner.check(
+            "SCEN-002",
+            has_scenario_delete and scenarios_left == ["sc-one"],
+            "The dedicated scenario delete action removes only the currently selected scenario.",
+            f"Scenario deletion targeted the wrong item or lacked an explicit action: {scenarios_left}",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser, seed_state())
+        page.once("dialog", lambda dialog: dialog.dismiss())
+        page.click(".pillar[data-p='p1'] [data-act='pdel']")
+        cancelled_delete = page.locator(".pillar[data-p='p1']").count() == 1 and page.evaluate("S.items.length") == 3
+        if cancelled_delete:
+            page.once("dialog", lambda dialog: dialog.accept())
+            page.click(".pillar[data-p='p1'] [data-act='pdel']")
+        undo_action = page.locator("#toast button[data-toast-action='undo']")
+        undo_visible = undo_action.count() == 1 and undo_action.is_visible()
+        if undo_visible:
+            undo_action.click()
+        restored_delete = page.locator(".pillar[data-p='p1']").count() == 1 and page.evaluate("S.items.length") == 3
+        runner.check(
+            "SAFETY-001",
+            cancelled_delete and undo_visible and restored_delete,
+            "Populated destructive actions require confirmation and provide an immediate Undo action.",
+            f"Destructive delete protection failed: cancelled={cancelled_delete}, undo={undo_visible}, restored={restored_delete}",
+        )
+        ctx.close()
+
+        ctx, page = new_context(browser, seed_state())
+        shell_exists = all(page.locator(sel).count() == 1 for sel in ["#projectName", "#saveStatus", "#scenarioSaveBtn", "#saveBtn"])
+        if shell_exists:
+            page.fill("#projectName", "Leadership roadmap")
+            blur(page)
+            wait_autosave(page)
+        saved_title = page.evaluate("JSON.parse(localStorage.getItem('roadmapStudio.v1')).fileName") if shell_exists else ""
+        runner.check(
+            "SHELL-001",
+            shell_exists
+            and saved_title == "Leadership roadmap"
+            and text(page, "#scenarioSaveBtn") == "Snapshot"
+            and text(page, "#saveBtn") == "Download"
+            and text(page, "#saveStatus") in ["Saved just now", "Saving…"],
+            "The toolbar clearly identifies the project, save state, scenario Snapshot, and project Download actions.",
+            f"Project shell remained ambiguous: exists={shell_exists}, title={saved_title}",
+        )
+        ctx.close()
+
         browser.close()
 
     untested = runner.update_tracker()
@@ -2106,3 +2393,4 @@ if __name__ == "__main__":
         "resultsJson": str(RESULTS_JSON),
         "tracker": str(TRACKER),
     }, indent=2))
+    sys.exit(1 if any(r['status']=='Failed' for r in runner.results.values()) or untested else 0)

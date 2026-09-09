@@ -19,3 +19,5 @@
 - A single-file app can still have required local runtime assets. Before publishing Roadmap Studio, inspect every relative `script`, stylesheet, image, and font reference; deploy the complete dependency set and smoke-test asset URLs plus the PowerPoint download on the live site.
 - When an executive asks for two measures to be prominent, do not leave them as opposing edge annotations. Give them equal, centered, high-contrast blocks and let the chart serve as supporting evidence beneath them.
 - A verified local preview is insufficient when approval happens through a hosted link. Publish with a unique asset path and inspect the actual public page before claiming the user can see the revision.
+- Keep table cells in the table formatting model. Put flex/grid layout inside a cell, not on the td itself, and verify checkbox/row-number centers against neighboring fields at normal and expanded row heights.
+- When the user replaces a derived goal with an editable goal, store the explicit dollar value independently, support clearing it, and use that same value in web metrics, scenarios, and exports. Do not silently reapply the former multiplier.

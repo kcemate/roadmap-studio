@@ -3,3 +3,5 @@
 *.xlsx
 *.roadmap.json
 tasks/test-artifacts/
+__pycache__/
+release/
