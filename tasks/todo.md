@@ -535,8 +535,14 @@
 
 - [x] Inspect local changes, fetch origin, and identify the existing PR without changing main.
 - [x] Include the complete source/build/test changes and current release documentation; add the missing PDF test dependency to CI.
-- [ ] Verify the staged diff, commit intentionally, and fast-forward the existing PR branch on GitHub.
-- [ ] Confirm the remote commit and report the PR/main status.
+- [x] Verify the staged diff, commit intentionally, and fast-forward the existing PR branch on GitHub.
+- [x] Confirm the remote commit and report the PR/main status.
+- [x] Correct the Mac-only native undo test shortcut exposed by Linux CI and verify the follow-up.
+
+## GitHub Review
+- Published the complete 1.6.6 source at 90bacad on existing PR #5, agent/reliability-first-ux. Main remains at 46f2699; no merge or deployment was performed.
+- All 13 local application verification gates passed. GitHub CI exposed a test portability issue: native select-all and undo used Meta on Linux. Use Playwright's ControlOrMeta for those native field shortcuts without changing application code or the assertion.
+- Follow-up local regression run: 120 passed, 0 failed, 0 untested. GitHub checks rerun on the follow-up push; application source and release remain unchanged.
 
 # Publish 1.6.6, September 9
 

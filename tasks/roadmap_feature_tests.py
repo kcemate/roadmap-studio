@@ -2261,9 +2261,9 @@ def run_tests():
         page.click("#btnBlank")
         pillar_input = page.locator(".pillar-name").first
         pillar_input.click()
-        pillar_input.press("Meta+A")
+        pillar_input.press("ControlOrMeta+A")
         pillar_input.press_sequentially("Native undo")
-        pillar_input.press("Meta+Z")
+        pillar_input.press("ControlOrMeta+Z")
         native_undo_ok = pillar_input.input_value() == "New pillar"
         pillar_input.fill("App redo")
         blur(page)
