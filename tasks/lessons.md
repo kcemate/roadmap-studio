@@ -21,3 +21,4 @@
 - A verified local preview is insufficient when approval happens through a hosted link. Publish with a unique asset path and inspect the actual public page before claiming the user can see the revision.
 - Keep table cells in the table formatting model. Put flex/grid layout inside a cell, not on the td itself, and verify checkbox/row-number centers against neighboring fields at normal and expanded row heights.
 - When the user replaces a derived goal with an editable goal, store the explicit dollar value independently, support clearing it, and use that same value in web metrics, scenarios, and exports. Do not silently reapply the former multiplier.
+- Share the Executive Summary measurement scale between web and PowerPoint. Axis headroom is a visual range, not a new goal; keep goal-based percentages unchanged and compare normalized marker/bar positions in export tests.

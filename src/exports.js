@@ -221,10 +221,10 @@ function addPptExecutiveSummarySlide(pptx){
     slide.addText(item.label,{x:item.x+.23,y:3.37,w:item.w,h:.28,fontSize:16,color:PPT_COLOR.muted,margin:0});
   });
 
-  const barX=.76, barY=3.88, barW=11.82, barH=.64, axisMax=Math.max(goal,stretchGoal||0,total,1);
+  const barX=.76, barY=3.88, barW=11.82, barH=.64, axisMax=executiveMeasurementMax(total,goal,stretchGoal);
   const X=value=>barX+Math.max(0,Math.min(1,value/axisMax))*barW;
   const realizedSavingsEnd=X(realizedSavings), savingsEnd=X(savings), realizedAvoidanceEnd=X(savings+realizedAvoidance), totalEnd=X(total), goalX=X(goal), radius=.32;
-  slide.addShape('roundRect',{x:barX,y:barY,w:barW,h:barH,rectRadius:.08,fill:{color:gapColor},line:{color:gapColor}});
+  slide.addShape('roundRect',{x:barX,y:barY,w:barW,h:barH,rectRadius:.08,fill:{color:gapColor},line:{color:gapColor},objectName:'executive-bar-track'});
   const segments=[
     {start:barX,end:realizedSavingsEnd,color:realizedSavingsColor},
     {start:realizedSavingsEnd,end:savingsEnd,color:savingsColor},
@@ -240,9 +240,16 @@ function addPptExecutiveSummarySlide(pptx){
     }else slide.addShape('rect',{x:seg.start,y:barY,w:width,h:barH,fill:{color:seg.color},line:{color:seg.color,transparency:100}});
   });
 
-  const savingsW=savingsEnd-barX, avoidanceW=totalEnd-savingsEnd;
-  if(savingsW>=1.55)pptText(slide,'SAVINGS',barX+.12,barY+.17,savingsW-.24,.3,18,{bold:true,color:white,align:'center'});
-  if(avoidanceW>=1.65)pptText(slide,'AVOIDANCE',savingsEnd+.12,barY+.17,avoidanceW-.24,.3,18,{bold:true,color:white,align:'center'});
+  const markerPositions=[goalX,...(stretchGoal?[X(stretchGoal)]:[])];
+  const addBarLabel=(label,start,end)=>{
+    const edges=[start,...markerPositions.filter(x=>x>start&&x<end).sort((a,b)=>a-b),end];
+    const spaces=edges.slice(1).map((right,i)=>({start:edges[i],width:right-edges[i]}));
+    const room=spaces.sort((a,b)=>b.width-a.width)[0];
+    if(room.width>=pptTextWidthIn(label,18,true)+.24)
+      pptText(slide,label,room.start+.12,barY+.17,room.width-.24,.3,18,{bold:true,color:white,align:'center'});
+  };
+  addBarLabel('SAVINGS',barX,savingsEnd);
+  addBarLabel('AVOIDANCE',savingsEnd,totalEnd);
 
   const targets=[
     {kind:'goal',value:goal,x:goalX,color:gold,label:'GOAL'},
@@ -267,17 +274,26 @@ function addPptExecutiveSummarySlide(pptx){
     pptText(slide,target.label,target.labelX,4.97,target.w,.24,14,{bold:true,color:target.color,align:'right',objectName:`executive-${target.kind}-label`});
   });
 
-  const financialItems=S.items.filter(it=>isIncludedInTotals(it)&&itemValue(it)>0),actuals=pptFinancialTotals(financialItems);
-  pptText(slide,`Savings ${fmtMoneyShort(savings,true)}`,.78,5.46,4.0,.38,24,{bold:true,color:savingsColor});
-  pptText(slide,`${fmtMoneyShort(actuals.RealizedSavings,true)} realized savings`,.78,5.92,4.0,.3,18,{color:realizedSavingsColor});
-  pptText(slide,`Avoidance ${fmtMoneyShort(avoidance,true)}`,5.05,5.46,4.3,.38,24,{bold:true,color:avoidanceColor});
-  pptText(slide,`${fmtMoneyShort(actuals.RealizedAvoidance,true)} realized avoidance`,5.05,5.92,4.3,.3,18,{color:realizedAvoidanceColor});
-  const goalDetail=total<goal?`${fmtMoneyShort(goal-total,true)} to goal`:total>goal?`${fmtMoneyShort(total-goal,true)} above goal`:'Goal reached';
-  slide.addText(goalDetail,{x:9.5,y:5.46,w:3.08,h:.38,fontSize:24,bold:true,color:ink,align:'right',margin:0});
+  const axisY=5.3;
+  addPptSafeLine(slide,barX,axisY,barX+barW,axisY,hair,.75,{objectName:'executive-axis'});
+  for(let i=0;i<=4;i++){
+    const value=axisMax*i/4,x=X(value),label=fmtGoalMoney(value),w=pptTextWidthIn(label,14)+.12;
+    const labelX=Math.max(barX,Math.min(x-w/2,barX+barW-w));
+    addPptSafeLine(slide,x,axisY-.05,x,axisY,PPT_COLOR.muted,.75,{objectName:`executive-axis-tick:${i}`});
+    pptText(slide,label,labelX,axisY+.08,w,.24,14,{color:PPT_COLOR.muted,align:i===0?'left':i===4?'right':'center',objectName:`executive-axis-label:${i}`});
+  }
 
-  addPptSafeLine(slide,.78,6.46,12.58,6.46,hair,.75);
-  pptText(slide,'Dark segments show the realized portion of each opportunity, capped at its planned value.',.78,6.62,11.8,.32,16,{color:PPT_COLOR.muted});
-  slide.addNotes(`Goal: ${fmtMoney(goal)}. ${stretchGoal?`Stretch goal entered independently: ${fmtMoney(stretchGoal)}. Stretch percentages use this amount, with no automatic multiplier. `:''}Headline percentages and the gap remain relative to the portfolio goal. The dollar scale includes all entered goals and the full identified portfolio.`);
+  const financialItems=S.items.filter(it=>isIncludedInTotals(it)&&itemValue(it)>0),actuals=pptFinancialTotals(financialItems);
+  pptText(slide,`Savings ${fmtMoneyShort(savings,true)}`,.78,5.82,4.0,.38,24,{bold:true,color:savingsColor});
+  pptText(slide,`${fmtMoneyShort(actuals.RealizedSavings,true)} realized savings`,.78,6.24,4.0,.3,18,{color:realizedSavingsColor});
+  pptText(slide,`Avoidance ${fmtMoneyShort(avoidance,true)}`,5.05,5.82,4.3,.38,24,{bold:true,color:avoidanceColor});
+  pptText(slide,`${fmtMoneyShort(actuals.RealizedAvoidance,true)} realized avoidance`,5.05,6.24,4.3,.3,18,{color:realizedAvoidanceColor});
+  const goalDetail=total<goal?`${fmtMoneyShort(goal-total,true)} to goal`:total>goal?`${fmtMoneyShort(total-goal,true)} above goal`:'Goal reached';
+  slide.addText(goalDetail,{x:9.5,y:5.82,w:3.08,h:.38,fontSize:24,bold:true,color:ink,align:'right',margin:0});
+
+  addPptSafeLine(slide,.78,6.67,12.58,6.67,hair,.75);
+  pptText(slide,'Dark segments show the realized portion of each opportunity, capped at its planned value.',.78,6.79,11.8,.32,16,{color:PPT_COLOR.muted});
+  slide.addNotes(`Goal: ${fmtMoney(goal)}. ${stretchGoal?`Stretch goal entered independently: ${fmtMoney(stretchGoal)}. Stretch percentages use this amount, with no automatic multiplier. `:''}Headline percentages and the gap remain relative to the portfolio goal. The dollar scale matches the Executive Summary web tracker, from $0 to ${fmtGoalMoney(axisMax)}, including headroom beyond the largest goal or identified portfolio value. The scale endpoint is not an additional goal.`);
   slide.addNotes('Realization uses recorded actual dollars where entered, otherwise reported realization percentages or dated phases. Actual totals are not confidence-weighted. Realized values are not added to the identified portfolio total. Dark bar segments are capped to each opportunity; uncapped actual totals are displayed separately.');
 }
 function addPptPortfolioRollupSlide(pptx){

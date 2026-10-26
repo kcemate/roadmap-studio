@@ -1,3 +1,66 @@
+# Publish Version 1.6.7 To GitHub, October 26
+
+## Plan
+- [x] Review pending changes and fetch GitHub main to confirm the publication scope.
+- [x] Confirm source matches the passing verification report and release package; check the final diff.
+- [x] Commit version 1.6.7, push a dedicated branch, and open a pull request against main.
+- [x] Verify the remote commit and GitHub checks; record the publication outcome.
+
+## Review
+- Scope: the previously tested and deployed executive PowerPoint measurement scale update, regression coverage, and release documentation.
+- Publication base: current GitHub main `bb51814`; its application tree matches the prior local commit, so no feature changes were lost or conflicted when creating `agent/executive-measurement-1.6.7`.
+- Pre-push verification: generated build is current, release package verification passes, `git diff --check` is clean, and application SHA256 `b29633616f468e03e1425293ebbdd53c94d2abd5aa387c39b0bc407226516103` matches the existing successful 13-gate verification report. This includes 120 existing feature checks and 21 presentation checks. No application edits were made during this publishing task.
+- Implementation commit `e4450ea` is published on `agent/executive-measurement-1.6.7` and confirmed by a remote ref read-back. Opened https://github.com/kcemate/roadmap-studio/pull/6 against main and attached it to this task. GitHub CI started for the push and pull request; both checks were still running when this receipt was recorded. Main remains at `bb51814`; the pull request has not been merged.
+
+# Publish Measurement Scale Update, October 20
+
+## Plan
+- [x] Confirm the 1.6.7 release matches the application that passed all verification gates.
+- [x] Publish only the verified release package to a new here.now site.
+- [x] Verify live assets, desktop/mobile startup, and the first-slide $1.2B scale/$1B goal; record the URL and hosting expiry.
+
+## Review
+- User authorized a new here.now deployment. No code changes or GitHub push are included.
+- Published https://spicy-zephyr-t8ek.here.now/ from the verified five-file 1.6.7 package through the here-now publish script. Current response reports anonymous hosting, expiring October 21, 2026 at 12:08:13 UTC. Claim link supplied privately to the user, not recorded in source.
+- Live verification: HTTP 200, version 1.6.7, matching runtime/license/release hashes and application source after removing only five hosting-inserted social-preview meta tags. Desktop 1440px and mobile 390px checks pass with no page errors or horizontal overflow.
+- A real nine-slide PowerPoint download from the live URL passes the shared measurement-axis checks: $1.2B maximum, $1B marker at 83.33% of the track, correct bar proportions and unchanged goal-based percentages. Used synthetic local browser data only. Evidence: `/tmp/roadmap-live-oct20-full.pptx`, `/tmp/roadmap-live-oct20-1440.png`, `/tmp/roadmap-live-oct20-390.png`.
+
+# Executive PowerPoint Measurement Scale, October 20
+
+## Plan
+- [x] Add failing regression coverage for a $1.2B measurement scale with the $1B goal retained, plus web/export parity at other portfolio sizes and entered stretch goals.
+- [x] Share the Executive Summary scale with the first PowerPoint slide and add legible dollar measurements without changing financial values or goal percentages.
+- [x] Render and inspect the first slide against its existing design; run the complete verification suite and package a new local version.
+
+## Review
+- Scope: existing export implementation, not a deck redesign. Preserve the two large metric blocks, financial legend, independently entered stretch goals, and saved project data. No deployment or GitHub push requested.
+- RED: 11 presentation checks exposed the web/export scale mismatch and missing measurement ticks. GREEN: all 21 presentation checks pass, including $1.2B range/$1B goal, web marker parity, segment proportions, unchanged headline percentages, editable stretch goals, large portfolios, empty data, and nonoverlapping 14pt axis labels.
+- Visually inspected five native-export slides rendered through LibreOffice, including the standard $1B goal, larger portfolios, independent stretch goals, and empty data. Marker-aware bar labels avoid collisions when the portfolio exceeds its goal. Desktop 1440px and mobile 390px web checks retain the $1B marker/$1.2B range without page overflow or page errors. Evidence: `/tmp/roadmap-scale-after-render/`. Microsoft PowerPoint itself was not used for rendering.
+- Verification uncovered an existing flaky native-undo test: sequential keystrokes sometimes formed multiple browser undo transactions. The test now inserts one text transaction and keeps the same exact undo assertion; eight isolated repetitions pass. Restored the documented test-only axe-core 4.10.3 dependency outside the repository.
+- Final verification: `python3 tasks/verify_all.py` passes all 13 gates: 120 existing feature checks, 43 core regressions per browser engine, workspace and selection coverage, accessibility, exports, 21 presentation checks, 7 register tests, and release/rollback validation. The application remained unchanged during verification.
+- Packaged local version 1.6.7 in `release/current`, `release/versions/1.6.7`, and `release/archives/roadmap-studio-1.6.7.zip`; `verify_release.py release/current` passes. All packaged HTML hashes match verified source `b29633616f468e03e1425293ebbdd53c94d2abd5aa387c39b0bc407226516103`. Previous 1.6.6 remains available for rollback. No Git commit, push, or deployment performed.
+
+# Replacement Link, October 9
+
+- [x] Confirm the verified 1.6.6 package still matches the latest GitHub main source.
+- [x] Publish only the five release files to a new here.now site.
+- [x] Verify live version, runtime assets, register rows, mobile layout, and PowerPoint download.
+
+## Review
+- Published https://lunar-zenith-6tzb.here.now/ after the previous anonymous site expired. Current publish reports anonymous hosting with expiry October 10, 2026 at 13:59:43 UTC; claim link supplied privately, not stored in source.
+- Live checks: HTTP 200, version 1.6.6, matching runtime/license hashes, 46 synthetic register rows, 10-slide PowerPoint download, no page errors or mobile overflow. No application changes, private project uploads, or GitHub changes.
+
+# Publish Latest Build, September 30
+
+- [x] Fetch GitHub and confirm the local source and verified 1.6.6 package match main.
+- [x] Publish a new here.now site containing only the five verified release files.
+- [x] Verify live assets, app version, Initiative Register, and PowerPoint download; record the current URL and expiry.
+
+## Review
+- Main bb51814 has passing full GitHub verification. No application edits or changes to financial counting rules are included in this deployment.
+- Published https://orchid-ravine-q8cj.here.now/ from the verified 1.6.6 release package. Anonymous hosting expires October 1, 2026 at 19:29:22 UTC; claim link supplied privately to the user, not recorded in source.
+- Re-ran all seven Initiative Register tests successfully. Live browser verification returned HTTP 200, version 1.6.6, matching PowerPoint runtime/license hashes, 46 synthetic register rows, a 10-slide PowerPoint download, no page errors, and no mobile page overflow. Evidence: /tmp/roadmap-live-sept30-desktop.png, /tmp/roadmap-live-sept30-mobile.png, /tmp/roadmap-live-sept30-register.pptx. No project data was uploaded, no existing site changed, and no GitHub push was performed.
+
 # Feature build: P0/P1 product upgrades
 
 ## Scope
