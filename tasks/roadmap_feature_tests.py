@@ -1943,6 +1943,9 @@ def run_tests():
         executive_boxes = ppt_text_boxes(executive_slide_xml, "")
         expected_goal_labels = {
             "executive-goal-amount": "$1B", "executive-goal-label": "GOAL",
+            "executive-axis-label:0": "$0", "executive-axis-label:1": "$300M",
+            "executive-axis-label:2": "$600M", "executive-axis-label:3": "$900M",
+            "executive-axis-label:4": "$1.2B",
         }
         executive_goal_labels = {box["object_name"]: box["text"] for box in executive_boxes
                                  if box["object_name"].startswith("executive-") and box["text"]}
@@ -2262,7 +2265,8 @@ def run_tests():
         pillar_input = page.locator(".pillar-name").first
         pillar_input.click()
         pillar_input.press("ControlOrMeta+A")
-        pillar_input.press_sequentially("Native undo")
+        # A single insertion makes the native undo transaction deterministic.
+        page.keyboard.insert_text("Native undo")
         pillar_input.press("ControlOrMeta+Z")
         native_undo_ok = pillar_input.input_value() == "New pillar"
         pillar_input.fill("App redo")

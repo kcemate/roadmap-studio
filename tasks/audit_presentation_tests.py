@@ -243,7 +243,20 @@ def export_deck(browser, state, filename, scope="full", tab="road"):
         assert page.evaluate("JSON.stringify({...serializeState(), savedAt: 0})") == before, (
             "PowerPoint export changed the saved project state"
         )
-        return deck_data(path)
+        deck = deck_data(path)
+        page.evaluate("setTab('exec')")
+        deck['executive_axis'] = page.evaluate("""() => {
+            const maximum=niceProjectionMax(Math.max(executiveSummaryData().totals.Total,
+                executiveGoalValue(),executiveStretchGoalValue()||0));
+            const track=document.querySelector('#execBarClip rect');
+            const ratio=id=>{
+                const marker=document.querySelector(`#${id} line`);
+                return track&&marker?(Number(marker.getAttribute('x1'))-Number(track.getAttribute('x')))/Number(track.getAttribute('width')):null;
+            };
+            return {maximum,goalRatio:ratio('execGoalMarker'),stretchRatio:ratio('execStretchMarker'),
+                labels:Array.from({length:5},(_,i)=>fmtGoalMoney(maximum*i/4))};
+        }""")
+        return deck
     finally:
         context.close()
 
@@ -311,7 +324,7 @@ def check_executive_contract(deck):
 def check_executive_stretch_goal(deck, goal, total, stretch, expected_labels, expected_percentages, stretch_percentages):
     slide = find_slide(deck, "opportunity", "realized")
     shapes = {shape["object_name"]: shape for shape in slide["shapes"]}
-    scale = max(goal, stretch or 0, total, 1)
+    scale = deck['executive_axis']['maximum']
     labels = []
     kinds = ("goal", "stretch") if stretch else ("goal",)
     for kind, value, label in zip(kinds, (goal, stretch), expected_labels):
@@ -345,6 +358,49 @@ def check_executive_stretch_goal(deck, goal, total, stretch, expected_labels, ex
     assert "STRETCH (+20%)" not in slide["text"]
 
 
+def check_executive_measurement_axis(deck, total, expected_max=None):
+    slide = deck['slides'][0]
+    shapes = {shape['object_name']: shape for shape in slide['shapes']}
+    web = deck['executive_axis']
+    if expected_max is not None:
+        assert web['maximum'] == expected_max, web
+    track = shapes.get('executive-bar-track')
+    assert track, 'missing measurement bar track'
+    labels = []
+    for i, label in enumerate(web['labels']):
+        tick = shapes.get(f'executive-axis-tick:{i}')
+        caption = shapes.get(f'executive-axis-label:{i}')
+        assert tick and abs(tick['x']-(track['x']+track['w']*i/4)) < .001, tick
+        assert caption and caption['text'] == label, (caption, label)
+        assert min_font(caption) >= 14, caption
+        assert caption['x'] >= .55 and caption['x']+caption['w'] <= 12.8, caption
+        labels.append(caption)
+    for kind in ('goal', 'stretch'):
+        ratio = web[f'{kind}Ratio']
+        if ratio is not None:
+            marker = shapes[f'executive-{kind}-marker']
+            assert abs((marker['x']-track['x'])/track['w']-ratio) < .0001, (kind, marker, web)
+        marker = shapes.get(f'executive-{kind}-marker')
+        if marker:
+            for label in slide['shapes']:
+                if label['text'] in ('SAVINGS', 'AVOIDANCE'):
+                    assert not label['x'] < marker['x'] < label['x']+label['w'], (
+                        f"{kind} marker crosses {label['text']} bar label", marker, label)
+    bar_colors = {'28A745', '0B662E', '3B73E8', '163A8A'}
+    segments = [s for s in slide['shapes'] if s['y'] is not None and abs(s['y']-track['y']) < .001
+                and set(s['fill_colors']) & bar_colors]
+    if total:
+        right = max(s['x']+s['w'] for s in segments)
+        assert abs((right-track['x'])/track['w']-total/web['maximum']) < .001, (right, web)
+    for label in labels:
+        for other in slide['shapes']:
+            if other is label or not other['text'] or other['x'] is None:
+                continue
+            dx = min(label['x']+label['w'],other['x']+other['w'])-max(label['x'],other['x'])
+            dy = min(label['y']+label['h'],other['y']+other['h'])-max(label['y'],other['y'])
+            assert dx < .001 or dy < .001, f"axis label overlaps: {label['text']} / {other['text']}"
+
+
 def stretch_cases():
     cases = []
     for name, goal, total, stretch, labels, percentages, stretch_percentages in [
@@ -355,6 +411,8 @@ def stretch_cases():
         ("empty", 250e6, 0, 400e6, ("$250M", "$400M"), ["0%", "0%"], ["0%", "0%"]),
         ("default", 0, 500e6, 2e9, ("$1B", "$2B"), ["50%", "12.5%"], ["25%", "6.3%"]),
         ("cleared", 1e9, 900e6, '', ("$1B",), ["90%", "22.5%"], []),
+        ("goal-reached", 1e9, 1e9, '', ("$1B",), ["100%", "25%"], []),
+        ("beyond-scale", 1e9, 1.3e9, '', ("$1B",), ["130%", "32.5%"], []),
     ]:
         state = four_pillar_state()
         state["fileName"] = f"Stretch goal example - {name} (sample data)"
@@ -614,10 +672,13 @@ def main():
     results.check("executive_full_deck_stretch_goal", lambda: check_executive_stretch_goal(
         four, 5000000, 1500000, 7500000, ("$5M", "$7.5M"), ["30%", "6%"], ["20%", "4%"]
     ))
+    results.check("executive_full_deck_measurement_axis", lambda: check_executive_measurement_axis(four, 1500000))
     for deck, goal, total, stretch_goal, labels, percentages, stretch_percentages in stretch:
         def check_current(deck=deck, goal=goal, total=total, stretch_goal=stretch_goal, labels=labels, percentages=percentages, stretch_percentages=stretch_percentages):
             assert len(deck["slides"]) == 1, "current executive export is not one slide"
             check_executive_stretch_goal(deck, goal, total, stretch_goal, labels, percentages, stretch_percentages)
+            expected_max = 1.2e9 if deck['path'].stem in ('stretch-cleared', 'stretch-goal-reached') else None
+            check_executive_measurement_axis(deck, total, expected_max)
         results.check(deck["path"].stem, check_current)
     results.check("full_deck_narrative_order", lambda: check_full_order(sparse, "Short Commitments"))
     results.check("four_pillar_rollup_2_plus_2", lambda: check_four_pillar_rollup(four))

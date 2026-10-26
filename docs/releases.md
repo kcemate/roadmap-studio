@@ -1,5 +1,18 @@
 # Roadmap Studio Releases
 
+## 1.6.7 Executive Measurement Scale
+
+The first PowerPoint slide uses the same dollar scale as the Executive Summary
+web tracker, including headroom beyond the portfolio and entered goals. For a
+$1B goal with up to $1B identified, the measurement bar spans $0 to $1.2B while
+the goal marker remains at $1B. Larger portfolios and entered stretch goals
+expand the scale using the existing web rules.
+
+Readable dollar ticks make the measurement range explicit. The two headline
+blocks, financial totals, goal-based percentages, and independently entered
+stretch goals remain unchanged. Both full-deck and current-view exports use
+the same scale. The PowerPoint packaging limitation noted below is unchanged.
+
 ## 1.6.6 Initiative Register
 
 A read-only register lists every initiative in the current plan, grouped by pillar
