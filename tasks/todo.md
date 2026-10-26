@@ -3,13 +3,14 @@
 ## Plan
 - [x] Review pending changes and fetch GitHub main to confirm the publication scope.
 - [x] Confirm source matches the passing verification report and release package; check the final diff.
-- [ ] Commit version 1.6.7, push a dedicated branch, and open a pull request against main.
-- [ ] Verify the remote commit and GitHub checks; record the publication outcome.
+- [x] Commit version 1.6.7, push a dedicated branch, and open a pull request against main.
+- [x] Verify the remote commit and GitHub checks; record the publication outcome.
 
 ## Review
 - Scope: the previously tested and deployed executive PowerPoint measurement scale update, regression coverage, and release documentation.
 - Publication base: current GitHub main `bb51814`; its application tree matches the prior local commit, so no feature changes were lost or conflicted when creating `agent/executive-measurement-1.6.7`.
 - Pre-push verification: generated build is current, release package verification passes, `git diff --check` is clean, and application SHA256 `b29633616f468e03e1425293ebbdd53c94d2abd5aa387c39b0bc407226516103` matches the existing successful 13-gate verification report. This includes 120 existing feature checks and 21 presentation checks. No application edits were made during this publishing task.
+- Implementation commit `e4450ea` is published on `agent/executive-measurement-1.6.7` and confirmed by a remote ref read-back. Opened https://github.com/kcemate/roadmap-studio/pull/6 against main and attached it to this task. GitHub CI started for the push and pull request; both checks were still running when this receipt was recorded. Main remains at `bb51814`; the pull request has not been merged.
 
 # Publish Measurement Scale Update, October 20
 
