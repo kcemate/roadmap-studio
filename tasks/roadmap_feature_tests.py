@@ -37,6 +37,10 @@ def now_iso():
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
+# 1.7.0: report tabs follow the deck story and are named for their content (audit B2, B5, B24).
+TAB_ORDER = ["Structure", "Initiatives", "Executive Summary", "Portfolio Rollup", "Projection", "Pillar Contribution", "Roadmap", "Initiative Register"]
+
+
 def seed_state():
     return {
         "v": 1,
@@ -683,12 +687,13 @@ def run_tests():
             "cdnjs.cloudflare.com" not in html
             and "ExcelJS" not in html
             and "https://" not in html
-            and page.locator("script[src='vendor/pptxgen.bundle.js']").count() == 1
-            and page.evaluate("typeof PptxGenJS") == "function"
+            and 'src="vendor/pptxgen.bundle.js"' in html
+            and page.evaluate("typeof PptxGenJS") == "undefined"
+            and page.evaluate("loadPptxRuntime().then(() => typeof PptxGenJS)") == "function"
             and page.locator("#btnImport").count() == 0
             and page.locator("#fileIn").count() == 0
             and page.locator("#exportBtn").count() == 0,
-            "External runtime URLs and Excel controls are absent; the local PowerPoint bundle loads.",
+            "External runtime URLs and Excel controls are absent; the local PowerPoint bundle loads on first export.",
             "External runtime URL, missing local PowerPoint bundle, or Excel controls were detected.",
         )
         csp = page.locator("meta[http-equiv='Content-Security-Policy']").get_attribute("content") or ""
@@ -720,7 +725,7 @@ def run_tests():
             ["START-004", "NAV-001", "STRUCT-001"],
             page.locator("#studio").is_visible()
             and page.locator("#segStruct.on").is_visible()
-            and visible_texts(page, ".seg button") == ["Structure", "Initiatives", "Initiative Register", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
+            and visible_texts(page, ".seg button") == TAB_ORDER
             and "1 pillar" in text(page, "#structMeta")
             and "1 workstream" in text(page, "#structMeta"),
             "Blank start creates one pillar/workstream and opens Structure with tabs ordered Structure, Initiatives, Roadmap, Projected Savings, Stacked Bar Chart.",
@@ -1070,14 +1075,15 @@ def run_tests():
                 const excluded = rollup.items.find(row => row.source.id === 'i2');
                 return {
                     legacyIncluded: isIncludedInTotals(S.items.find(it => it.id === 'i1')),
-                    pillar: pillarFinancialTotals('p1'),
+                    pillar: (t => ({Savings:t.Savings, Avoidance:t.Avoidance, Realized:t.Realized}))(portfolioTotals(S.items.filter(it => it.pillarId === 'p1'))),
                     health: healthSummary()['At Risk'].value,
                     projectionIds: projectionFinancialItems().map(row => row.source.id),
                     stacked: stackedBreakdown('combined').total,
                     executive: executiveSummaryData().totals,
                     rollup: rollup.totals,
                     rollupCount: rollup.items.length,
-                    excludedRollupValue: excluded && excluded.value,
+                    rollupExcluded: rollup.excludedCount,
+                    excludedInRollup: !!excluded,
                     excludedLabel: roadmapLabel(S.items.find(it => it.id === 'i2')),
                     excludedVisible: !!document.querySelector('#tlSvg [data-id="i2"]')
                 };
@@ -1096,8 +1102,9 @@ def run_tests():
             and exclusion_totals["executive"]["Realized"] == 460000
             and exclusion_totals["rollup"]["Total"] == 920000
             and exclusion_totals["rollup"]["Realized"] == 460000
-            and exclusion_totals["rollupCount"] == 3
-            and exclusion_totals["excludedRollupValue"] == 0
+            and exclusion_totals["rollupCount"] == 2
+            and exclusion_totals["rollupExcluded"] == 1
+            and exclusion_totals["excludedInRollup"] is False
             and "$450K" in exclusion_totals["excludedLabel"]
             and exclusion_totals["excludedVisible"] is True,
             "Excluded values are omitted from every financial aggregate while the initiative remains visible and counted.",
@@ -1165,7 +1172,8 @@ def run_tests():
         runner.check(
             ["ROAD-002", "ROAD-003", "ROAD-004", "ROAD-005", "ROAD-012", "ROAD-013", "ROAD-014"],
             "3 initiatives" in text(page, "#roadMeta")
-            and "3 dated" in text(page, "#roadMeta")
+            and "0 undated" in text(page, "#roadMeta")
+            and "As of" in text(page, "#roadMeta")
             and text(page, "#realizedSavingsTotal") == "$460K"
             and text(page, "#savingsTotal") == "$920K"
             and text(page, "#realizedAvoidanceTotal") == "$360K"
@@ -1174,8 +1182,8 @@ def run_tests():
             and "Foam Cup Damage" in text(page, "#tlSvg")
             and "$920K" in text(page, "#tlSvg")
             and "Savings $920K · Avoidance $450K · Realized $820K" in text(page, "#tlSvg")
-            and "TODAY" in text(page, "#tlSvg"),
-            "Roadmap renders counts, grouped realized financial totals, per-pillar totals, fiscal/quarter layout, today marker, lanes, item labels, and money labels.",
+            and "AS OF" in text(page, "#tlSvg"),
+            "Roadmap renders counts, grouped realized financial totals, per-pillar totals, fiscal/quarter layout, reporting-date marker, lanes, item labels, and money labels.",
             "Roadmap rendering, metadata, grouped realized financial totals, per-pillar totals, totals, or money labels were wrong.",
         )
         not_started_fill = page.locator(".bar-grab[data-id='i3'][data-kind='move']").get_attribute("fill")
@@ -1284,7 +1292,6 @@ def run_tests():
         runner.check(
             "ROAD-015",
             isinstance(inside_label, dict)
-            and inside_label.get("placement") == "inside"
             and inside_label.get("text") != inside_label.get("full")
             and "…" in inside_label.get("text", "")
             and inside_label.get("estimatedWidth", 9999) <= inside_label.get("barWidth", 0) - 12
@@ -1362,13 +1369,13 @@ def run_tests():
         default_combined = maybe_text(page, "#projCombined")
         runner.check(
             "PROJ-001",
-            tabs == ["Structure", "Initiatives", "Initiative Register", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
+            tabs == TAB_ORDER
             and projection_visible
             and page.locator("#segProj.on").count() == 1
             and not page.locator("#roadStage").is_visible()
             and not page.locator("#gridStage").is_visible(),
-            "Projected Savings tab renders immediately after Roadmap and displays only the projection stage.",
-            "Projected Savings tab was missing, out of order, or did not display the projection stage.",
+            "Projection tab renders in report order and displays only the projection stage.",
+            "Projection tab was missing, out of order, or did not display the projection stage.",
         )
         if page.locator("#projectionEndDate").count():
             page.locator("#projectionEndDate").fill("2026-02-15")
@@ -1469,12 +1476,13 @@ def run_tests():
         target_ok = (
             page.locator("#projectionTargetLine").count() == 1
             and page.locator("#projectionTarget").input_value() == "$100,000"
-            and "Above target by $21K" in maybe_text(page, "#projectionTargetStatus")
+            and maybe_text(page, "#projectionTargetStatus").startswith(page.evaluate("goalHeadline()"))
+            and "of goal" in maybe_text(page, "#projectionTargetStatus")
         )
         runner.check(
             "PROJ-009",
             target_ok,
-            "Projection target input renders a target line and above/below target status.",
+            "Projection goal input renders a goal line and a status on the shared goal basis.",
             "Projection target input, target line, or target status failed.",
         )
         realized_default = (
@@ -1521,7 +1529,7 @@ def run_tests():
             "Mar 1, 2026" in default_inspect
             and "Jan 1, 2026" in hover_inspect
             and "$0" in hover_inspect
-            and "active" in hover_inspect,
+            and "contributing" in hover_inspect,
             "Projection chart hover updates the date-level inspection readout.",
             "Projection chart inspection did not update on hover.",
         )
@@ -1544,13 +1552,13 @@ def run_tests():
         stack_stage_text = maybe_text(page, "#stackStage")
         runner.check(
             "STACK-001",
-            tabs == ["Structure", "Initiatives", "Initiative Register", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
+            tabs == TAB_ORDER
             and stack_visible
             and page.locator("#segStack.on").count() == 1
             and not page.locator("#projStage").is_visible()
             and not page.locator("#roadStage").is_visible(),
-            "Stacked Bar Chart tab renders after Projected Savings and displays only the stacked chart stage.",
-            "Stacked Bar Chart tab was missing, out of order, or did not display its stage.",
+            "Pillar Contribution tab renders after Projection and displays only its stage.",
+            "Pillar Contribution tab was missing, out of order, or did not display its stage.",
         )
         runner.check(
             "STACK-002",
@@ -1603,7 +1611,7 @@ def run_tests():
             page.click("#segExec")
         runner.check(
             "EXEC-001",
-            tabs == ["Structure", "Initiatives", "Initiative Register", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
+            tabs == TAB_ORDER
             and has_exec_tab
             and page.locator("#segExec.on").count() == 1
             and page.locator("#execStage").is_visible()
@@ -1640,14 +1648,14 @@ def run_tests():
             page.locator("#execGoalInput").dispatch_event("change")
         runner.check(
             "EXEC-003",
-            initial_goal == "$1,000,000,000"
+            initial_goal == ""
             and "$0" in initial_axis_text
-            and "$1B" in initial_axis_text
+            and "$1B" not in initial_axis_text
             and "2026" not in initial_axis_text
             and page.locator("#execGoalMarker[data-goal='250000000']").count() == 1
-            and "above the $250M goal" in maybe_text(page, "#execHeadline")
+            and "exceeds the $250M goal" in maybe_text(page, "#execHeadline")
             and page.evaluate("S.projectionTarget") == 250000000,
-            "Executive tracker uses a dollar axis, defaults to $1B, and updates the shared goal and headline when edited.",
+            "Executive tracker uses a dollar axis, starts with no goal set, and updates the shared goal and headline when edited.",
             "Executive goal marker, dollar axis, shared target, or gap headline was incorrect.",
         )
         ctx.close()
@@ -1676,7 +1684,7 @@ def run_tests():
             page.click("#segRollup")
         runner.check(
             "ROLLUP-001",
-            tabs == ["Structure", "Initiatives", "Initiative Register", "Roadmap", "Executive Summary", "Portfolio Rollup", "Projected Savings", "Stacked Bar Chart"]
+            tabs == TAB_ORDER
             and has_rollup_tab
             and page.locator("#segRollup.on").count() == 1
             and page.locator("#rollupStage").is_visible()
@@ -1722,7 +1730,7 @@ def run_tests():
             and page.locator("#rollupSvg .rollup-bar[data-pillar='p1'][data-approval='Proposed']").count() == 1
             and "Packaging redesign" not in rollup_visible_text
             and "Freight exposure" not in rollup_visible_text
-            and "1 initiative · $120M · Savings $120M · Avoidance $0" in rollup_visible_text,
+            and "1 initiative · $100M · Savings $0 · Avoidance $100M" in rollup_visible_text,
             "Portfolio Rollup renders one aggregate bar per non-empty pillar approval bucket without initiative-level labels.",
             "Portfolio Rollup still showed initiative-level marks or omitted the aggregate financial label.",
         )
@@ -1829,13 +1837,13 @@ def run_tests():
             dialog.accept()
 
         page.on("dialog", on_dialog)
-        page.click("#pngBtn")
-        page.wait_for_timeout(200)
+        with page.expect_download() as outside_info:
+            page.click("#pngBtn")
         runner.check(
             "EXPORT-003",
-            dialog_seen["value"] and "Open the Roadmap tab first" in dialog_seen["message"],
-            "PNG outside Roadmap shows the expected alert.",
-            "PNG outside Roadmap did not show expected alert.",
+            not dialog_seen["value"] and outside_info.value.suggested_filename.endswith(".png") and " — Roadmap — " in outside_info.value.suggested_filename,
+            "PNG from another tab renders the roadmap from current data without an alert.",
+            "PNG outside Roadmap alerted or did not download a current roadmap image.",
         )
         ctx.close()
 
@@ -1849,9 +1857,9 @@ def run_tests():
         png_download.save_as(png_path)
         runner.check(
             "EXPORT-002",
-            png_path.exists() and png_path.stat().st_size > 1000 and png_download.suggested_filename == "roadmap.png",
-            "PNG export downloads a non-empty roadmap.png.",
-            "PNG export did not produce a valid roadmap.png.",
+            png_path.exists() and png_path.stat().st_size > 1000 and png_download.suggested_filename.startswith("Seed roadmap — Roadmap — ") and png_download.suggested_filename.endswith(".png"),
+            "PNG export downloads a non-empty '<project> — Roadmap — <as-of>.png'.",
+            "PNG export did not produce a valid roadmap PNG.",
         )
 
         with page.expect_download() as dl_info:

@@ -7,8 +7,13 @@ function exportReportingDate(){
   return value instanceof Date&&!isNaN(value)?value:new Date();
 }
 function exportScenarioName(){
-  const active=(S.scenarios||[]).find(s=>s.id===S.activeScenarioId);
-  return active?.name||S.activeScenarioName||'Working plan';
+  const active=S.scenarios.find(s=>s.id===S.activeScenarioId);
+  return active?.name||WORKING_PLAN_NAME;
+}
+/* One file-naming rule: "<project> — <view> — <as-of date>.<ext>"; project files keep "<project>.roadmap.json". */
+function exportFileName(kind,ext){
+  const base=String(S.fileName||DEFAULT_PROJECT_NAME).replace(/[\\/:*?"<>|\u0000-\u001f]+/g,' ').replace(/\s+/g,' ').trim().slice(0,120)||DEFAULT_PROJECT_NAME;
+  return kind==='project'?`${base}.${ext}`:`${base} — ${kind} — ${isoDate(exportReportingDate())}.${ext}`;
 }
 function exportGroupingLabel(){ return S.roadmapGroup==='owner'?'Owner':'Structure'; }
 function exportScopeValue(override){
@@ -16,8 +21,9 @@ function exportScopeValue(override){
   const control=$('pptScope');
   return control?.value==='current'||S.exportScope==='current'?'current':'full';
 }
+const REPORT_TABS=['exec','rollup','proj','stack','road','register'];
 function exportViewLabel(tab=S.tab){
-  return({road:'Roadmap',exec:'Executive Summary',rollup:'Portfolio Rollup',proj:'Projected Savings',stack:'Stacked Bar Chart',register:'Initiative Register'})[tab]||'Roadmap';
+  return LABELS[REPORT_TABS.includes(tab)?(tab==='proj'?'projection':tab==='stack'?'contribution':tab):'road'];
 }
 function buildExportContext(scope){
   return{
@@ -26,21 +32,40 @@ function buildExportContext(scope){
     project:S.fileName||'Roadmap',
     scenario:exportScenarioName(),
     asOf:exportReportingDate(),
-    baseline:S.baseline?'Baseline on':'No baseline',
-    weighting:S.weightConfidence===false?'Unweighted':'Confidence weighted',
+    baseline:S.baseline&&S.showBaseline!==false?'Baseline comparison on':S.baseline?'Baseline comparison off':'No baseline',
+    weighting:S.weightConfidence===false?'Unweighted':'Confidence-weighted',
     grouping:exportGroupingLabel(),
-    version:typeof APP_VERSION==='string'?APP_VERSION:'1.6.0'
+    version:APP_VERSION
   };
 }
 function exportContext(){ return PPT_EXPORT_CONTEXT||buildExportContext(exportScopeValue()); }
+let PPT_SLIDES=[];
+function pptSlide(pptx){ const slide=pptx.addSlide(); PPT_SLIDES.push(slide); return slide; }
+/* The 461 KB PowerPoint writer loads on first export from the local vendor folder (works offline and from file://). */
+let PPTX_LOADING=null;
+function loadPptxRuntime(){
+  if(typeof PptxGenJS==='function')return Promise.resolve();
+  if(PPTX_LOADING)return PPTX_LOADING;
+  const src=$('pptRuntime')?.content.querySelector('script')?.getAttribute('src')||'vendor/pptxgen.bundle.js';
+  PPTX_LOADING=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');script.src=src;
+    script.onload=()=>typeof PptxGenJS==='function'?resolve():reject(new Error('The PowerPoint writer did not initialize.'));
+    script.onerror=()=>{PPTX_LOADING=null;script.remove();reject(new Error('The offline PowerPoint writer (vendor/pptxgen.bundle.js) could not be loaded. Keep the vendor folder next to index.html.'));};
+    document.head.appendChild(script);
+  });
+  return PPTX_LOADING;
+}
+/* Slide notes are collected per slide and written once, one paragraph per line, so sections never run together. */
+function pptNote(slide,text){ (slide.__rsNotes||(slide.__rsNotes=[])).push(String(text)); }
+function pptFlushNotes(slides){ slides.forEach(slide=>{ if(slide.__rsNotes?.length)slide.addNotes(slide.__rsNotes.join('\n\n')); }); }
 function addPptContext(slide,section,pageLabel='',overrides={}){
   const c={...exportContext(),...overrides}, right=[c.scenario,c.scopeLabel,pageLabel].filter(Boolean).join('  ·  ');
   slide.addText(pptBoundText(c.project,5.2,12,true),{x:.55,y:.16,w:5.2,h:.22,fontSize:12,bold:true,color:PPT_COLOR.ink,margin:0});
   slide.addText(pptBoundText(right,6.78,12),{x:6.0,y:.16,w:6.78,h:.22,fontSize:12,color:PPT_COLOR.muted,align:'right',margin:0,breakLine:false});
   addPptSafeLine(slide,.55,.42,12.78,.42,'E5E5EA',.65);
-  const footer=`As of ${fmtDate(c.asOf)}  ·  ${c.weighting}${c.baseline==='Baseline on'?'  ·  Baseline comparison':''}`;
+  const footer=[`As of ${fmtDate(c.asOf)}`,c.weighted?c.weighting:'',c.baseline==='Baseline comparison on'&&c.weighted?'Baseline comparison':''].filter(Boolean).join('  ·  ');
   slide.addText(footer,{x:.55,y:7.19,w:12.23,h:.22,fontSize:12,color:PPT_COLOR.muted,margin:0,align:'right'});
-  slide.addNotes(`${c.project}\n${section}\n${right}\nAs of ${fmtDate(c.asOf)}\n${c.baseline}\n${c.weighting}\nGrouping: ${c.grouping}\nRoadmap Studio ${c.version}`);
+  pptNote(slide,[c.project,section,right,`As of ${fmtDate(c.asOf)}`,c.baseline,c.weighted?c.weighting:'Values are not confidence-weighted',`Grouping: ${c.grouping}`,`Roadmap Studio ${c.version}`].join('\n'));
 }
 function ensureExportScopeControl(){
   if($('pptScope')||!$('pptBtn'))return;
@@ -54,16 +79,26 @@ function ensureExportScopeControl(){
 }
 ensureExportScopeControl();
 
-$('pngBtn').onclick=()=>{ const el=$('tlSvg'); if(!el){alert('Open the Roadmap tab first.');return;}
+/* Roadmap PNG: always drawn from current data, scaled down to stay inside browser canvas limits. */
+const PNG_MAX_SIDE=16000,PNG_MAX_AREA=120e6;
+function exportRoadmapPng(){
+  renderTimeline();
+  const el=$('tlSvg'); if(!el){showToast('Add a pillar before exporting the roadmap.');return;}
   const xml=new XMLSerializer().serializeToString(el), img=new Image(), c=buildExportContext('current');
-  img.onload=()=>{ const s=2,header=92,canvas=document.createElement('canvas');
-    canvas.width=el.width.baseVal.value*s; canvas.height=(el.height.baseVal.value+header)*s; const x=canvas.getContext('2d');
-    x.scale(s,s); x.fillStyle='#fbfbfd'; x.fillRect(0,0,canvas.width/s,header); x.fillStyle='#1d1d1f'; x.font='600 20px sans-serif';
+  const w=el.width.baseVal.value,header=92,h=el.height.baseVal.value+header;
+  const s=Math.max(.1,Math.min(2,PNG_MAX_SIDE/w,PNG_MAX_SIDE/h,Math.sqrt(PNG_MAX_AREA/(w*h))));
+  img.onerror=()=>showToast('The roadmap image could not be drawn.');
+  img.onload=()=>{ const canvas=document.createElement('canvas');
+    canvas.width=Math.floor(w*s); canvas.height=Math.floor(h*s); const x=canvas.getContext('2d');
+    if(!x){showToast('This roadmap is too large for a PNG in this browser. Use PowerPoint instead.');return;}
+    x.scale(s,s); x.fillStyle='#fbfbfd'; x.fillRect(0,0,w,header); x.fillStyle='#1d1d1f'; x.font='600 20px sans-serif';
     x.fillText(c.project,20,31); x.font='12px sans-serif'; x.fillStyle='#6e6e73';
-    x.fillText(`${c.scenario}  ·  As of ${fmtDate(c.asOf)}  ·  ${c.baseline}  ·  ${c.weighting}  ·  Grouping: ${c.grouping}`,20,57);
-    x.fillText(`Current view: Roadmap  ·  Roadmap Studio ${c.version}`,20,77); x.drawImage(img,0,header);
-    canvas.toBlob(b=>dl(b,'roadmap.png'),'image/png'); };
-  img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(xml); };
+    x.fillText(`${c.scenario}  ·  As of ${fmtDate(c.asOf)}  ·  Grouping: ${c.grouping}${s<2?`  ·  Scaled to ${Math.round(s*50)}% to fit image limits`:''}`,20,57);
+    x.fillText(`Roadmap  ·  Roadmap Studio ${c.version}`,20,77); x.drawImage(img,0,header,w,h-header);
+    canvas.toBlob(b=>{if(!b){showToast('This roadmap is too large for a PNG in this browser. Use PowerPoint instead.');return;}dl(b,exportFileName('Roadmap','png'));},'image/png'); };
+  img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(xml);
+}
+$('pngBtn').onclick=exportRoadmapPng;
 
 function pptHex(c){ return String(c||'').replace('#','').slice(0,6).toUpperCase()||'1D1D1F'; }
 function pptItemColor(it){ if(it.status==='Not Started')return['1D1D1F','FFFFFF'];
@@ -102,9 +137,9 @@ function pptBalancedPages(items,max=2){
   for(let i=0;i<pages;i++){const count=size+(i<extra?1:0);out.push(items.slice(offset,offset+count));offset+=count;}return out;
 }
 function pptItemNotes(slide,items){
-  slide.addNotes(items.map(it=>`${it.name}\n${normValueType(it.valueType)} ${fmtMoney(itemValue(it))}; ${isIncludedInTotals(it)?'Included':'Excluded from portfolio totals'}; ${approvalLabel(approvalStatus(it))}; ${it.status}; Owner: ${it.owner||'Unassigned'}\n${it.start?fmtDate(it.start):'Unscheduled'} to ${it.end?fmtDate(it.end):'Unscheduled'}; Realized ${fmtMoney(realizedItemValue(it,exportReportingDate()))}`).join('\n\n'));
+  pptNote(slide,items.map(it=>`${it.name}\n${normValueType(it.valueType)} ${fmtMoney(itemValue(it))}; ${isIncludedInTotals(it)?'Included':'Excluded from portfolio totals'}; ${approvalLabel(approvalStatus(it))}; ${it.status}; Owner: ${it.owner||'Unassigned'}\n${it.start?fmtDate(it.start):'Unscheduled'} to ${it.end?fmtDate(it.end):'Unscheduled'}; Realized ${fmtMoney(realizedItemValue(it,exportReportingDate()))}`).join('\n\n'));
 }
-function pptAddFullNameNotes(slide,entries){const names=[...new Set(entries.filter(Boolean).map(String))];if(names.length)slide.addNotes(`Full names\n${names.join('\n')}`);}
+function pptAddFullNameNotes(slide,entries){const names=[...new Set(entries.filter(Boolean).map(String))];if(names.length)pptNote(slide,`Full names\n${names.join('\n')}`);}
 function addPptMetric(slide,label,value,x,color){ slide.addShape('roundRect',{x,y:1.02,w:1.88,h:.6,fill:{color:'FFFFFF'},line:{color:'ECECF0',width:.7}});
   slide.addShape('roundRect',{x:x+.14,y:1.2,w:.22,h:.08,fill:{color},line:{color}});
   slide.addText(pptBoundText(value,1.26,17,true),{x:x+.44,y:1.1,w:1.26,h:.22,fontSize:17,bold:true,color:'1D1D1F',margin:0});
@@ -143,7 +178,7 @@ function addPptPillarSlide(pptx,p,idx,total,options={}){
   const pages=pptBalancedPages(pptRoadmapReferenceRows(p,allItems),4),timeX=4.58,timeW=8.05,bodyY=3.05,rowH=.86;
   const X=d=>timeX+Math.max(0,Math.min(1,(d-axis.start)/(axis.end-axis.start)))*timeW;
   pages.forEach((rows,pageIndex)=>{
-    const slide=pptx.addSlide();slide.background={color:'FFFFFF'};addPptContext(slide,'Roadmap',`${options.kind||'Pillar'} ${idx+1}/${total} · Page ${pageIndex+1}/${pages.length}`);
+    const slide=pptSlide(pptx);slide.background={color:'FFFFFF'};addPptContext(slide,'Roadmap',`${options.kind||'Pillar'} ${idx+1}/${total} · Page ${pageIndex+1}/${pages.length}`);
     pptTitle(slide,p.name);pptMetric(slide,'SAVINGS',fmtMoneyShort(totals.Savings,true),.6,1.28,3.5,PPT_COLOR.savings);
     pptMetric(slide,'AVOIDANCE',fmtMoneyShort(totals.Avoidance,true),4.7,1.28,3.5,PPT_COLOR.avoidance);
     pptMetric(slide,'REALIZED',fmtMoneyShort(totals.Realized,true),8.8,1.28,3.8,PPT_COLOR.realized);
@@ -182,7 +217,7 @@ function addPptPillarSlide(pptx,p,idx,total,options={}){
   });
 }
 function addPptExecutiveSummarySlide(pptx){
-  const slide=pptx.addSlide(), data=executiveSummaryData(), total=data.totals.Total, goal=executiveGoalValue();
+  const slide=pptSlide(pptx), data=executiveSummaryData(), total=data.totals.Total, goal=executiveGoalValue();
   const stretchGoal=executiveStretchGoalValue();
   const ink='1D1D1F', ink2='6E6E73', ink3='8E8E93', hair='E5E5EA', bg='FBFBFD', white='FFFFFF';
   const savingsColor='28A745', realizedSavingsColor='0B662E', avoidanceColor='3B73E8', realizedAvoidanceColor='163A8A', gold='B45309', gapColor='E5E5EA';
@@ -293,14 +328,14 @@ function addPptExecutiveSummarySlide(pptx){
 
   addPptSafeLine(slide,.78,6.67,12.58,6.67,hair,.75);
   pptText(slide,'Dark segments show the realized portion of each opportunity, capped at its planned value.',.78,6.79,11.8,.32,16,{color:PPT_COLOR.muted});
-  slide.addNotes(`Goal: ${fmtMoney(goal)}. ${stretchGoal?`Stretch goal entered independently: ${fmtMoney(stretchGoal)}. Stretch percentages use this amount, with no automatic multiplier. `:''}Headline percentages and the gap remain relative to the portfolio goal. The dollar scale matches the Executive Summary web tracker, from $0 to ${fmtGoalMoney(axisMax)}, including headroom beyond the largest goal or identified portfolio value. The scale endpoint is not an additional goal.`);
-  slide.addNotes('Realization uses recorded actual dollars where entered, otherwise reported realization percentages or dated phases. Actual totals are not confidence-weighted. Realized values are not added to the identified portfolio total. Dark bar segments are capped to each opportunity; uncapped actual totals are displayed separately.');
+  pptNote(slide,`Goal: ${goal===''?'No goal set':fmtMoney(goal)}. ${stretchGoal?`Stretch goal entered independently: ${fmtMoney(stretchGoal)}. Stretch percentages use this amount, with no automatic multiplier. `:''}Headline percentages and the gap remain relative to the portfolio goal. The dollar scale matches the Executive Summary web tracker, from $0 to ${fmtGoalMoney(axisMax)}, including headroom beyond the largest goal or identified portfolio value. The scale endpoint is not an additional goal.`);
+  pptNote(slide,'Realization uses recorded actual dollars where entered, otherwise reported realization percentages or dated phases. Actual totals are not confidence-weighted. Realized values are not added to the identified portfolio total. Dark bar segments are capped to each opportunity; uncapped actual totals are displayed separately.');
 }
 function addPptPortfolioRollupSlide(pptx){
   const data=portfolioRollupData(),pages=pptBalancedPages(data.groups||[],2),timeX=4.15,timeW=8.48,bodyY=2.95,groupH=1.69;
   const axisStart=utc(data.minYear,0,1),axisEnd=utc(data.maxYear+1,0,1),X=d=>timeX+Math.max(0,Math.min(1,(d-axisStart)/(axisEnd-axisStart)))*timeW;
   pages.forEach((groups,pageIndex)=>{
-    const slide=pptx.addSlide();slide.background={color:'FFFFFF'};addPptContext(slide,'Portfolio Rollup',`Page ${pageIndex+1}/${pages.length}`);pptTitle(slide,pageIndex?'Portfolio Rollup (continued)':'Portfolio Rollup');
+    const slide=pptSlide(pptx);slide.background={color:'FFFFFF'};addPptContext(slide,'Portfolio Rollup',`Page ${pageIndex+1}/${pages.length}`);pptTitle(slide,pageIndex?'Portfolio Rollup (continued)':'Portfolio Rollup');
     [['TOTAL PORTFOLIO',data.totals.Total],['ACTIVE',data.totals.Approved],['PROPOSED',data.totals.Proposed],['REALIZED',data.totals.Realized]].forEach(([label,value],i)=>pptMetric(slide,label,fmtMoneyShort(value,true),.6+i*3.13,1.32,2.95,i===3?PPT_COLOR.realized:PPT_COLOR.ink));
     if(!data.items.length){pptText(slide,'No initiatives to roll up',.6,3,11,.5,24,{color:PPT_COLOR.muted});return;}
     const bottom=bodyY+Math.max(1,groups.length)*groupH;
@@ -334,7 +369,7 @@ function addPptPortfolioRollupSlide(pptx){
     });
     slide.addShape('rect',{x:.62,y:6.68,w:.2,h:.15,fill:{color:PPT_COLOR.realized},line:{transparency:100}});
     pptText(slide,'Realized share of scheduled value; bar length represents dates',.95,6.61,10.8,.3,16,{color:PPT_COLOR.muted});
-    slide.addNotes(`${data.items.length} initiatives\nSavings + Avoidance\nSelected as active: ${fmtMoney(data.totals.Approved)}\nSelected as proposed: ${fmtMoney(data.totals.Proposed)}\nCaptured to date: ${fmtMoney(data.totals.Realized)}\nApproval is independent of Savings or Avoidance. Row amounts include unscheduled initiatives; time bars include scheduled initiatives only.`);
+    pptNote(slide,`${data.items.length} initiatives\nSavings + Avoidance\nSelected as active: ${fmtMoney(data.totals.Approved)}\nSelected as proposed: ${fmtMoney(data.totals.Proposed)}\nCaptured to date: ${fmtMoney(data.totals.Realized)}\nApproval is independent of Savings or Avoidance. Row amounts include unscheduled initiatives; time bars include scheduled initiatives only.`);
   });
 }
 function pptProjectionBand(slide,points,X,Y,plot){
@@ -350,13 +385,13 @@ function pptProjectionLabelPositions(entries,top,bottom,gap=.75){
   return rows;
 }
 function addPptProjectionSlide(pptx){
-  const slide=pptx.addSlide(),end=selectedProjectionEnd(),data=projectionPoints(end),totals=projectionTotalsAt(data.items,end),target=projectionTargetValue();
+  const slide=pptSlide(pptx),end=selectedProjectionEnd(),data=projectionPoints(end),totals=projectionTotalsAt(data.items,end),target=projectionTargetValue();
   const baseline=S.showBaseline!==false?baselineProjectionPoints(end):null,run=data.run||projectionRunRateTotals(data.items),baselineLast=baseline?.points?.[baseline.points.length-1];
-  slide.background={color:'FFFFFF'};addPptContext(slide,'Projected savings trajectory');pptTitle(slide,`Projected by ${fmtDate(end)}`);
+  slide.background={color:'FFFFFF'};addPptContext(slide,'Projected savings trajectory','',{weighted:true});pptTitle(slide,`Projected by ${fmtDate(end)}`);
   pptMetric(slide,'Savings + Avoidance',fmtMoneyShort(totals.Combined,true),.6,1.32,5.6,PPT_COLOR.avoidance);
   const gap=target===''?null:target-totals.Combined;
   pptMetric(slide,target===''?'Target not set':`Target ${fmtMoneyShort(target,true)}`,gap===null?'No target comparison':gap>0?`${fmtMoneyShort(gap,true)} below target`:gap<0?`${fmtMoneyShort(-gap,true)} above target`:'Target covered',7.05,1.32,5.55,PPT_COLOR.ink);
-  slide.addNotes(`Projected savings trajectory\nSavings ${fmtMoney(totals.Savings)}\nAvoidance ${fmtMoney(totals.Avoidance)}\nRealized ${fmtMoney(totals.Realized)}\nExpected ${fmtMoney(run.expected)}\nAnnualized ${fmtMoney(run.annualized)}\n${baselineLast?`Baseline ${fmtMoney(baselineLast.Combined)}; change ${fmtMoney(totals.Combined-baselineLast.Combined)}`:'No baseline'}\nValue added by Avoidance: ${fmtMoney(totals.Avoidance)}. Avoidance lift is the difference between the two planned trajectories. Actuals are never confidence weighted.`);
+  pptNote(slide,`Projected savings trajectory\nSavings ${fmtMoney(totals.Savings)}\nAvoidance ${fmtMoney(totals.Avoidance)}\nRealized ${fmtMoney(totals.Realized)}\nExpected ${fmtMoney(run.expected)}\nAnnualized ${fmtMoney(run.annualized)}\n${baselineLast?`Baseline ${fmtMoney(baselineLast.Combined)}; change ${fmtMoney(totals.Combined-baselineLast.Combined)}`:'No baseline'}\nValue added by Avoidance: ${fmtMoney(totals.Avoidance)}. Avoidance lift is the difference between the two planned trajectories. Actuals are never confidence weighted.`);
   if(!data.items.length){pptText(slide,'No dated financial initiatives',.6,3.35,11,.45,24,{color:PPT_COLOR.muted});return;}
   const plot={x:1.05,y:2.64,w:8.37,h:3.53},baseMax=baseline?Math.max(...baseline.points.map(p=>p.Combined)):0;
   const dataMax=Math.max(...data.points.map(p=>Math.max(p.Combined,p.Realized)),baseMax,1),showTarget=target!==''&&target<=dataMax*1.8;
@@ -438,7 +473,7 @@ function pptContributionTable(slide,rows,stack,full=false){
   pptAddFullNameNotes(slide,rows.map(r=>r.p.name));
 }
 function addPptStackedSlide(pptx){
-  const slide=pptx.addSlide(),stack=pptStackRows(),savings=stack.savings,combined=stack.combined;
+  const slide=pptSlide(pptx),stack=pptStackRows(),savings=stack.savings,combined=stack.combined;
   const top=combined.segments.length?[...combined.segments].sort((a,b)=>b.value-a.value)[0]:null;
   slide.background={color:'FFFFFF'};addPptContext(slide,'Pillar value concentration');
   pptTitle(slide,top?`One pillar carries ${fmtShare(top.pct)} of identified value`:'Pillar value concentration');
@@ -448,10 +483,10 @@ function addPptStackedSlide(pptx){
   addPptSafeLine(slide,5.25,2.17,5.25,6.54,PPT_COLOR.hair,.7);
   pptContributionTable(slide,stack.rows.slice(0,5),stack);
   pptText(slide,'Colors identify pillars. Both bars represent 100%, not equal dollar values.',.6,6.75,12.0,.28,16,{color:PPT_COLOR.muted});
-  slide.addNotes('Pillar value concentration\nRanked contribution\nSavings-only / Total impact\nThe same pillar colors and order are used across both normalized bars. Dollar amounts are separate from percent shares.');
+  pptNote(slide,'Pillar value concentration\nRanked contribution\nSavings-only / Total impact\nThe same pillar colors and order are used across both normalized bars. Dollar amounts are separate from percent shares.');
   const remaining=stack.rows.slice(5),pages=pptBalancedPages(remaining,6);
   if(remaining.length)pages.forEach((rows,i)=>{
-    const detail=pptx.addSlide();detail.background={color:'FFFFFF'};addPptContext(detail,'Pillar value concentration',`Contribution detail ${i+1}/${pages.length}`);pptTitle(detail,'Pillar contribution (continued)');pptContributionTable(detail,rows,stack,true);
+    const detail=pptSlide(pptx);detail.background={color:'FFFFFF'};addPptContext(detail,'Pillar value concentration',`Contribution detail ${i+1}/${pages.length}`);pptTitle(detail,'Pillar contribution (continued)');pptContributionTable(detail,rows,stack,true);
   });
 }
 function pptRoadmapGroups(){
@@ -469,15 +504,18 @@ function addCurrentPptView(pptx){
   else if(S.tab==='stack')addPptStackedSlide(pptx);
   else addPptRoadmapSlides(pptx);
 }
-async function exportPowerPoint(scopeOverride){ if(typeof PptxGenJS!=='function'){alert('PowerPoint export is unavailable.');return;}
-  const btn=$('pptBtn'),scope=exportScopeValue(typeof scopeOverride==='string'?scopeOverride:null); btn.disabled=true; PPT_EXPORT_CONTEXT=buildExportContext(scope);
+async function exportPowerPoint(scopeOverride){
+  const btn=$('pptBtn'),scope=exportScopeValue(typeof scopeOverride==='string'?scopeOverride:null); btn.disabled=true;
+  try{ await loadPptxRuntime(); }catch(error){ btn.disabled=false; showToast(error.message); return; }
+  PPT_EXPORT_CONTEXT=buildExportContext(scope); PPT_SLIDES=[];
   try{ const pptx=new PptxGenJS(); pptx.layout='LAYOUT_WIDE'; pptx.theme={headFontFace:PPT_FONT_FACE,bodyFontFace:PPT_FONT_FACE,lang:'en-US'}; pptx.author='Roadmap Studio'; pptx.subject=`${PPT_EXPORT_CONTEXT.scopeLabel} · ${PPT_EXPORT_CONTEXT.scenario}`; pptx.title=S.fileName||'Roadmap';
     if(scope==='current')addCurrentPptView(pptx);
     else{addPptExecutiveSummarySlide(pptx);addPptPortfolioRollupSlide(pptx);addPptProjectionSlide(pptx);addPptStackedSlide(pptx);addPptRoadmapSlides(pptx);}
     if(scope==='full'&&$('registerAppendix').checked)addPptInitiativeRegister(pptx);
-    const blob=await pptx.write({outputType:'blob'}); dl(blob,`${S.fileName||'roadmap'} — roadmap.pptx`);
-  }catch(e){ console.error(e); alert('PowerPoint export failed.'); } finally{ PPT_EXPORT_CONTEXT=null;btn.disabled=false; } }
-$('pptBtn').onclick=exportPowerPoint;
+    pptFlushNotes(PPT_SLIDES);
+    const blob=await pptx.write({outputType:'blob'}); dl(blob,exportFileName(scope==='current'?exportViewLabel():'Deck','pptx'));
+  }catch(e){ console.error(e); showToast('PowerPoint export failed. '+(e?.message||'')); } finally{ PPT_EXPORT_CONTEXT=null;PPT_SLIDES=[];btn.disabled=false; } }
+$('pptBtn').onclick=()=>exportPowerPoint();
 
 /* ============ PRESENT ============ */
 function presentationContextElement(){
