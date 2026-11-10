@@ -31,7 +31,6 @@ table.grid td.rownum input,#wsSelectAll{width:16px;height:16px;accent-color:var(
 .workspace-review{min-width:0}
 .ws-review-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:16px 0 13px;border-bottom:1px solid var(--hairline)}
 .ws-review-head h3{font-size:18px;font-weight:650;letter-spacing:0}
-.ws-review-head p{margin-top:3px;color:var(--ink2);font-size:12px}
 .ws-review-tabs{display:flex;padding:2px;background:rgba(0,0,0,.05);border-radius:8px}
 .ws-review-tabs button{min-height:34px;padding:6px 13px;border-radius:6px;color:var(--ink2);font-size:12px;font-weight:600}
 .ws-review-tabs button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}

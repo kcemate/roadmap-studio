@@ -469,14 +469,8 @@ function enhanceGrid(){
 }
 
 function enhanceDrawer(){
-  const drawer=$('itemDrawer'); if(!drawer||drawer.getAttribute('aria-hidden')==='true')return;
+  const drawer=$('itemDrawer'); if(drawer.getAttribute('aria-hidden')==='true')return;
   drawer.setAttribute('aria-modal','true'); drawer.setAttribute('aria-labelledby','drawerTitle');
-  drawer.querySelectorAll('.drawer-field').forEach((field,index)=>{
-    const label=field.querySelector('label'),control=field.querySelector('input,select,textarea');
-    if(!label||!control)return;
-    if(!control.id)control.id=`workspaceDrawerField${index}`;
-    label.htmlFor=control.id;
-  });
 }
 
 /* The Initiatives tab badge counts initiatives with at least one Review exception. */

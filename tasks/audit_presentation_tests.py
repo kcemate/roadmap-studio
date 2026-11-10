@@ -14,7 +14,8 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "index.html"
-OUT = Path("/tmp/roadmap-presentation-regression-tests")
+from test_paths import artifact_dir
+OUT = artifact_dir("presentation")
 EMU = 914400
 NS = {
     "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
@@ -611,6 +612,11 @@ def check_ooxml_safety(decks):
     for deck in decks:
         assert not deck["negative_extents"], f"{deck['path'].name} has negative OOXML extents: {deck['negative_extents'][:4]}"
         assert not deck["autofit"], f"{deck['path'].name} uses shrink-to-fit in {deck['autofit']}"
+        with zipfile.ZipFile(deck["path"]) as archive:
+            names = set(archive.namelist())
+            declared = re.findall(r'PartName="/([^"]+)"', archive.read("[Content_Types].xml").decode())
+        missing = [part for part in declared if part not in names]
+        assert not missing, f"{deck['path'].name} declares content types for missing parts: {missing[:4]}"
         for chart in chart_parts(deck["path"]):
             assert chart["content_type"], f"{deck['path'].name}: {chart['part']} lacks a content type"
             assert all(re.fullmatch(r"[A-Z]+\d+:[A-Z]+\d+", ref) for ref in chart["table_refs"]), f"{deck['path'].name}: invalid chart workbook range {chart['table_refs']}"

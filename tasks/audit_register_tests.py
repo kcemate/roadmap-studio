@@ -8,7 +8,8 @@ from audit_presentation_tests import deck_data
 from roadmap_feature_tests import seed_state
 
 ROOT=Path(__file__).resolve().parents[1]
-OUT=Path('/tmp/roadmap-register-tests')
+from test_paths import artifact_dir
+OUT=artifact_dir('register')
 
 def register_state(count=46):
     state=seed_state()

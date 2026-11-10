@@ -1,3 +1,15 @@
+# Current Work: 1.7.0 audit implementation
+
+- [x] Section A (41 broken items) with regression tests in `tasks/audit_fixes_tests.py`, run in Chromium, WebKit, and Firefox.
+- [x] One totals path (`src/finance.js`), one goal basis, explicit "No goal set", recognized statuses.
+- [x] Section B consistency items and Section G features (sample, paste rows, commentary, since last review, statuses, filtered exports, review badge, brand) with tests in `tasks/audit_consistency_tests.py`.
+- [x] Section C performance work, measured at 500 and 2,000 initiatives (numbers in the pull request).
+- [x] Section D/E: dead code removed, generated results untracked, tests no longer rewrite tracked files or rebuild mid-gate, CI caching and artifacts, docs corrected.
+- [x] Section F deck redesign, rendered through Keynote for sparse, 20-initiative, and 120-initiative fixtures and inspected slide by slide.
+- [ ] Owner decisions listed in the pull request (Pages source, tags, LICENSE, branch cleanup, proposed file deletions, deck differences from 1.6.7).
+
+Review: verification output and every behavior change to reported figures are recorded in the pull request. Native Microsoft PowerPoint was not available; repair-free opening there is unverified.
+
 # Publish Version 1.6.7 To GitHub, October 26
 
 ## Plan
@@ -23,7 +35,7 @@
 - User authorized a new here.now deployment. No code changes or GitHub push are included.
 - Published https://spicy-zephyr-t8ek.here.now/ from the verified five-file 1.6.7 package through the here-now publish script. Current response reports anonymous hosting, expiring October 21, 2026 at 12:08:13 UTC. Claim link supplied privately to the user, not recorded in source.
 - Live verification: HTTP 200, version 1.6.7, matching runtime/license/release hashes and application source after removing only five hosting-inserted social-preview meta tags. Desktop 1440px and mobile 390px checks pass with no page errors or horizontal overflow.
-- A real nine-slide PowerPoint download from the live URL passes the shared measurement-axis checks: $1.2B maximum, $1B marker at 83.33% of the track, correct bar proportions and unchanged goal-based percentages. Used synthetic local browser data only. Evidence: `/tmp/roadmap-live-oct20-full.pptx`, `/tmp/roadmap-live-oct20-1440.png`, `/tmp/roadmap-live-oct20-390.png`.
+- A real nine-slide PowerPoint download from the live URL passes the shared measurement-axis checks: $1.2B maximum, $1B marker at 83.33% of the track, correct bar proportions and unchanged goal-based percentages. Used synthetic local browser data only. Evidence: a temporary local folder, a temporary local folder, a temporary local folder.
 
 # Executive PowerPoint Measurement Scale, October 20
 
@@ -35,7 +47,7 @@
 ## Review
 - Scope: existing export implementation, not a deck redesign. Preserve the two large metric blocks, financial legend, independently entered stretch goals, and saved project data. No deployment or GitHub push requested.
 - RED: 11 presentation checks exposed the web/export scale mismatch and missing measurement ticks. GREEN: all 21 presentation checks pass, including $1.2B range/$1B goal, web marker parity, segment proportions, unchanged headline percentages, editable stretch goals, large portfolios, empty data, and nonoverlapping 14pt axis labels.
-- Visually inspected five native-export slides rendered through LibreOffice, including the standard $1B goal, larger portfolios, independent stretch goals, and empty data. Marker-aware bar labels avoid collisions when the portfolio exceeds its goal. Desktop 1440px and mobile 390px web checks retain the $1B marker/$1.2B range without page overflow or page errors. Evidence: `/tmp/roadmap-scale-after-render/`. Microsoft PowerPoint itself was not used for rendering.
+- Visually inspected five native-export slides rendered through LibreOffice, including the standard $1B goal, larger portfolios, independent stretch goals, and empty data. Marker-aware bar labels avoid collisions when the portfolio exceeds its goal. Desktop 1440px and mobile 390px web checks retain the $1B marker/$1.2B range without page overflow or page errors. Evidence: a temporary local folder. Microsoft PowerPoint itself was not used for rendering.
 - Verification uncovered an existing flaky native-undo test: sequential keystrokes sometimes formed multiple browser undo transactions. The test now inserts one text transaction and keeps the same exact undo assertion; eight isolated repetitions pass. Restored the documented test-only axe-core 4.10.3 dependency outside the repository.
 - Final verification: `python3 tasks/verify_all.py` passes all 13 gates: 120 existing feature checks, 43 core regressions per browser engine, workspace and selection coverage, accessibility, exports, 21 presentation checks, 7 register tests, and release/rollback validation. The application remained unchanged during verification.
 - Packaged local version 1.6.7 in `release/current`, `release/versions/1.6.7`, and `release/archives/roadmap-studio-1.6.7.zip`; `verify_release.py release/current` passes. All packaged HTML hashes match verified source `b29633616f468e03e1425293ebbdd53c94d2abd5aa387c39b0bc407226516103`. Previous 1.6.6 remains available for rollback. No Git commit, push, or deployment performed.
@@ -59,7 +71,7 @@
 ## Review
 - Main bb51814 has passing full GitHub verification. No application edits or changes to financial counting rules are included in this deployment.
 - Published https://orchid-ravine-q8cj.here.now/ from the verified 1.6.6 release package. Anonymous hosting expires October 1, 2026 at 19:29:22 UTC; claim link supplied privately to the user, not recorded in source.
-- Re-ran all seven Initiative Register tests successfully. Live browser verification returned HTTP 200, version 1.6.6, matching PowerPoint runtime/license hashes, 46 synthetic register rows, a 10-slide PowerPoint download, no page errors, and no mobile page overflow. Evidence: /tmp/roadmap-live-sept30-desktop.png, /tmp/roadmap-live-sept30-mobile.png, /tmp/roadmap-live-sept30-register.pptx. No project data was uploaded, no existing site changed, and no GitHub push was performed.
+- Re-ran all seven Initiative Register tests successfully. Live browser verification returned HTTP 200, version 1.6.6, matching PowerPoint runtime/license hashes, 46 synthetic register rows, a 10-slide PowerPoint download, no page errors, and no mobile page overflow. Evidence: a temporary local folder, a temporary local folder, a temporary local folder No project data was uploaded, no existing site changed, and no GitHub push was performed.
 
 # Feature build: P0/P1 product upgrades
 
@@ -276,7 +288,7 @@
 - [ ] Obtain explicit approval before changing Roadmap Studio or publishing any build.
 
 ## Review
-- Created `/tmp/roadmap-studio-exec-preview/executive-view-preview.pptx` and a direct 1920×1080 PNG render for review only.
+- Created a temporary local folder and a direct 1920×1080 PNG render for review only.
 - The design uses one takeaway title, one portfolio-to-goal bar, and three mutually exclusive segments: Savings, Avoidance, and Remaining to goal. Labels and color meanings appear directly on the bar and again in one short key.
 - The deck ZIP structure validates without errors. The standard Office renderer is unavailable in this environment, so the prototype was visually checked from the artifact engine's direct PNG output.
 - No production source code, GitHub state, or here.now deployment changed in this preview-only phase.
@@ -478,10 +490,10 @@
 
 ## Review
 - Read-only product audit completed against the current source and `fancy-buddha-rjbf.here.now`, with disposable synthetic data. No production code, user data, remote branch, or live deployment changed.
-- Existing regression suite rerun with outputs isolated under `/tmp/roadmap-product-audit/regression`: **120 passed / 0 failed / 0 untested**.
+- Existing regression suite rerun with outputs isolated under a temporary local folder: **120 passed / 0 failed / 0 untested**.
 - Independent failure tests reproduced percent inflation, mismatched undated totals, confidence-discounted actuals, scenario draft/deletion problems, incorrect deletion Undo, uncommitted text loss, missing-end crashes, and executable imported ID attributes.
 - Visual/accessibility checks covered all seven views, 390-1920px widths, 60- and 1,000-initiative portfolios, and the drawer. Dense exported PowerPoint content extended below slide bounds; mobile projection metrics and long roadmap headings overflowed.
-- Evidence-backed assessment and verification limits: `/tmp/roadmap-product-audit/report.md`. Detailed browser manifest, stress captures, regression output, and independently rendered export evidence remain outside the repository.
+- Evidence-backed assessment and verification limits: a temporary local folder. Detailed browser manifest, stress captures, regression output, and independently rendered export evidence remain outside the repository.
 
 # Roadmap Studio 1.6: All Thirteen Audit Improvements
 
@@ -518,7 +530,7 @@
 - Published https://steady-canyon-zvjb.here.now/ as a new anonymous site. The publisher reports expiry at 2026-09-08T21:10:53.736Z; a claim link was returned for the user to retain it permanently. No previous site or GitHub remote was modified.
 - All five hosted release files verified. HereNow adds social-preview meta tags to HTML; after accounting only for those parsed meta tags, the application HTML matches the verified release exactly. The runtime, license, manifest, and checksums match byte-for-byte.
 - Live Chromium smoke passed all seven tabs at 1440px and 390px (14 combinations), with no page overflow, app errors, console warnings/errors, or failed requests. Observed app requests were only the hosted HTML and its local PowerPoint runtime.
-- A real live PowerPoint download produced a valid seven-slide, 237235-byte archive. Synthetic browser-only verification data was not published. Inspected screenshot: /tmp/roadmap-1.6-herenow-smoke/executive-live.png; downloaded deck: /tmp/roadmap-1.6-herenow-smoke/live-export.pptx.
+- A real live PowerPoint download produced a valid seven-slide, 237235-byte archive. Synthetic browser-only verification data was not published. Inspected screenshot: a temporary local folder; downloaded deck: a temporary local folder
 
 # PowerPoint Presentation Refinement, September 7
 
@@ -540,7 +552,7 @@
 - Consolidated verification passed all 10 gates: 120 existing checks, 34 core regressions per Chromium/WebKit/Firefox, 10 workspace tests, accessibility, exports, 10 new presentation checks, and reproducible release/rollback verification. The app hash stayed unchanged throughout: b5865b6fb354e431b77c4a7563d772b252d71e4b95bb397493d921f502de9851.
 - Updated legacy tests to identify slides by their role rather than shared labels or fixed positions, and to read the current version instead of hardcoding v1.6.0. Restored the pinned axe-core 4.10.3 test-only dependency outside the repository before the final passing run.
 - Built local release/versions/1.6.1, release/current, and release/archives/roadmap-studio-1.6.1.zip. Archive SHA-256: 98450a226c2efb36195a0b6682da77fc1110cc5ec8a3bcb21ee62cf6e1f23892. Version 1.6.0 is retained unchanged for rollback.
-- A nine-slide synthetic example deck and PDF are available in /Users/giovanni/.codex/visualizations/2026/06/15/019ecbc0-e357-7372-9008-821fb444e5cd/roadmap-studio-1.6.1. Additional rendered test evidence remains in /tmp/roadmap-ppt-refinement/final. Native Microsoft PowerPoint was unavailable; no native repair-dialog claim is made.
+- A nine-slide synthetic example deck and PDF are available in a local visualization folder outside the repository. Additional rendered test evidence remained in a temporary local folder. Native Microsoft PowerPoint was unavailable; no native repair-dialog claim is made.
 - Nothing was deployed, committed, or pushed. Existing web-view layouts and financial/editing code outside the export module match 1.6.0 exactly after normalizing the version constant.
 
 # Publish Roadmap Studio 1.6.1, September 8
@@ -558,7 +570,7 @@
 - Publisher finalized a new anonymous site at https://ground-hollow-pmqa.here.now/, expiring 2026-09-09T13:25:55.657Z. A one-time claim link was returned for the user; no prior site or GitHub state was changed.
 - All five hosted files verified against the release. HTML matches after ignoring only hosting-added social metadata; other assets match byte-for-byte.
 - Live Chromium checks passed for all seven tabs at 1440px and 390px, with no page overflow, application errors, console warnings/errors, or failed requests. Only the hosted HTML and local PowerPoint runtime were requested by the app.
-- Live PowerPoint download produced a valid nine-slide, 369146-byte deck with the new executive blocks and 2+2 rollup pagination. Evidence and screenshots: /tmp/roadmap-1.6.1-live-smoke/report.json. Synthetic verification data stayed in an isolated browser and was not uploaded.
+- Live PowerPoint download produced a valid nine-slide, 369146-byte deck with the new executive blocks and 2+2 rollup pagination. Evidence and screenshots: a temporary local folder Synthetic verification data stayed in an isolated browser and was not uploaded.
 
 # Initiative Selection Alignment, September 8
 
@@ -572,7 +584,7 @@
 - Scope: the Initiatives grid selection column. Preserve financial logic, existing row editing, and the 1.6.1 PowerPoint refinements.
 - Root cause: the selection td used display:grid, detaching its height and alignment from the table row. Restored native table-cell layout and moved the checkbox/number grid into an inner wrapper.
 - RED confirmed the checkbox was 9.5px above its initiative on normal rows and 23.25px above on 72px rows. The new geometry and keyboard-selection regressions now pass.
-- Desktop (1440px) and mobile (390px) visual/geometry checks passed in Chromium, WebKit, and Firefox: checkbox/name centers match exactly, with no page overflow. Compact-density rerenders preserve both vertical and horizontal scroll positions in all six combinations. Evidence: /tmp/roadmap-selection-alignment.
+- Desktop (1440px) and mobile (390px) visual/geometry checks passed in Chromium, WebKit, and Firefox: checkbox/name centers match exactly, with no page overflow. Compact-density rerenders preserve both vertical and horizontal scroll positions in all six combinations. Evidence: a temporary local folder
 - Full verification passed all 12 gates, including 120 existing checks, 34 core tests per browser, 12 workspace tests, two additional selection tests per WebKit/Firefox, accessibility, exports, 10 presentation checks, and release/rollback verification. Application SHA-256 stayed unchanged throughout: ab5055f966ce250b54d796518160e30318f771a3f619d3de8b0bc8ab00a27f44.
 - Built and verified the five-file local release/versions/1.6.2 package, release/current, and release/archives/roadmap-studio-1.6.2.zip. Version 1.6.1 remains retained for rollback. Nothing was deployed, committed, or pushed.
 
@@ -590,7 +602,7 @@
 - Preserve the approved two-block composition and financial color legend. Verify meaningful labels without clipping or overlap, including when portfolio value exceeds both targets.
 - Six new goal regressions started RED; all 16 presentation checks now pass. Coverage includes $1B to $1.2B, $125 to $150, above-stretch totals, zero opportunity, the existing default goal, accurate marker positions, caption bounds, unchanged percentages, both export scopes, and saved-state preservation.
 - Updated three legacy executive assertions from the former one-line goal label to exact, separately named original-goal and stretch-goal amount/caption checks. All other requirements remain enforced.
-- Inspected real LibreOffice slide renders at 1440px for below-goal, above-stretch, small-goal, and empty portfolios. Both markers/captions and the financial legend remain legible, with no clipping or overlap. Evidence: /tmp/roadmap-stretch-preview. Native Microsoft PowerPoint was not available; package integrity reports zero findings, and export regressions confirm no negative OOXML extents or shrink-to-fit.
+- Inspected real LibreOffice slide renders at 1440px for below-goal, above-stretch, small-goal, and empty portfolios. Both markers/captions and the financial legend remain legible, with no clipping or overlap. Evidence: a temporary local folder Native Microsoft PowerPoint was not available; package integrity reports zero findings, and export regressions confirm no negative OOXML extents or shrink-to-fit.
 - Consolidated verification passed all 12 gates, including 120 existing features, 34 core regressions per browser, 12 workspace tests, selection checks in WebKit/Firefox, accessibility, exports, 16 presentation checks, and release/rollback. Application hash stayed unchanged throughout: 0cd2c130f3073b81210937e323d5a0a1a2f2aa484a7814437f264a6a90bd0574.
 - Built and verified release/versions/1.6.3, release/current, and release/archives/roadmap-studio-1.6.3.zip. Archive SHA-256: 7b96c1efd71d3ac34b776f96af61a66f5f7de1d508b2c13e888abde7701a02bd. Version 1.6.2 is retained. No deployment, GitHub push, or live-site changes were made.
 
@@ -628,7 +640,7 @@
 - Added src/register.js and src/register.css through the existing local build includes, plus one accessible tab beside Initiatives. No runtime dependency or schema migration was added. Print / PDF opens the browser's local dialog; the user selects Save as PDF rather than receiving an automatic PDF download.
 - Seven new register checks cover all 46 synthetic rows regardless of grid filters, grouped totals, scenario refresh, empty/unscheduled/excluded states, full names/XSS safety, mobile geometry, PDF text and repeated reporting context, standalone PPT, opt-in appendix, and long-name slide bounds. RED failed before the tab existed. Updated exact existing navigation assertions to include the new eighth tab; all other assertions stay enforced.
 - All 13 final gates passed, with the application unchanged throughout: 82e00fec10ab4c3e4a8120f9ec585541dbfc2a064a189833238c9189efdbcbd7. Includes 120 existing features, 43 core checks in three engines, workspace/selection/accessibility/export checks, 18 existing presentation checks, seven register checks, and reproducible release/rollback.
-- Additional Chromium/WebKit/Firefox checks at 1440px and 390px passed with all 46 rows, no page overflow, and no application errors. A separate axe scan of the new register passed on desktop/mobile. Inspected actual landscape PDF pages, normal and extreme-name PowerPoint renders, and settled browser screenshots. Evidence: /tmp/roadmap-register-tests. Very long names use a full-width detail slide instead of shrinking/truncating text.
+- Additional Chromium/WebKit/Firefox checks at 1440px and 390px passed with all 46 rows, no page overflow, and no application errors. A separate axe scan of the new register passed on desktop/mobile. Inspected actual landscape PDF pages, normal and extreme-name PowerPoint renders, and settled browser screenshots. Evidence: a temporary local folder Very long names use a full-width detail slide instead of shrinking/truncating text.
 - The previously recorded PowerPoint package content-type/slide-master warning remains outside this feature's scope. LibreOffice rendering and application export tests pass, but native Microsoft PowerPoint repair-free behavior is not verified; do not report the legacy packaging issue as fixed.
 - Built and verified local release/versions/1.6.6, release/current, and release/archives/roadmap-studio-1.6.6.zip. Version 1.6.5 remains retained. Nothing deployed, committed, pushed, or uploaded.
 
@@ -643,7 +655,7 @@
 - Scope: Approved becomes Active; Proposed and execution status remain unchanged. Preserve user-entered text and old saved projects. No deployment or GitHub changes.
 - Added three core regressions for Active labels, legacy save/import behavior, explicit Active imports, grid/bulk/drawer controls, and financial drilldowns. Initial label and import checks failed before implementation. Display-specific legacy assertions now require Active; canonical financial keys and category assertions remain Approved for backward compatibility.
 - Final full verification passed all 12 gates: 120 existing features, 43 core checks in each of Chromium/WebKit/Firefox, workspace/selection/accessibility checks, exports, 18 presentation checks, and release/rollback verification. Application remained unchanged throughout: e71d5a44c595042e792b7d38fe6c13fffb6dce557a68b1c621095698c468878f. An initial run hit a transient existing stretch-goal input test failure; its isolated rerun and the complete subsequent run passed without production changes.
-- Visually inspected desktop/mobile labels and actual LibreOffice-rendered Portfolio Rollup slides. Evidence: /tmp/roadmap-active-preview. Notes tests confirm category labels changed while user-entered names containing "approved" remain intact.
+- Visually inspected desktop/mobile labels and actual LibreOffice-rendered Portfolio Rollup slides. Evidence: a temporary local folder Notes tests confirm category labels changed while user-entered names containing "approved" remain intact.
 - Separate package-integrity inspection found eight content-type overrides referencing absent slideMaster2.xml through slideMaster9.xml in the nine-slide fixture. A fresh export from immutable 1.6.4 reproduced the identical eight findings, so this is a pre-existing export packaging issue, not introduced by the rename. It remains unresolved and should be addressed separately; do not claim repair-free native PowerPoint verification.
 - Built local 1.6.5 with 1.6.4 retained for rollback. No deployment, commit, push, or remote changes.
 
@@ -663,5 +675,5 @@
 - RED confirmed all five initial UI/persistence regressions failed without the field and seven presentation checks rejected the automatic multiplier. The follow-up precision regression caught $1.75B being displayed as $1.8B; goal-specific formatting now preserves precise amounts in web/PPT labels.
 - Added six durable core regressions covering field placement in both views, percentages and markers, file download/open, autosave, undo/redo, scenario switching, baseline snapshots, legacy import, invalid/cleared values, independent goal changes, responsive label bounds, and precision. All 40 core tests pass in Chromium, WebKit, and Firefox.
 - All 18 presentation checks pass, including full/current export, custom stretch amounts, goal-independent percentages, optional/cleared targets, small/large/empty portfolios, precision, state preservation, and repair-safe geometry. The earlier automatic-goal assertion is replaced by explicit entered-goal coverage; legacy inputs no longer imply a stretch value.
-- Inspected desktop/mobile Executive Summary and goal-entry controls, plus actual LibreOffice PowerPoint renders. Twelve browser/view/viewport combinations have no page overflow or application errors. Evidence: /tmp/roadmap-editable-stretch-preview. Package inspection reports zero structural findings; no native Microsoft PowerPoint validation is claimed. The layout detector returned no findings in degraded regex mode, so screenshot and browser geometry checks remain authoritative.
+- Inspected desktop/mobile Executive Summary and goal-entry controls, plus actual LibreOffice PowerPoint renders. Twelve browser/view/viewport combinations have no page overflow or application errors. Evidence: a temporary local folder Package inspection reports zero structural findings; no native Microsoft PowerPoint validation is claimed. The layout detector returned no findings in degraded regex mode, so screenshot and browser geometry checks remain authoritative.
 - Full verification passed all 12 gates with the application unchanged throughout: fdbacb47fd1fa520fd07c633d75ef59c032f8f6d533df42c5c0d0c8f869f48af. Built and verified the five-file release/versions/1.6.4 package, release/current, and release/archives/roadmap-studio-1.6.4.zip (SHA-256 614c216b0b40b35d80f607f0d6c193c15b6e32a131c6d26aa83da1fadc994be3). Version 1.6.3 remains retained. Nothing was deployed, committed, or pushed.

@@ -613,9 +613,14 @@ function withExportScope(run){
 /* Two corrections to the written package, applied before download; the vendored library itself is unmodified.
    1. PptxGenJS 4.0.1 writes embedded chart workbooks whose table range ends with a stray apostrophe
       (ref="A1:C4'"). Keynote then drops every chart and strict readers may repair the file.
-   2. Title placeholders get the stable shape name "slide-title" (PptxGenJS ignores objectName on placeholders). */
+   2. Title placeholders get the stable shape name "slide-title" (PptxGenJS ignores objectName on placeholders).
+   3. [Content_Types].xml declares one slideMaster part per slide although only one master is written; overrides
+      for parts that do not exist are removed (the 1.6.4-1.6.7 known packaging limitation). */
 async function repairChartWorkbooks(buffer){
   const zip=await JSZip.loadAsync(buffer);
+  const types=await zip.file('[Content_Types].xml').async('string');
+  const cleaned=types.replace(/<Override\s+PartName="\/([^"]+)"[^>]*\/>/g,(tag,part)=>zip.file(part)?tag:'');
+  if(cleaned!==types)zip.file('[Content_Types].xml',cleaned);
   for(const name of Object.keys(zip.files).filter(n=>/^ppt\/slides\/slide\d+\.xml$/.test(n))){
     const xml=await zip.file(name).async('string');
     const named=xml.replace(/(<p:cNvPr id="\d+" name=")[^"]*("><\/p:cNvPr><p:cNvSpPr\/><p:nvPr><p:ph\s+idx="\d+"\s+type="title")/g,'$1slide-title$2');

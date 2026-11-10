@@ -13,7 +13,8 @@ from playwright.sync_api import sync_playwright
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = Path("/tmp/roadmap-export-implementation-tests")
+from test_paths import artifact_dir, require_current_build
+OUT = artifact_dir("exports")
 APP = ROOT / "index.html"
 EMU = 914400
 NS = {
@@ -23,7 +24,7 @@ NS = {
 
 
 def build_app():
-    subprocess.run(["python3", str(ROOT / "tasks" / "build.py")], cwd=ROOT, check=True)
+    require_current_build()
 
 
 def dense_state():
@@ -475,8 +476,7 @@ def test_legacy_export_contracts(browser):
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    if os.environ.get("ROADMAP_TEST_SKIP_BUILD") != "1":
-        build_app()
+    build_app()
     artifacts = []
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)

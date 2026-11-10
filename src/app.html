@@ -13,7 +13,7 @@
   --paper:#fbfbfd; --surface:#ffffff;
   --hairline:rgba(0,0,0,.09);
   --accent:#0071e3; --accent-hover:#0077ed;
-  --risk:#b45309; --done-fill:#d8d8dc; --done-ink:#515154;
+  --risk:#b45309;
   --radius:8px; --radius-card:14px;
   --shadow-card:0 1px 2px rgba(0,0,0,.04), 0 8px 32px rgba(0,0,0,.06);
   --spring:cubic-bezier(.32,.72,0,1);
@@ -254,7 +254,6 @@ table.grid th.sticky-col{z-index:6}
 table.grid tr.excluded-from-totals td[data-total-cell]{background:#f5f5f7}
 .grid-meta-row{display:flex;align-items:baseline;gap:14px;margin-bottom:12px;flex-wrap:wrap}
 .grid-meta-row h2{font-size:22px;font-weight:600;letter-spacing:-.02em}
-#gridStage .stage-head{max-width:none}
 
 /* ---------- health panel ---------- */
 .health-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
@@ -388,9 +387,6 @@ table.grid tr.excluded-from-totals td[data-total-cell]{background:#f5f5f7}
 .rollup-scroll{overflow:auto;border:1px solid var(--hairline);border-radius:var(--radius-card);background:var(--surface);box-shadow:var(--shadow-card)}
 .rollup-svg{display:block;width:100%;height:auto;min-width:1080px}
 .rollup-bar{cursor:pointer}
-.approval-pill{display:inline-flex;align-items:center;justify-content:center;min-width:72px;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:650}
-.approval-pill.approved{background:#e8f2ff;color:#0066cc}
-.approval-pill.proposed{background:#f1f1f3;color:#55555a}
 @media (max-width:860px){.rollup-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.rollup-metric:nth-child(3){border-left:none;border-top:1px solid var(--hairline)}.rollup-metric:nth-child(4){border-top:1px solid var(--hairline)}}
 /* @include workspace.css */
 /* @include register.css */
@@ -614,14 +610,14 @@ table.grid tr.excluded-from-totals td[data-total-cell]{background:#f5f5f7}
       <div class="stage-head"><h2>Pillar Contribution</h2><span class="meta" id="stackMeta"></span></div>
       <div id="stackEmpty" class="stack-empty" style="display:none"><b>No financial values</b>Add Savings or Avoidance dollar values to see pillar share of impact.</div>
       <div class="stack-layout" id="stackBody">
-        <div class="stack-card" id="stackSavingsChart">
+        <div class="stack-card">
           <div class="stack-card-head">
             <div><h3>Savings only</h3><p>Each segment shows that pillar's share of total planned savings.</p></div>
             <div class="stack-total" id="stackSavingsTotal">$0<span>Total Savings</span></div>
           </div>
           <div class="stack-chart-body" id="stackSavingsBody"></div>
         </div>
-        <div class="stack-card" id="stackCombinedChart">
+        <div class="stack-card">
           <div class="stack-card-head">
             <div><h3>Savings + Avoidance</h3><p>Each segment shows that pillar's share of total planned impact.</p></div>
             <div class="stack-total" id="stackCombinedTotal">$0<span>Total Impact</span></div>

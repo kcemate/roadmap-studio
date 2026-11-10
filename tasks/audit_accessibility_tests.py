@@ -10,10 +10,10 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 from audit_workspace_tests import APP, ROOT, seed_state
+from test_paths import ARTIFACTS, require_current_build
 
-
-DEFAULT_AXE_PATH = Path("/tmp/roadmap-audit-tools/node_modules/axe-core/axe.min.js")
-AXE_PATH = Path(os.environ.get("AXE_PATH", DEFAULT_AXE_PATH))
+# axe-core is a test-only dependency installed with: npm install --prefix tasks/test-artifacts/tools --no-save axe-core@4.10.3
+AXE_PATH = Path(os.environ.get("AXE_PATH") or ARTIFACTS / "tools" / "node_modules" / "axe-core" / "axe.min.js")
 VIEWPORTS = ((390, 844), (1440, 1000))
 MAJOR_VIEWS = ("struct", "data", "road", "exec", "rollup", "proj", "stack")
 
@@ -26,7 +26,7 @@ class AccessibilityAuditTests(unittest.TestCase):
                 f"axe-core bundle not found at {AXE_PATH}. "
                 "Set AXE_PATH to a local axe.min.js test dependency."
             )
-        subprocess.run(["python3", "tasks/build.py"], cwd=ROOT, check=True, capture_output=True, text=True)
+        require_current_build()
         cls.playwright = sync_playwright().start()
         cls.browser = cls.playwright.chromium.launch()
 

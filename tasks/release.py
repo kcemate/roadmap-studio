@@ -7,6 +7,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import zipfile
 from pathlib import Path
@@ -19,7 +20,7 @@ ZIP_TIMESTAMP = (1980, 1, 1, 0, 0, 0)
 
 
 def build_check():
-    subprocess.run(["python3", str(ROOT / "tasks" / "build.py"), "--check"], cwd=ROOT, check=True)
+    subprocess.run([sys.executable, str(ROOT / "tasks" / "build.py"), "--check"], cwd=ROOT, check=True)
 
 
 def metadata(source_files, version, public_url):

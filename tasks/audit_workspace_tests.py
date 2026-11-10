@@ -9,6 +9,8 @@ import unittest
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
+
+from test_paths import require_current_build
 from verify_release import source_version
 
 
@@ -129,7 +131,7 @@ def seed_state():
 class WorkspaceAuditTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        subprocess.run(["python3", "tasks/build.py"], cwd=ROOT, check=True, capture_output=True, text=True)
+        require_current_build()
         ARTIFACTS.mkdir(parents=True, exist_ok=True)
         cls.pw = sync_playwright().start()
         cls.browser = getattr(cls.pw, os.environ.get("ROADMAP_BROWSER", "chromium")).launch()

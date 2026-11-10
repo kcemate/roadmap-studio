@@ -11,27 +11,18 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
+from test_paths import relative
+
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "index.html"
 TRACKER = ROOT / "tasks" / "roadmap-studio-feature-tracker.csv"
 ARTIFACTS = ROOT / "tasks" / "test-artifacts"
-RESULTS_JSON = ROOT / "tasks" / "roadmap-studio-test-results.json"
+RESULTS_JSON = ARTIFACTS / "results" / "roadmap-studio-test-results.json"
+# The tracked tracker CSV is rewritten only on request; a normal run writes an updated copy to test-artifacts.
+UPDATE_TRACKER = "--update-tracker" in sys.argv
+TRACKER_OUT = TRACKER if UPDATE_TRACKER else ARTIFACTS / "results" / "roadmap-studio-feature-tracker.csv"
 APP_URL = APP.as_uri()
-
-KNOWN_FIXES = {
-    "STRUCT-004": {
-        "Fix Status": "Fixed",
-        "Retest Result": "Passed after adding data-p to pillar move/delete controls.",
-        "Notes": "Initial full run found pillar move controls lacked the pillar id needed by the shared structure action handler.",
-    },
-    "STRUCT-005": {
-        "Fix Status": "Fixed",
-        "Retest Result": "Passed after adding data-p to pillar move/delete controls.",
-        "Notes": "Initial full run found pillar delete controls lacked the pillar id needed by the shared structure action handler.",
-    },
-}
-
 
 def now_iso():
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -519,9 +510,9 @@ class Runner:
             row["Latest Test Result"] = res["result"]
             row["Issue ID"] = res["issue_id"]
             row["Fix Status"] = "" if res["status"] == "Passed" else "Needs fix"
-            if row["ID"] in KNOWN_FIXES:
-                row.update(KNOWN_FIXES[row["ID"]])
-        with TRACKER.open("w", newline="") as f:
+        TRACKER_OUT.parent.mkdir(parents=True, exist_ok=True)
+        RESULTS_JSON.parent.mkdir(parents=True, exist_ok=True)
+        with TRACKER_OUT.open("w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=fields, lineterminator="\n")
             writer.writeheader()
             writer.writerows(rows)
@@ -529,8 +520,8 @@ class Runner:
             json.dumps(
                 {
                     "generatedAt": now_iso(),
-                    "app": str(APP),
-                    "tracker": str(TRACKER),
+                    "app": relative(APP),
+                    "tracker": relative(TRACKER_OUT),
                     "results": self.results,
                     "issues": self.issues,
                     "untested": untouched,
@@ -547,12 +538,10 @@ class Runner:
 
 
 def reset_artifacts():
+    """Clear only this suite's own output; other suites, results, and test tools share tasks/test-artifacts/."""
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
-    for child in ARTIFACTS.iterdir():
-        if child.is_dir():
-            shutil.rmtree(child)
-        else:
-            child.unlink()
+    shutil.rmtree(ARTIFACTS / "downloads", ignore_errors=True)
+    (ARTIFACTS / "invalid-project.json").unlink(missing_ok=True)
     (ARTIFACTS / "downloads").mkdir()
 
 
@@ -1313,7 +1302,7 @@ def run_tests():
         mobile_nav = page.evaluate("""() => ({height:document.querySelector('.toolbar').getBoundingClientRect().height,
           scrollable:document.querySelector('.toolbar').scrollWidth>document.querySelector('.toolbar').clientWidth})""")
         runner.check(
-            "NAV-001",
+            "NAV-002",
             nav_layout.get("height", 0) >= 90
             and nav_layout.get("tabsTop", 0) >= nav_layout.get("brandBottom", 999)
             and nav_layout.get("tabCount") == 8
@@ -2414,7 +2403,7 @@ if __name__ == "__main__":
         "failed": sum(1 for r in runner.results.values() if r["status"] == "Failed"),
         "issues": runner.issues,
         "untested": untested,
-        "resultsJson": str(RESULTS_JSON),
-        "tracker": str(TRACKER),
+        "resultsJson": relative(RESULTS_JSON),
+        "tracker": relative(TRACKER_OUT),
     }, indent=2))
     sys.exit(1 if any(r['status']=='Failed' for r in runner.results.values()) or untested else 0)

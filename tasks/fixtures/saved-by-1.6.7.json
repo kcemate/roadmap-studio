@@ -1,0 +1,537 @@
+{
+  "v": 3,
+  "appVersion": "1.6.7",
+  "percentageUnit": "points",
+  "savedAt": 1782000000000,
+  "fileName": "Seed roadmap",
+  "fyStart": 6,
+  "asOfDate": "2026-06-30",
+  "workspace": {
+    "sort": {
+      "key": "",
+      "dir": "asc"
+    },
+    "layouts": [],
+    "visibleColumns": [
+      "name",
+      "pillar",
+      "ws",
+      "start",
+      "end",
+      "mile",
+      "status",
+      "approval",
+      "valueType",
+      "value",
+      "include",
+      "realized",
+      "confidence",
+      "owner"
+    ],
+    "activeLayout": "all",
+    "reviewView": "exceptions",
+    "reviewOpen": false
+  },
+  "deletedIds": [],
+  "workingDraft": {
+    "structure": [
+      {
+        "id": "p1",
+        "name": "Product Requirements",
+        "workstreams": [
+          {
+            "id": "w1",
+            "name": "Material Savings"
+          },
+          {
+            "id": "w2",
+            "name": "Transportation Optimization"
+          }
+        ]
+      },
+      {
+        "id": "p2",
+        "name": "Vertical Integration",
+        "workstreams": [
+          {
+            "id": "w3",
+            "name": "Corn"
+          }
+        ]
+      }
+    ],
+    "items": [
+      {
+        "id": "i1",
+        "pillarId": "p1",
+        "wsId": "w1",
+        "name": "Foam Cup Damage",
+        "start": "2026-05-18",
+        "end": "2026-12-20",
+        "milestone": false,
+        "status": "On Track",
+        "approval": "Approved",
+        "owner": "B. Berry",
+        "valueType": "Savings",
+        "value": 920000,
+        "includeInTotals": true,
+        "realizedPct": 50,
+        "confidence": 100,
+        "phases": [],
+        "actualValue": 300000,
+        "actualAsOf": "2026-05-31",
+        "cost": 50000,
+        "benefitKind": "recurring",
+        "valueBasis": "annual",
+        "recognitionMethod": "linear",
+        "creditedToId": "",
+        "exclusionReason": ""
+      },
+      {
+        "id": "i2",
+        "pillarId": "p1",
+        "wsId": "w2",
+        "name": "Carrier Contract Risk",
+        "start": "2026-09-01",
+        "end": "2026-09-01",
+        "milestone": true,
+        "status": "At Risk",
+        "approval": "Approved",
+        "owner": "A. Adams",
+        "valueType": "Avoidance",
+        "value": 450000,
+        "includeInTotals": false,
+        "realizedPct": 80,
+        "confidence": 100,
+        "phases": [],
+        "actualValue": "",
+        "actualAsOf": "",
+        "cost": "",
+        "benefitKind": "one-time",
+        "valueBasis": "lifetime",
+        "recognitionMethod": "linear",
+        "creditedToId": "i1",
+        "exclusionReason": "Counted in Foam Cup Damage"
+      },
+      {
+        "id": "i3",
+        "pillarId": "p2",
+        "wsId": "w3",
+        "name": "Corn Supplier Mapping",
+        "start": "2026-10-01",
+        "end": "2026-12-31",
+        "milestone": false,
+        "status": "Not Started",
+        "approval": "Proposed",
+        "owner": "B. Berry",
+        "valueType": "Savings",
+        "value": 0,
+        "includeInTotals": true,
+        "realizedPct": "",
+        "confidence": 100,
+        "phases": [],
+        "actualValue": "",
+        "actualAsOf": "",
+        "cost": "",
+        "benefitKind": "one-time",
+        "valueBasis": "lifetime",
+        "recognitionMethod": "linear",
+        "creditedToId": "",
+        "exclusionReason": ""
+      }
+    ],
+    "fyStart": 6,
+    "collapsedPillars": {},
+    "projectionEnd": null,
+    "projectionTarget": 2500000,
+    "stretchGoal": 3000000,
+    "projectionShowRealized": true,
+    "weightConfidence": true,
+    "asOfDate": "2026-06-30"
+  },
+  "editDrafts": {
+    "i3": {
+      "name": "Unsaved name"
+    }
+  },
+  "drawerDraft": null,
+  "activeScenarioId": "sc_f93e88b4-5119-451c-9253-ca527c06003b",
+  "collapsedPillars": {},
+  "projectionEnd": null,
+  "projectionTarget": 2500000,
+  "stretchGoal": 3000000,
+  "projectionShowRealized": true,
+  "weightConfidence": true,
+  "showBaseline": true,
+  "roadmapGroup": "structure",
+  "filters": {
+    "q": "",
+    "status": "",
+    "owner": "",
+    "pillarId": "",
+    "valueType": ""
+  },
+  "tableDensity": "comfortable",
+  "colWidths": {
+    "name": 200,
+    "pillar": 150,
+    "ws": 150,
+    "start": 128,
+    "end": 128,
+    "mile": 52,
+    "status": 118,
+    "approval": 112,
+    "valueType": 120,
+    "value": 120,
+    "include": 88,
+    "realized": 90,
+    "confidence": 88,
+    "owner": 110
+  },
+  "scenarios": [
+    {
+      "id": "sc_f93e88b4-5119-451c-9253-ca527c06003b",
+      "name": "Upside",
+      "savedAt": 1794344117969,
+      "payload": {
+        "structure": [
+          {
+            "id": "p1",
+            "name": "Product Requirements",
+            "workstreams": [
+              {
+                "id": "w1",
+                "name": "Material Savings"
+              },
+              {
+                "id": "w2",
+                "name": "Transportation Optimization"
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "name": "Vertical Integration",
+            "workstreams": [
+              {
+                "id": "w3",
+                "name": "Corn"
+              }
+            ]
+          }
+        ],
+        "items": [
+          {
+            "id": "i1",
+            "pillarId": "p1",
+            "wsId": "w1",
+            "name": "Foam Cup Damage",
+            "start": "2026-05-18",
+            "end": "2026-12-20",
+            "milestone": false,
+            "status": "On Track",
+            "approval": "Approved",
+            "owner": "B. Berry",
+            "valueType": "Savings",
+            "value": 920000,
+            "includeInTotals": true,
+            "realizedPct": 50,
+            "confidence": 100,
+            "phases": [],
+            "actualValue": 300000,
+            "actualAsOf": "2026-05-31",
+            "cost": 50000,
+            "benefitKind": "recurring",
+            "valueBasis": "annual",
+            "recognitionMethod": "linear",
+            "creditedToId": "",
+            "exclusionReason": ""
+          },
+          {
+            "id": "i2",
+            "pillarId": "p1",
+            "wsId": "w2",
+            "name": "Carrier Contract Risk",
+            "start": "2026-09-01",
+            "end": "2026-09-01",
+            "milestone": true,
+            "status": "At Risk",
+            "approval": "Approved",
+            "owner": "A. Adams",
+            "valueType": "Avoidance",
+            "value": 450000,
+            "includeInTotals": false,
+            "realizedPct": 80,
+            "confidence": 100,
+            "phases": [],
+            "actualValue": "",
+            "actualAsOf": "",
+            "cost": "",
+            "benefitKind": "one-time",
+            "valueBasis": "lifetime",
+            "recognitionMethod": "linear",
+            "creditedToId": "i1",
+            "exclusionReason": "Counted in Foam Cup Damage"
+          },
+          {
+            "id": "i3",
+            "pillarId": "p2",
+            "wsId": "w3",
+            "name": "Corn Supplier Mapping",
+            "start": "2026-10-01",
+            "end": "2026-12-31",
+            "milestone": false,
+            "status": "Not Started",
+            "approval": "Proposed",
+            "owner": "B. Berry",
+            "valueType": "Savings",
+            "value": 0,
+            "includeInTotals": true,
+            "realizedPct": "",
+            "confidence": 100,
+            "phases": [],
+            "actualValue": "",
+            "actualAsOf": "",
+            "cost": "",
+            "benefitKind": "one-time",
+            "valueBasis": "lifetime",
+            "recognitionMethod": "linear",
+            "creditedToId": "",
+            "exclusionReason": ""
+          }
+        ],
+        "fyStart": 6,
+        "collapsedPillars": {},
+        "projectionEnd": null,
+        "projectionTarget": 2500000,
+        "stretchGoal": 3000000,
+        "projectionShowRealized": true,
+        "weightConfidence": true,
+        "asOfDate": "2026-06-30"
+      }
+    }
+  ],
+  "baseline": {
+    "savedAt": 1794344118021,
+    "structure": [
+      {
+        "id": "p1",
+        "name": "Product Requirements",
+        "workstreams": [
+          {
+            "id": "w1",
+            "name": "Material Savings"
+          },
+          {
+            "id": "w2",
+            "name": "Transportation Optimization"
+          }
+        ]
+      },
+      {
+        "id": "p2",
+        "name": "Vertical Integration",
+        "workstreams": [
+          {
+            "id": "w3",
+            "name": "Corn"
+          }
+        ]
+      }
+    ],
+    "items": [
+      {
+        "id": "i1",
+        "pillarId": "p1",
+        "wsId": "w1",
+        "name": "Foam Cup Damage",
+        "start": "2026-05-18",
+        "end": "2026-12-20",
+        "milestone": false,
+        "status": "On Track",
+        "approval": "Approved",
+        "owner": "B. Berry",
+        "valueType": "Savings",
+        "value": 920000,
+        "includeInTotals": true,
+        "realizedPct": 50,
+        "confidence": 100,
+        "phases": [],
+        "actualValue": 300000,
+        "actualAsOf": "2026-05-31",
+        "cost": 50000,
+        "benefitKind": "recurring",
+        "valueBasis": "annual",
+        "recognitionMethod": "linear",
+        "creditedToId": "",
+        "exclusionReason": ""
+      },
+      {
+        "id": "i2",
+        "pillarId": "p1",
+        "wsId": "w2",
+        "name": "Carrier Contract Risk",
+        "start": "2026-09-01",
+        "end": "2026-09-01",
+        "milestone": true,
+        "status": "At Risk",
+        "approval": "Approved",
+        "owner": "A. Adams",
+        "valueType": "Avoidance",
+        "value": 450000,
+        "includeInTotals": false,
+        "realizedPct": 80,
+        "confidence": 100,
+        "phases": [],
+        "actualValue": "",
+        "actualAsOf": "",
+        "cost": "",
+        "benefitKind": "one-time",
+        "valueBasis": "lifetime",
+        "recognitionMethod": "linear",
+        "creditedToId": "i1",
+        "exclusionReason": "Counted in Foam Cup Damage"
+      },
+      {
+        "id": "i3",
+        "pillarId": "p2",
+        "wsId": "w3",
+        "name": "Corn Supplier Mapping",
+        "start": "2026-10-01",
+        "end": "2026-12-31",
+        "milestone": false,
+        "status": "Not Started",
+        "approval": "Proposed",
+        "owner": "B. Berry",
+        "valueType": "Savings",
+        "value": 0,
+        "includeInTotals": true,
+        "realizedPct": "",
+        "confidence": 100,
+        "phases": [],
+        "actualValue": "",
+        "actualAsOf": "",
+        "cost": "",
+        "benefitKind": "one-time",
+        "valueBasis": "lifetime",
+        "recognitionMethod": "linear",
+        "creditedToId": "",
+        "exclusionReason": ""
+      }
+    ],
+    "fyStart": 6,
+    "collapsedPillars": {},
+    "projectionEnd": null,
+    "projectionTarget": 2500000,
+    "stretchGoal": 3000000,
+    "projectionShowRealized": true,
+    "weightConfidence": true,
+    "asOfDate": "2026-06-30"
+  },
+  "structure": [
+    {
+      "id": "p1",
+      "name": "Product Requirements",
+      "workstreams": [
+        {
+          "id": "w1",
+          "name": "Material Savings"
+        },
+        {
+          "id": "w2",
+          "name": "Transportation Optimization"
+        }
+      ]
+    },
+    {
+      "id": "p2",
+      "name": "Vertical Integration",
+      "workstreams": [
+        {
+          "id": "w3",
+          "name": "Corn"
+        }
+      ]
+    }
+  ],
+  "items": [
+    {
+      "id": "i1",
+      "pillarId": "p1",
+      "wsId": "w1",
+      "name": "Foam Cup Damage",
+      "start": "2026-05-18",
+      "end": "2026-12-20",
+      "milestone": false,
+      "status": "On Track",
+      "approval": "Approved",
+      "owner": "B. Berry",
+      "valueType": "Savings",
+      "value": 920000,
+      "includeInTotals": true,
+      "realizedPct": 50,
+      "confidence": 100,
+      "phases": [],
+      "actualValue": 300000,
+      "actualAsOf": "2026-05-31",
+      "cost": 50000,
+      "benefitKind": "recurring",
+      "valueBasis": "annual",
+      "recognitionMethod": "linear",
+      "creditedToId": "",
+      "exclusionReason": ""
+    },
+    {
+      "id": "i2",
+      "pillarId": "p1",
+      "wsId": "w2",
+      "name": "Carrier Contract Risk",
+      "start": "2026-09-01",
+      "end": "2026-09-01",
+      "milestone": true,
+      "status": "At Risk",
+      "approval": "Approved",
+      "owner": "A. Adams",
+      "valueType": "Avoidance",
+      "value": 450000,
+      "includeInTotals": false,
+      "realizedPct": 80,
+      "confidence": 100,
+      "phases": [],
+      "actualValue": "",
+      "actualAsOf": "",
+      "cost": "",
+      "benefitKind": "one-time",
+      "valueBasis": "lifetime",
+      "recognitionMethod": "linear",
+      "creditedToId": "i1",
+      "exclusionReason": "Counted in Foam Cup Damage"
+    },
+    {
+      "id": "i3",
+      "pillarId": "p2",
+      "wsId": "w3",
+      "name": "Corn Supplier Mapping",
+      "start": "2026-10-01",
+      "end": "2026-12-31",
+      "milestone": false,
+      "status": "Not Started",
+      "approval": "Proposed",
+      "owner": "B. Berry",
+      "valueType": "Savings",
+      "value": 0,
+      "includeInTotals": true,
+      "realizedPct": "",
+      "confidence": 100,
+      "phases": [],
+      "actualValue": "",
+      "actualAsOf": "",
+      "cost": "",
+      "benefitKind": "one-time",
+      "valueBasis": "lifetime",
+      "recognitionMethod": "linear",
+      "creditedToId": "",
+      "exclusionReason": ""
+    }
+  ]
+}

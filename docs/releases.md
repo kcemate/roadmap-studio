@@ -1,5 +1,27 @@
 # Roadmap Studio Releases
 
+Roadmap Studio releases are offline packages. They contain exactly the generated
+`index.html`, the vendored PowerPoint runtime and its license, `release.json`, and
+`SHA256SUMS`. Project files, test artifacts, source files, tasks, browser storage,
+credentials, and other user-entered data are never packaged.
+
+## 1.7.0 Audit Release (2026-11)
+
+Implements the 1.6.7 audit: one totals path for every view and export, an explicit
+"No goal set" state, Blocked / On Hold / Cancelled statuses with documented total
+rules, input and save-time validation that keeps every save loadable, safer recovery,
+and editing, export, and accessibility fixes. The PowerPoint deck is rebuilt on slide
+masters as a story (title, summary, bridge to goal, timing, projection, pillar
+contribution, pillar pages, since last review, decisions needed, register appendix)
+with editable native charts. New: sample portfolio, paste rows, initiative commentary,
+Since last review, Review badge, filtered exports, and brand settings.
+
+Behavior changes to reported figures are listed in README "Financial Definitions" and
+in the pull request. The project format stays v3; files saved by 1.6.7 open unchanged.
+The 1.6.4–1.6.7 packaging limitation (content types for missing slide-master parts) is
+corrected after writing. Repair-free opening in native Microsoft PowerPoint has not
+been verified: decks were rendered in Keynote only.
+
 ## 1.6.7 Executive Measurement Scale
 
 The first PowerPoint slide uses the same dollar scale as the Executive Summary
@@ -67,10 +89,12 @@ pagination, larger essential text, continuous projection shading, separated
 financial columns, and numbered short-bar references. Financial calculations and
 web-view layouts are unchanged. Version 1.6.0 remains available for rollback.
 
-Roadmap Studio releases are offline packages. They contain exactly the generated
-`index.html`, the vendored PowerPoint runtime and its license, `release.json`, and
-`SHA256SUMS`. Project files, test artifacts, source files, tasks, browser storage,
-credentials, and other user-entered data are never packaged.
+## 1.6.0 Reliability Audit
+
+Strict financial and date validation, atomic bounded imports, reconciled totals with
+explicit unscheduled and excluded value, recorded actuals with an as-of date,
+per-scenario drafts, local recovery, the Review workspace, financial drilldowns,
+versioned offline releases, and the automated verification gate.
 
 ## Build and verify
 
@@ -99,7 +123,7 @@ Verify either an unpacked package or archive independently:
 
 ```sh
 python3 tasks/verify_release.py release/current
-python3 tasks/verify_release.py release/archives/roadmap-studio-1.6.6.zip
+python3 tasks/verify_release.py release/archives/roadmap-studio-<version>.zip
 ```
 
 Verification fails nonzero for extra or missing files, a version mismatch, an
@@ -126,11 +150,15 @@ a promise of lossless project-schema downgrade.
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs `tasks/verify_all.py`: generated-source checks,
-the existing browser suite, core regressions in Chromium/WebKit/Firefox, workspace,
-axe accessibility, exports, presentation-design regressions, and release reproducibility/rollback. Every command
-uses its real exit status, so a failed gate fails the job. The integration report
-also verifies that the application did not change during testing.
+`.github/workflows/ci.yml` runs once per pull-request commit (and on `main`). It
+installs `requirements-dev.txt` with pip caching, restores cached Playwright browsers,
+and runs `tasks/verify_all.py`: generated-source checks, the feature suite, core and
+audit regressions in Chromium/WebKit/Firefox, consistency and feature contracts,
+workspace, axe accessibility, exports, presentation design, register, and release
+reproducibility/rollback. Every command uses its real exit status. The gate fails if
+any tracked file changed during testing, and the job checks `git status --porcelain`
+afterwards. Test results and generated decks are uploaded as the
+`roadmap-test-artifacts` build artifact instead of being committed.
 
 ## GitHub Pages approval gate
 
@@ -141,9 +169,14 @@ and deploys it to the stable public URL:
 
 `https://<repository-owner>.github.io/<repository-name>/`
 
-External approval is still required to enable GitHub Pages with **GitHub Actions**
-as its source, configure any required `github-pages` environment reviewers, merge
-the workflow to the publishing branch, and manually trigger it. The workflow uses
-GitHub's short-lived Pages identity token; it defines no application secret and
-does not upload Roadmap Studio project data. No deployment occurs merely because
-code is pushed or a pull request is opened.
+**Current state (checked 2026-11-10):** the repository's Pages site uses the legacy
+branch source (`main`, `/`). Every merge to `main` therefore publishes the whole
+repository at the public URL, including `src/`, `tasks/`, and docs, and this workflow
+has never been the deployment path. Opening a pull request does not deploy; merging it
+does.
+
+Recommended fix (repository owner): switch **Settings > Pages > Source** to
+**GitHub Actions**, optionally add `github-pages` environment reviewers, then run this
+workflow to publish only the verified package. The workflow uses GitHub's
+short-lived Pages identity token; it defines no application secret and does not
+upload Roadmap Studio project data.

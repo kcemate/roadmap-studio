@@ -10,7 +10,7 @@ from pathlib import Path
 from audit_fixes_tests import AppCase, item, notes_texts, project, slide_texts, ROOT
 
 MONEY3 = re.compile(r"-?\$(?:\d{3}|\d{2}(?:\.\d)?|\d(?:\.\d{1,2})?)[KMBT]?")
-FIXTURE = ROOT / 'tasks' / 'fixtures' / 'saved-by-1.6.7.roadmap.json'
+FIXTURE = ROOT / 'tasks' / 'fixtures' / 'saved-by-1.6.7.json'
 
 
 def deck_xml(path):
