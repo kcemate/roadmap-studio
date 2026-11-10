@@ -1387,7 +1387,7 @@ mainTabs.forEach(([buttonId,panelId],index)=>{
   button.addEventListener('keydown',event=>{let next;if(event.key==='ArrowRight')next=(index+1)%mainTabs.length;else if(event.key==='ArrowLeft')next=(index+mainTabs.length-1)%mainTabs.length;else if(event.key==='Home')next=0;else if(event.key==='End')next=mainTabs.length-1;else return;event.preventDefault();const target=$(mainTabs[next][0]);target.click();target.focus();});
 });
 
-function renderAll(){ if(S.view!=='studio')return;
+function renderAll(opts={}){ if(S.view!=='studio')return;
   invalidateReportingDate();
   pruneCollapsedPillars();
   renderScenarioUI();
@@ -1396,7 +1396,7 @@ function renderAll(){ if(S.view!=='studio')return;
   if(S.tab==='road'||S.presenting)renderTimeline();
   if(S.tab==='exec')renderExecutiveSummary();
   if(S.tab==='rollup')renderPortfolioRollup();
-  if(S.tab==='data')renderGrid();
+  if(S.tab==='data'){ if(opts.gridRow&&replaceGridRow(opts.gridRow))syncFilterControls(filteredItems().length); else renderGrid(); }
   if(S.tab==='register')renderInitiativeRegister();
   if(S.tab==='proj')renderProjection();
   if(S.tab==='stack')renderStackedCharts();
@@ -2447,6 +2447,22 @@ function gridRowHtml(it,ctx){
       </div></td>
     </tr>`;
 }
+function gridContext(){
+  return{index:new Map(S.items.map((it,i)=>[it.id,i])),sorted:!!workspaceDefaults().sort.key,
+    pillarOptions:S.structure.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join(''),
+    wsOptions:new Map(S.structure.map(p=>[p.id,p.workstreams.map(w=>`<option value="${esc(w.id)}">${esc(w.name)}</option>`).join('')])),
+    statusOptions:STATUSES.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join(''),
+    approvalOptions:APPROVAL_STATES.map(v=>`<option value="${v}">${approvalLabel(v)}</option>`).join(''),
+    typeOptions:VALUE_TYPES.map(v=>`<option value="${v}">${v}</option>`).join('')};
+}
+/* A single-cell edit that cannot change row order or filter membership redraws only its row (audit C6). */
+function replaceGridRow(id){
+  if(workspaceDefaults().sort.key||filtersActive())return false;
+  const row=document.querySelector(`#initGrid tbody tr[data-id="${CSS.escape(id)}"]`),it=S.items.find(i=>i.id===id);
+  if(!row||!it)return false;
+  const template=document.createElement('tbody');template.innerHTML=gridRowHtml(it,gridContext());
+  row.replaceWith(template.firstElementChild);enhanceGrid();return true;
+}
 function renderGrid(){
   bindGridToolbar();
   const body=$('gridBody');
@@ -2462,12 +2478,7 @@ function renderGrid(){
     body.innerHTML=`<div class="grid-wrap"><div class="empty-note">No initiatives match these filters.</div><div class="grid-foot"><button class="btn" id="addRow">Add initiative</button></div></div>`;
     enhanceGrid(); requestAnimationFrame(fitGridHeight); return;
   }
-  const ctx={index:new Map(S.items.map((it,i)=>[it.id,i])),sorted:!!workspaceDefaults().sort.key,
-    pillarOptions:S.structure.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join(''),
-    wsOptions:new Map(S.structure.map(p=>[p.id,p.workstreams.map(w=>`<option value="${esc(w.id)}">${esc(w.name)}</option>`).join('')])),
-    statusOptions:STATUSES.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join(''),
-    approvalOptions:APPROVAL_STATES.map(v=>`<option value="${v}">${approvalLabel(v)}</option>`).join(''),
-    typeOptions:VALUE_TYPES.map(v=>`<option value="${v}">${v}</option>`).join('')};
+  const ctx=gridContext();
   const L=COLUMN_LABELS;
   body.innerHTML=`<div class="grid-wrap"><table class="grid${dense}" id="initGrid">
     <thead><tr><th style="width:34px"></th>${th(L.name,'name')}${th(L.pillar,'pillar')}${th(L.ws,'ws')}${th(L.start,'start')}${th(L.end,'end')}${th(L.mile,'mile','text-align:center')}${th(L.status,'status')}${th(L.approval,'approval','text-align:center')}${th(L.valueType,'valueType')}${th(L.value,'value')}${th(L.include,'include','text-align:center')}${th(L.realized,'realized')}${th(L.confidence,'confidence')}${th(L.owner,'owner')}<th></th></tr></thead>
@@ -2550,7 +2561,7 @@ function commitGridCell(inp){
   else if(f==='owner')it.owner=inp.value.trim().slice(0,120);
   else it[f]=inp.value;
   const focus=inp._focusAfterChange||(inp.tagName==='SELECT'||inp.type==='checkbox'?{id:rowId,field:f}:null);
-  if(f==='owner')refreshOwners(); renderAll();
+  if(f==='owner')refreshOwners(); renderAll({gridRow:rowId});
   focusGridCell(focus);
   if(notice)showToast(notice);
 }
