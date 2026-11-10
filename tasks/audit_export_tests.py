@@ -2,6 +2,7 @@
 """Focused regressions for audited PowerPoint, PNG, and presentation behavior."""
 import json
 import os
+import re
 import subprocess
 import xml.etree.ElementTree as ET
 import zipfile
@@ -167,6 +168,12 @@ def download_ppt(page, name, scope="full"):
     return path
 
 
+def layout_text(path):
+    with zipfile.ZipFile(path) as zf:
+        return "\n".join("".join(re.findall(r"<a:t>([^<]*)</a:t>", zf.read(name).decode("utf-8", "ignore")))
+                         for name in zf.namelist() if name.startswith(("ppt/slideLayouts/slideLayout", "ppt/slideMasters/slideMaster")) and name.endswith(".xml"))
+
+
 def slide_names(path):
     with zipfile.ZipFile(path) as zf:
         return sorted(
@@ -246,18 +253,19 @@ def test_dense_pagination(page):
     dense = [shape for shape in shapes if shape["object_name"].startswith("initiative-label:dense-")]
     assert len(dense) == 32, f"expected every dense row once, got {len(dense)}"
     roadmap_labels = [shape for shape in shapes if shape["object_name"].startswith("initiative-label:")]
-    assert len({shape["slide"] for shape in roadmap_labels}) >= 9, "dense pillar was not paginated at four rows per slide"
+    # 1.7.0 pillar pages hold up to ten rows including workstream headers (audit F1.4, F2.6).
+    rows = [shape for shape in shapes if shape["object_name"].startswith(("initiative-label:", "workstream-header:"))]
+    assert len({shape["slide"] for shape in roadmap_labels}) >= 4, "dense pillar was not paginated"
     for slide_index in {shape["slide"] for shape in roadmap_labels}:
-        assert len([shape for shape in roadmap_labels if shape["slide"] == slide_index]) <= 4
-        assert any(shape["slide"] == slide_index and "Simultaneous" in shape["text"] and "portfolio" in shape["text"] for shape in shapes), (
+        assert len([shape for shape in rows if shape["slide"] == slide_index]) <= 10
+        assert any(shape["slide"] == slide_index and shape["object_name"].startswith("workstream-header:") and "SIMULTANEOUS" in shape["text"] and "PORTFOLIO" in shape["text"] for shape in shapes), (
             f"workstream context was not repeated on dense roadmap slide {slide_index}"
         )
-    assert max(shape["y"] + shape["h"] for shape in dense) <= 7.35, "timeline text left slide bounds"
-    assert min(min(shape["sizes"]) for shape in dense if shape["sizes"]) >= 18, "timeline body fell below 18 pt"
+    assert max(shape["y"] + shape["h"] for shape in dense) <= 6.95, "timeline text crossed the footer"
+    assert min(min(shape["sizes"]) for shape in dense if shape["sizes"]) >= 14, "timeline body fell below 14 pt"
     undated = [shape for shape in shapes if shape["object_name"] == "initiative-label:undated-01"]
-    assert len(undated) == 1 and "Undated" in undated[0]["text"] and "decision" in undated[0]["text"], (
-        "undated initiative was silently omitted", undated
-    )
+    assert len(undated) == 1 and "decision" in undated[0]["text"], ("undated initiative was silently omitted", undated)
+    assert any(shape["object_name"] == "initiative-undated:undated-01" and shape["text"] == "Undated" for shape in shapes), "undated initiative is not marked Undated"
     assert_explicit_sans_theme(deck)
     return deck
 
@@ -266,15 +274,15 @@ def test_scope_context_and_projection(page):
     page.click("#segProj")
     page.wait_for_selector("#projectionSvg")
     deck = download_ppt(page, "projection-current.pptx", "current")
-    text = all_text(deck)
+    text = all_text(deck) + "\n" + layout_text(deck)
     assert len(slide_names(deck)) == 1, "current-view projection should export one slide"
+    # Project, scenario and reporting date sit in the slide master footer; weighting is shown on this slide only.
     for expected in [
         "FY27 Board Roadmap",
         "Downside scenario",
-        "Current view",
         "As of Sep 4, 2026",
-        "Confidence weighted",
-        "Target $8M",
+        "Confidence-weighted",
+        "$8M goal",
         "Baseline",
     ]:
         assert expected in text, f"missing projection/context label: {expected}"
@@ -286,6 +294,7 @@ def test_scope_context_and_projection(page):
             if name.startswith("ppt/notesSlides/notesSlide") and name.endswith(".xml")
         )
     assert "Expected" in notes and "Annualized" in notes, "projection notes lost Expected/Annualized metadata"
+    assert "Current view" in notes, "export scope was not retained in notes"
     return deck
 
 
@@ -341,7 +350,7 @@ def test_png_context(page):
     svg_height = page.locator("#tlSvg").evaluate("el => el.height.baseVal.value")
     with page.expect_download() as info:
         page.click("#pngBtn")
-    assert info.value.suggested_filename == "roadmap.png"
+    assert info.value.suggested_filename == "FY27 Board Roadmap — Roadmap — 2026-09-04.png", info.value.suggested_filename
     path = OUT / "roadmap-context.png"
     info.value.save_as(path)
     image = Image.open(path)
@@ -370,7 +379,7 @@ def test_long_names_without_autofit(browser):
         assert full_name in notes, "full truncated name was not retained in speaker notes"
     named = [shape for shape in text_shapes(deck) if shape["text"].startswith(("Pillar ", "Workstream ", "Initiative "))]
     initiative_labels = [shape for shape in text_shapes(deck) if shape["object_name"] == "initiative-label:long-1"]
-    assert len(initiative_labels) == 1 and min(initiative_labels[0]["sizes"]) >= 18
+    assert len(initiative_labels) == 1 and min(initiative_labels[0]["sizes"]) >= 14
     context.close()
 
 
@@ -390,20 +399,21 @@ def test_legacy_export_contracts(browser):
     for expected in [
         "Savings only",
         "Savings + Avoidance",
-        "100% composition",
-        "Both bars represent 100%, not equal dollar values",
-        "Contribution",
+        "Realized within plan",
+        "Active remaining",
+        "Share",
         "Product Requirements",
-        "2 initiatives",
     ]:
         assert expected.lower() in text.lower(), f"replacement export story label missing: {expected}"
-    executive = min(shape["slide"] for shape in shapes if "opportunity" in shape["text"].lower())
-    rollup = min(shape["slide"] for shape in shapes if shape["text"] == "Portfolio Rollup")
+    # Story order (audit F2.3): title, summary, bridge, timing, projection, contribution, pillar pages.
+    executive = min(shape["slide"] for shape in shapes if shape["object_name"] == "executive-bar-track")
+    bridge = min(shape["slide"] for shape in shapes if shape["object_name"].startswith("bridge-value:"))
+    rollup = min(shape["slide"] for shape in shapes if shape["object_name"] == "slide-title" and shape["text"].startswith("Portfolio Rollup"))
     projection = min(shape["slide"] for shape in shapes if shape["text"] == "Savings only")
-    contribution = min(shape["slide"] for shape in shapes if "contribution" in shape["text"].lower())
+    contribution = min(shape["slide"] for shape in shapes if shape["object_name"].startswith("contribution-dollar:"))
     roadmap = min(shape["slide"] for shape in shapes if shape["object_name"] == "initiative-label:i1")
-    assert executive == 1 and rollup == 2
-    assert executive < rollup < projection < contribution < roadmap
+    assert executive == 2 and bridge == 3 and rollup == 4
+    assert executive < bridge < rollup < projection < contribution < roadmap
     context.close()
 
     context, page = new_page(browser, ppt_same_workstream_state())
@@ -414,7 +424,7 @@ def test_legacy_export_contracts(browser):
         "initiative-label:sw1", "initiative-label:sw2"
     }]
     assert len(boxes) == 2 and len({round(box["y"], 2) for box in boxes}) == 2, boxes
-    assert all(min(box["sizes"]) >= 18 for box in boxes), boxes
+    assert all(min(box["sizes"]) >= 14 for box in boxes), boxes
     assert {shape["object_name"] for shape in shapes if shape["object_name"].startswith("initiative-bar:sw")} == {
         "initiative-bar:sw1", "initiative-bar:sw2"
     }
@@ -429,26 +439,25 @@ def test_legacy_export_contracts(browser):
         shape["slide"] for shape in shapes
         if shape["object_name"] == "slide-title" and shape["text"].startswith("Portfolio Rollup")
     }
-    assert len(rollup_slides) == 2
+    # The timing slide holds up to five pillars and carries dates, not dollars, on its time axis (audit F1.8).
+    assert len(rollup_slides) == 1
     pillar_rows = [shape for shape in shapes if shape["object_name"].startswith("rollup-pillar:")]
     assert len(pillar_rows) == 4
-    assert sorted(sum(shape["slide"] == slide for shape in pillar_rows) for slide in rollup_slides) == [2, 2]
-    assert min(min(shape["sizes"]) for shape in pillar_rows) >= 18
-    for expected in ["Active", "Proposed", "Realized"]:
+    assert min(min(shape["sizes"]) for shape in pillar_rows) >= 14
+    for expected in ["Active", "Proposed"]:
         matches = [shape for shape in shapes if shape["slide"] in rollup_slides and (
-            shape["text"] == expected or expected == "Realized" and shape["text"].startswith("Realized ")
+            shape["text"] == expected or shape["text"].startswith(f"{expected} · ")
         )]
         assert matches, expected
-        if expected != "Realized":
-            assert all(shape["colors"] and all(is_neutral(color) for color in shape["colors"]) for shape in matches)
+        assert all(shape["colors"] and all(is_neutral(color) for color in shape["colors"]) for shape in matches)
+    assert not any(shape["slide"] in rollup_slides and shape["object_name"].startswith("rollup-bar:") and "$" in shape["text"] for shape in shapes)
     context.close()
 
     context, page = new_page(browser, exclusion_state())
     page.click("#segRoad")
     deck = download_ppt(page, "compat-exclusion.pptx")
     shapes = text_shapes(deck)
-    aggregate_slides = {1}
-    aggregate_slides.update(shape["slide"] for shape in shapes if shape["text"] == "Portfolio Rollup")
+    aggregate_slides = {shape["slide"] for shape in shapes if shape["object_name"] in {"executive-bar-track", "bridge-value:Identified"}}
     aggregate_slides.update(shape["slide"] for shape in shapes if shape["text"] == "Savings only")
     aggregate_slides.update(
         shape["slide"] for shape in shapes

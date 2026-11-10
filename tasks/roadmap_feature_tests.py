@@ -1122,14 +1122,16 @@ def run_tests():
             )
             exclusion_slide_xmls = [zf.read(name).decode("utf-8", "ignore") for name in exclusion_slide_names]
         exclusion_boxes = [ppt_text_boxes(xml, "") for xml in exclusion_slide_xmls]
-        exclusion_exec = exclusion_slide_xmls[0]
+        exclusion_exec = next(xml for xml, boxes in zip(exclusion_slide_xmls, exclusion_boxes)
+                              if any(box["object_name"] == "executive-bar-track" for box in boxes))
+        # The rollup slide is a timing view without dollars (audit F1.8); the Bridge carries the aggregate value.
         exclusion_rollup = "\n".join(
             xml for xml, boxes in zip(exclusion_slide_xmls, exclusion_boxes)
-            if any(box["object_name"] == "slide-title" and box["text"].startswith("Portfolio Rollup") for box in boxes)
+            if any(box["object_name"].startswith("bridge-value:") for box in boxes)
         )
         exclusion_projection = "\n".join(
             xml for xml, boxes in zip(exclusion_slide_xmls, exclusion_boxes)
-            if any(box["object_name"].startswith("projection-line:") for box in boxes)
+            if any(box["object_name"].startswith("projection-label:") for box in boxes)
         )
         exclusion_contribution = "\n".join(
             xml for xml, boxes in zip(exclusion_slide_xmls, exclusion_boxes)
@@ -1881,11 +1883,12 @@ def run_tests():
             )
         slide_boxes = [ppt_text_boxes(xml, "") for xml in slide_xmls]
         slide_texts = ["\n".join(box["text"] for box in boxes) for boxes in slide_boxes]
-        executive_slide_xml = slide_xmls[0]
+        executive_index = next(index for index, boxes in enumerate(slide_boxes) if any(box["object_name"] == "executive-bar-track" for box in boxes))
+        executive_slide_xml = slide_xmls[executive_index]
         rollup_indexes = [index for index, boxes in enumerate(slide_boxes)
                           if any(box["object_name"] == "slide-title" and box["text"].startswith("Portfolio Rollup") for box in boxes)]
         projection_indexes = [index for index, boxes in enumerate(slide_boxes)
-                              if any(box["object_name"].startswith("projection-line:") for box in boxes)]
+                              if any(box["object_name"].startswith("projection-label:") for box in boxes)]
         contribution_indexes = [index for index, boxes in enumerate(slide_boxes)
                                 if any(box["object_name"].startswith("contribution-dollar:") for box in boxes)]
         roadmap_indexes = [index for index, boxes in enumerate(slide_boxes)
@@ -1904,16 +1907,18 @@ def run_tests():
             and {box["object_name"] for box in initiative_labels} >= {
                 "initiative-label:i1", "initiative-label:i2", "initiative-label:i3"
             }
-            and all(min(box["font_sizes"] or [0]) >= 18 for box in initiative_labels)
+            and all(min(box["font_sizes"] or [0]) >= 14 for box in initiative_labels)
             and "Product Requirements" in slide_xml
             and "Vertical Integration" in slide_xml
             and "Foam Cup Damage" in slide_xml
+            and "initiative-status:i1" in slide_xml
+            and "initiative-value:i1" in slide_xml
             and "SAVINGS" in slide_xml
             and "AVOIDANCE" in slide_xml
             and "REALIZED" in slide_xml
             and "FY2026" in slide_xml
             and "FY2027" in slide_xml,
-            "PowerPoint export downloads a deck with one human-readable slide per pillar, including fiscal years.",
+            "PowerPoint export downloads a deck with readable pillar pages (status pill, value column) and fiscal years.",
             "PowerPoint export did not produce the expected pillar slides.",
         )
         runner.check(
@@ -1923,37 +1928,38 @@ def run_tests():
             and len(contribution_indexes) >= 1
             and len(roadmap_indexes) >= 1
             and max(rollup_indexes) < projection_indexes[0] < min(contribution_indexes) <= max(contribution_indexes) < min(roadmap_indexes)
+            and executive_index < min(rollup_indexes)
             and "Savings only" in projection_slide_xml
             and "Savings + Avoidance" in slide_xml
-            and contribution_slide_xml.count("100% composition") >= 2
-            and "Both bars represent 100%, not equal dollar values" in contribution_slide_xml
+            and "<c:chart " in contribution_slide_xml
+            and "Share" in contribution_slide_xml
             and "Product Requirements" in slide_xml,
-            "PowerPoint export follows Executive, Rollup, Projection, Contribution, then Roadmaps.",
+            "PowerPoint export follows Title, Summary, Bridge, Rollup, Projection, Contribution, then Roadmaps.",
             "PowerPoint export did not follow the approved full-deck narrative order.",
         )
         rollup_boxes = [box for index in rollup_indexes for box in slide_boxes[index]]
-        approval_boxes = [box for box in rollup_boxes if box["text"] in {"Active", "Proposed"}]
+        approval_boxes = [box for box in rollup_boxes if box["text"].startswith(("Active · ", "Proposed · "))]
         runner.check(
             "EXPORT-011",
             len(rollup_indexes) >= 1
             and {box["object_name"] for box in rollup_boxes} >= {"rollup-pillar:p1", "rollup-pillar:p2"}
-            and all(min(box["font_sizes"] or [0]) >= 18 for box in rollup_boxes if box["object_name"].startswith("rollup-pillar:"))
+            and all(min(box["font_sizes"] or [0]) >= 14 for box in rollup_boxes if box["object_name"].startswith("rollup-pillar:"))
             and approval_boxes
             and all(box["text_colors"] and all(ppt_neutral_color(color) for color in box["text_colors"])
                     for box in approval_boxes)
-            and any(box["text"].lower().startswith("realized") for box in rollup_boxes)
-            and "2 initiatives" in rollup_slide_xml
+            and "Realized:" in notes_xml
+            and "Active · 2" in rollup_slide_xml
             and "Foam Cup Damage" not in rollup_slide_xml
             and "Carrier Contract Risk" not in rollup_slide_xml,
-            "PowerPoint includes a balanced aggregate Rollup with neutral approval labels and explicit realized context.",
+            "PowerPoint includes an aggregate timing Rollup with neutral approval labels; realized context is in notes and on the Bridge.",
             "PowerPoint Portfolio Rollup slide was missing, misplaced, or incomplete.",
         )
         executive_boxes = ppt_text_boxes(executive_slide_xml, "")
         expected_goal_labels = {
-            "executive-goal-amount": "$1B", "executive-goal-label": "GOAL",
-            "executive-axis-label:0": "$0", "executive-axis-label:1": "$300M",
-            "executive-axis-label:2": "$600M", "executive-axis-label:3": "$900M",
-            "executive-axis-label:4": "$1.2B",
+            "executive-axis-label:0": "$0", "executive-axis-label:1": "$400K",
+            "executive-axis-label:2": "$800K", "executive-axis-label:3": "$1.2M",
+            "executive-axis-label:4": "$1.6M", "executive-stage-label:SAVINGS": "SAVINGS",
+            "executive-stage-label:AVOIDANCE": "AVOIDANCE",
         }
         executive_goal_labels = {box["object_name"]: box["text"] for box in executive_boxes
                                  if box["object_name"].startswith("executive-") and box["text"]}
@@ -1967,23 +1973,24 @@ def run_tests():
             and "REALIZED" in executive_slide_xml.upper()
             and "Realized savings" in executive_slide_xml
             and "Realized avoidance" in executive_slide_xml
-            and "0.1%" in executive_slide_xml
-            and "13.7%" not in executive_slide_xml
+            and "$1.37M" in executive_slide_xml
+            and "No goal set" in executive_slide_xml
+            and "$1B" not in executive_slide_xml
             and executive_goal_labels == expected_goal_labels
             and "Portfolio Rollup" in rollup_slide_xml,
-            "PowerPoint opens with a live Executive View followed by Portfolio Rollup.",
+            "PowerPoint opens with a title slide and a live Executive View; with no goal it states so instead of assuming one.",
             "PowerPoint Executive View was missing, out of order, or did not use the live financial story.",
         )
         runner.check(
             "EXPORT-007",
             "Savings only" in projection_slide_xml
             and "Savings + Avoidance" in projection_slide_xml
-            and "<a:custGeom" in projection_slide_xml
+            and "<c:chart " in projection_slide_xml
             and "Expected" not in projection_slide_xml
             and "Annualized" not in projection_slide_xml
             and "Expected" in notes_xml
             and "Annualized" in notes_xml,
-            "PowerPoint projection uses two native lines and a smooth area while retaining run-rate metadata in notes.",
+            "PowerPoint projection is a native, editable line chart with direct labels; run-rate metadata stays in notes.",
             "PowerPoint projection did not preserve the approved core chart and notes-only metadata.",
         )
         runner.check(
@@ -1994,14 +2001,13 @@ def run_tests():
         )
         runner.check(
             "EXPORT-008",
-            contribution_slide_xml.count("100% composition") >= 2
-            and "Both bars represent 100%, not equal dollar values" in contribution_slide_xml
+            "<c:chart " in contribution_slide_xml
             and {box["object_name"] for index in contribution_indexes for box in slide_boxes[index]} >= {
                 "contribution-dollar:savings:p1", "contribution-share:savings:p1",
                 "contribution-dollar:combined:p1", "contribution-share:combined:p1",
             }
             and not re.search(r"\$[^<]*(?:·|\|)[^<]*%", contribution_slide_xml),
-            "PowerPoint contribution uses normalized bars and separate dollar and share columns.",
+            "PowerPoint contribution uses native value bars and separate dollar and share columns.",
             "PowerPoint contribution did not preserve normalized composition or separate table columns.",
         )
 
@@ -2025,7 +2031,8 @@ def run_tests():
             )
             stage_slide_xmls = [zf.read(name).decode("utf-8", "ignore") for name in stage_slide_names]
         stage_slide_boxes = [ppt_text_boxes(xml, "") for xml in stage_slide_xmls]
-        stage_exec_xml = stage_slide_xmls[0]
+        stage_exec_index = next(index for index, boxes in enumerate(stage_slide_boxes) if any(box["object_name"] == "executive-bar-track" for box in boxes))
+        stage_exec_xml = stage_slide_xmls[stage_exec_index]
         stage_rollup_indexes = [index for index, boxes in enumerate(stage_slide_boxes)
                                 if any(box["object_name"] == "slide-title" and box["text"].startswith("Portfolio Rollup") for box in boxes)]
         stage_rollup_xml = "\n".join(stage_slide_xmls[index] for index in stage_rollup_indexes)
@@ -2038,18 +2045,24 @@ def run_tests():
                              if "opportun" in box["text"].lower() and max(box["font_sizes"] or [0]) >= 26]
         stage_exec_total = [box for box in ppt_text_boxes(stage_exec_xml, "OPPORTUNITY") if box["w"] >= 3.5]
         stage_exec_realized = [box for box in ppt_text_boxes(stage_exec_xml, "REALIZED") if box["w"] >= 3.5]
-        stage_exec_goal = [box for box in stage_slide_boxes[0]
-                           if box["object_name"] == "executive-goal-amount" and box["text"] == "$1B"]
-        stage_goal_labels = {box["object_name"]: box["text"] for box in stage_slide_boxes[0]
+        stage_exec_goal = [box for box in stage_slide_boxes[stage_exec_index]
+                           if box["object_name"] == "executive-goal-amount"]
+        stage_goal_labels = {box["object_name"]: box["text"] for box in stage_slide_boxes[stage_exec_index]
                              if box["object_name"].startswith("executive-") and box["text"]}
+        stage_expected_labels = {
+            "executive-axis-label:0": "$0", "executive-axis-label:1": "$300M",
+            "executive-axis-label:2": "$600M", "executive-axis-label:3": "$900M",
+            "executive-axis-label:4": "$1.2B", "executive-stage-label:SAVINGS": "SAVINGS",
+            "executive-stage-label:AVOIDANCE": "AVOIDANCE",
+        }
         runner.check(
             "EXPORT-014",
             len(stage_exec_titles) == 1
             and max(stage_exec_titles[0]["font_sizes"], default=0) >= 28
             and len(stage_exec_total) == 1
             and len(stage_exec_realized) == 1
-            and len(stage_exec_goal) == 1
-            and stage_goal_labels == expected_goal_labels
+            and len(stage_exec_goal) == 0
+            and stage_goal_labels == stage_expected_labels
             and "SAVINGS" in stage_exec_xml
             and "AVOIDANCE" in stage_exec_xml
             and "Realized savings" in stage_exec_xml
@@ -2070,8 +2083,8 @@ def run_tests():
             and "AVOIDANCE" in stage_exec_xml
             and "Realized savings" in stage_exec_xml
             and "Realized avoidance" in stage_exec_xml
-            and stage_goal_labels == expected_goal_labels
-            and len(stage_rollup_indexes) == 2
+            and stage_goal_labels == stage_expected_labels
+            and len(stage_rollup_indexes) == 1
             and "PATH TO PORTFOLIO GOAL" not in stage_exec_xml
             and "How the portfolio builds" not in stage_exec_xml
             and "Darker = more certain" not in stage_exec_xml
@@ -2081,8 +2094,9 @@ def run_tests():
             "Every PowerPoint opens with a live, keynote-style Executive View followed by Portfolio Rollup.",
             f"Executive View was missing, stale, dashboard-like, or unsafe; title={keynote_titles}, extents={stage_repair_extents[:3]}",
         )
-        identified_pct = ppt_text_boxes(stage_exec_xml, "93.9%")
-        realized_pct = ppt_text_boxes(stage_exec_xml, "3.2%")
+        # With no goal set the blocks show dollars instead of a share of an assumed $1B goal (audit A12).
+        identified_pct = [box for box in ppt_text_boxes(stage_exec_xml, "$939M") if box["object_name"] == "summary-metric:identified"]
+        realized_pct = [box for box in ppt_text_boxes(stage_exec_xml, "$") if box["object_name"] == "summary-metric:realized"]
         runner.check(
             "EXPORT-017",
             len(stage_exec_total) == 1
@@ -2098,26 +2112,24 @@ def run_tests():
             and "Savings" in stage_exec_xml
             and "Realized avoidance" in stage_exec_xml
             and "Avoidance" in stage_exec_xml,
-            "Executive View centers two large goal-percentage blocks above a four-part financial legend.",
+            "Executive View centers two large blocks (goal percentages, or dollars when no goal is set) above a four-part financial legend.",
             f"Centered Executive View hierarchy was missing or undersized; identified={stage_exec_total}, realized={stage_exec_realized}, percentages={identified_pct + realized_pct}",
         )
         runner.check(
             "EXPORT-012",
             stage_path.exists()
             and stage_path.stat().st_size > 1000
-            and len(title_boxes) == 2
+            and len(title_boxes) == 1
             and all(max(box["font_sizes"], default=0) >= 24 for box in title_boxes)
             and len(pillar_boxes) == 4
-            and sorted(sum(box in stage_slide_boxes[index] for box in pillar_boxes) for index in stage_rollup_indexes) == [2, 2]
-            and all(min(box["font_sizes"] or [0]) >= 18 for box in pillar_boxes)
-            and all(any(box["text"] == label for box in stage_rollup_boxes) for label in ["Active", "Proposed"])
-            and any(box["text"].lower().startswith("realized") for box in stage_rollup_boxes)
+            and all(min(box["font_sizes"] or [0]) >= 14 for box in pillar_boxes)
+            and all(any(box["text"].startswith(f"{label} · ") for box in stage_rollup_boxes) for label in ["Active", "Proposed"])
             and all(
                 box["text_colors"] and all(ppt_neutral_color(color) for color in box["text_colors"])
-                for box in stage_rollup_boxes if box["text"] in {"Active", "Proposed"}
+                for box in stage_rollup_boxes if box["text"].startswith(("Active · ", "Proposed · "))
             )
             and not stage_repair_extents,
-            "Portfolio Rollup paginates four pillars 2+2 with readable neutral row labels.",
+            "Portfolio Rollup places four pillars on one timing page with readable neutral row labels.",
             f"Portfolio Rollup pagination or typography was wrong; title={title_boxes}, pillars={pillar_boxes}, extents={stage_repair_extents[:3]}",
         )
 
@@ -2156,7 +2168,7 @@ def run_tests():
             len(same_boxes) == 2
             and len({round(box["y"], 2) for box in same_boxes}) == 2
             and len({box["text"] for box in same_boxes}) == 2
-            and all(min(box["font_sizes"] or [0]) >= 18 for box in same_boxes)
+            and all(min(box["font_sizes"] or [0]) >= 14 for box in same_boxes)
         )
         runner.check(
             "EXPORT-005",

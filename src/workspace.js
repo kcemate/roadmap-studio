@@ -252,7 +252,7 @@ function renderSinceReview(){
 
 /* ---------- Review: scenario comparison ---------- */
 function scenarioRecord(id){
-  if(id==='current')return{name:'Current plan',payload:{items:S.items,projectionTarget:S.projectionTarget}};
+  if(id==='current')return{name:`Current: ${exportScenarioName()}`,payload:{items:S.items,projectionTarget:S.projectionTarget}};
   return S.scenarios.find(scenario=>scenario.id===id)||null;
 }
 function scenarioDateText(value,which){

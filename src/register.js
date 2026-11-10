@@ -60,7 +60,7 @@ $('registerPrint').onclick=printInitiativeRegister;
 $('registerPpt').onclick=()=>exportPowerPoint('current');
 
 // Explicit line breaks keep complete names editable in PowerPoint without autofit.
-function registerPptLines(value,width,font=16,bold=false){
+function registerPptLines(value,width,font=PPT_TYPE.body,bold=false){
   const lines=[];
   String(value).split('\n').forEach(paragraph=>{
     let line='';
@@ -76,55 +76,54 @@ function registerPptLines(value,width,font=16,bold=false){
   });
   return lines;
 }
+/* Register appendix: exact dollars, the same columns as the web register, 14 pt body, rows never split. */
 function addPptInitiativeRegister(pptx){
-  const data=initiativeRegisterData(),widths=[3.65,1.25,2.05,1.6,2.05,1.55],font=16,lineH=.27;
+  const data=initiativeRegisterData(),widths=[3.55,1.6,2.15,1.5,2.0,1.53],font=PPT_TYPE.body,lineH=.235,bodyTop=2.2,bodyMax=4.3;
   const pages=[];
   data.groups.forEach(group=>{
     let rows=[],height=0;
     group.items.forEach(it=>{
       const cells=registerCells(it).map((text,i)=>registerPptLines(text,widths[i]-.18,font,i===0));
-      const h=Math.max(.64,Math.max(...cells.map(lines=>lines.length))*lineH+.2);
-      if(h>3.75){
+      const h=Math.max(.5,Math.max(...cells.map(lines=>lines.length))*lineH+.16);
+      if(h>bodyMax){
         if(rows.length)pages.push({group,rows});
         pages.push({group,rows:[],detail:it});rows=[];height=0;return;
       }
-      if(rows.length&&height+h>3.75){pages.push({group,rows});rows=[];height=0;}
+      if(rows.length&&height+h>bodyMax){pages.push({group,rows});rows=[];height=0;}
       rows.push({it,cells,h});height+=h;
     });
     if(rows.length)pages.push({group,rows});
   });
   if(!pages.length)pages.push({group:{name:'All pillars',totals:data.totals},rows:[]});
   pages.forEach((page,index)=>{
-    const slide=pptSlide(pptx);slide.background={color:'FFFFFF'};
-    addPptContext(slide,'Initiative Register',`Register ${index+1}/${pages.length}`,{weighting:'Unweighted values'});
-    pptTitle(slide,'Initiative Register');
-    const groupLines=registerPptLines(page.group.name,12.1,20,true);
-    pptText(slide,groupLines.join('\n'),.6,1.23,12.1,Math.min(.65,groupLines.length*.3),20,{bold:true,wrap:true});
+    const slide=pptSlide(pptx);
+    addPptContext(slide,'Initiative Register',`Register ${index+1}/${pages.length}`);
+    pptTitle(slide,`Initiative Register: ${page.group.name}`);
     const t=page.group.totals;
-    pptText(slide,pptBoundText(registerTotalsText(t),12.1,16),.6,1.96,12.1,.32,16,{color:PPT_COLOR.muted});
+    pptText(slide,pptBoundText(registerTotalsText(t),12.3,PPT_TYPE.body),.5,1.35,12.33,.3,PPT_TYPE.body,{color:PPT_COLOR.muted});
     if(page.detail){
-      const it=page.detail,cells=registerCells(it),nameLines=registerPptLines(cells[0],12.05,16,true);
-      pptText(slide,nameLines.join('\n'),.66,2.4,12.05,nameLines.length*.27+.12,16,{bold:true,wrap:true,valign:'top',objectName:`register-row:${it.id}:0`});
-      const detailWidths=[2.1,3,3,4.05];let dx=.6;
+      const it=page.detail,cells=registerCells(it),nameLines=registerPptLines(cells[0],12.2,font,true);
+      pptText(slide,nameLines.join('\n'),.56,1.85,12.2,nameLines.length*lineH+.12,font,{bold:true,wrap:true,valign:'top',objectName:`register-row:${it.id}:0`});
+      const detailWidths=[2.1,3,3,4.2];let dx=.5;
       cells.slice(1,5).forEach((value,i)=>{
-        pptText(slide,registerPptLines(REGISTER_HEADINGS[i+1],detailWidths[i]-.2,14,true).join('\n'),dx+.06,4.4,detailWidths[i]-.2,.48,14,{bold:true,wrap:true});
-        pptText(slide,registerPptLines(value,detailWidths[i]-.2,16).join('\n'),dx+.06,4.95,detailWidths[i]-.2,.74,16,{wrap:true,valign:'top',objectName:`register-row:${it.id}:${i+1}`});dx+=detailWidths[i];
+        pptText(slide,REGISTER_HEADINGS[i+1],dx+.06,4.3,detailWidths[i]-.2,.3,PPT_TYPE.caption,{bold:true,color:PPT_COLOR.muted});
+        pptText(slide,registerPptLines(value,detailWidths[i]-.2,font).join('\n'),dx+.06,4.65,detailWidths[i]-.2,.8,font,{wrap:true,valign:'top',objectName:`register-row:${it.id}:${i+1}`});dx+=detailWidths[i];
       });
-      pptText(slide,'Owner',.66,5.89,1.2,.3,14,{bold:true});
-      pptText(slide,registerPptLines(cells[5],10.6,16).join('\n'),2,5.89,10.6,.81,16,{wrap:true,valign:'top',objectName:`register-row:${it.id}:5`});
-      pptText(slide,'Totals exclude marked initiatives. All initiative values are shown.',.6,6.86,12,.25,12,{color:PPT_COLOR.muted});
+      pptText(slide,REGISTER_HEADINGS[5],.56,5.6,2,.26,PPT_TYPE.caption,{bold:true,color:PPT_COLOR.muted});
+      pptText(slide,registerPptLines(cells[5],12.2,font).join('\n'),.56,5.9,12.2,.7,font,{wrap:true,valign:'top',objectName:`register-row:${it.id}:5`});
+      pptText(slide,'Totals exclude marked and Cancelled initiatives. All initiative values are shown.',.5,6.68,8.5,.24,PPT_TYPE.caption,{color:PPT_COLOR.muted});
       pptItemNotes(slide,[it]);return;
     }
-    let x=.6;
-    REGISTER_HEADINGS.forEach((label,i)=>{pptText(slide,registerPptLines(label,widths[i]-.18,14,true).join('\n'),x+.06,2.5,widths[i]-.18,.48,14,{bold:true,wrap:true});x+=widths[i];});
-    let y=3.03;addPptSafeLine(slide,.6,y,12.75,y,PPT_COLOR.hair);
+    let x=.5;
+    REGISTER_HEADINGS.forEach((label,i)=>{pptText(slide,registerPptLines(label,widths[i]-.18,PPT_TYPE.caption,true).join('\n'),x+.06,1.78,widths[i]-.18,.36,PPT_TYPE.caption,{bold:true,wrap:true,color:PPT_COLOR.muted,valign:'bottom'});x+=widths[i];});
+    let y=bodyTop;addPptSafeLine(slide,.5,y,12.83,y,PPT_COLOR.hair);
     page.rows.forEach(row=>{
-      x=.6;
-      row.cells.forEach((lines,i)=>{pptText(slide,lines.join('\n'),x+.06,y+.1,widths[i]-.18,row.h-.16,font,{bold:i===0,wrap:true,valign:'top',breakLine:false,objectName:`register-row:${row.it.id}:${i}`,paraSpaceAfterPt:0,lineSpacingMultiple:1});x+=widths[i];});
-      y+=row.h;addPptSafeLine(slide,.6,y,12.75,y,PPT_COLOR.hair,.5);
+      x=.5;
+      row.cells.forEach((lines,i)=>{pptText(slide,lines.join('\n'),x+.06,y+.08,widths[i]-.18,row.h-.12,font,{bold:i===0,wrap:true,valign:'top',breakLine:false,objectName:`register-row:${row.it.id}:${i}`,paraSpaceAfterPt:0,lineSpacingMultiple:1});x+=widths[i];});
+      y+=row.h;addPptSafeLine(slide,.5,y,12.83,y,PPT_COLOR.hair,.5);
     });
-    if(!page.rows.length)pptText(slide,'No initiatives yet.',.66,3.23,10,.4,18);
-    pptText(slide,'Totals exclude marked initiatives. All initiative values are shown.',.6,6.86,12,.25,12,{color:PPT_COLOR.muted});
+    if(!page.rows.length)pptText(slide,'No initiatives yet.',.56,bodyTop+.2,10,.4,PPT_TYPE.body);
+    pptText(slide,'Totals exclude marked and Cancelled initiatives. All initiative values are shown.',.5,6.68,8.5,.24,PPT_TYPE.caption,{color:PPT_COLOR.muted});
     pptItemNotes(slide,page.rows.map(row=>row.it));
   });
 }

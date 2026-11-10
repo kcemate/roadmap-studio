@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Focused PowerPoint regressions for the approved executive presentation contract."""
 import json
+import math
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -21,6 +22,8 @@ NS = {
 }
 CORE_LINE_COLORS = {"188038", "2563EB"}
 MONEY_PERCENT = re.compile(r"\$[^\n]*[·|][^\n]*%")
+# Three significant figures with the unit promoted after rounding (audit A21, F2.9).
+MONEY3 = re.compile(r"-?\$(?:\d{3}|\d{2}(?:\.\d)?|\d(?:\.\d{1,2})?)[KMBT]?")
 
 
 def initiative(item_id, pillar_id, workstream_id, name, start, end, value_type,
@@ -304,7 +307,7 @@ def collapsed_text(value):
 
 
 def check_executive_contract(deck):
-    slide = find_slide(deck, "opportunity", "realized")
+    slide = exec_slide(deck)
     headline = [shape for shape in slide["shapes"]
                 if "opportun" in shape["text"].lower() and max(shape["font_sizes"] or [0]) >= 26]
     assert headline, "executive headline does not explicitly frame the portfolio as opportunity"
@@ -322,7 +325,7 @@ def check_executive_contract(deck):
 
 
 def check_executive_stretch_goal(deck, goal, total, stretch, expected_labels, expected_percentages, stretch_percentages):
-    slide = find_slide(deck, "opportunity", "realized")
+    slide = exec_slide(deck)
     shapes = {shape["object_name"]: shape for shape in slide["shapes"]}
     scale = deck['executive_axis']['maximum']
     labels = []
@@ -359,7 +362,7 @@ def check_executive_stretch_goal(deck, goal, total, stretch, expected_labels, ex
 
 
 def check_executive_measurement_axis(deck, total, expected_max=None):
-    slide = deck['slides'][0]
+    slide = exec_slide(deck)
     shapes = {shape['object_name']: shape for shape in slide['shapes']}
     web = deck['executive_axis']
     if expected_max is not None:
@@ -383,10 +386,11 @@ def check_executive_measurement_axis(deck, total, expected_max=None):
         marker = shapes.get(f'executive-{kind}-marker')
         if marker:
             for label in slide['shapes']:
-                if label['text'] in ('SAVINGS', 'AVOIDANCE'):
+                if label['object_name'].startswith('executive-stage-label:'):
                     assert not label['x'] < marker['x'] < label['x']+label['w'], (
                         f"{kind} marker crosses {label['text']} bar label", marker, label)
-    bar_colors = {'28A745', '0B662E', '3B73E8', '163A8A'}
+    # 1.7.0 shares the web tracker's six stage colours (audit B28): realized, active remaining, proposed remaining.
+    bar_colors = {'0E5A27', '1E3A8A', '188038', '2563EB', 'A8D5B5', 'A9C1F5'}
     segments = [s for s in slide['shapes'] if s['y'] is not None and abs(s['y']-track['y']) < .001
                 and set(s['fill_colors']) & bar_colors]
     if total:
@@ -409,7 +413,7 @@ def stretch_cases():
         ("above", 1e6, 20e6, 3e6, ("$1M", "$3M"), ["2000%", "500%"], ["666.7%", "166.7%"]),
         ("small", 125, 100, 200, ("$125", "$200"), ["80%", "20%"], ["50%", "12.5%"]),
         ("empty", 250e6, 0, 400e6, ("$250M", "$400M"), ["0%", "0%"], ["0%", "0%"]),
-        ("default", 0, 500e6, 2e9, ("$1B", "$2B"), ["50%", "12.5%"], ["25%", "6.3%"]),
+        ("no-goal", 0, 500e6, '', (), [], []),
         ("cleared", 1e9, 900e6, '', ("$1B",), ["90%", "22.5%"], []),
         ("goal-reached", 1e9, 1e9, '', ("$1B",), ["100%", "25%"], []),
         ("beyond-scale", 1e9, 1.3e9, '', ("$1B",), ["130%", "32.5%"], []),
@@ -421,219 +425,206 @@ def stretch_cases():
         for item in state["items"]:
             item["value"] *= total / 1500000
             item["realizedPct"] = 25
-        cases.append((name, state, goal or 1e9, total, stretch, labels, percentages, stretch_percentages))
+        cases.append((name, state, goal, total, stretch, labels, percentages, stretch_percentages))
     return cases
 
 
+def exec_slide(deck):
+    matches = [slide for slide in deck["slides"] if any(shape["object_name"] == "executive-bar-track" for shape in slide["shapes"])]
+    assert len(matches) == 1, f"expected one executive summary slide, found {[slide['index'] for slide in matches]}"
+    return matches[0]
+
+
+def slide_title(slide):
+    return next((shape["text"] for shape in slide["shapes"] if shape["object_name"] == "slide-title"), "")
+
+
+def chart_parts(path):
+    """Native chart parts with their slide, series names, axis settings and embedded workbook table ranges."""
+    charts = []
+    with zipfile.ZipFile(path) as archive:
+        names = set(archive.namelist())
+        content_types = archive.read("[Content_Types].xml").decode()
+        for slide_index, name in enumerate(slide_names(path), start=1):
+            rels_name = f"ppt/slides/_rels/{Path(name).name}.rels"
+            if rels_name not in names:
+                continue
+            rels = archive.read(rels_name).decode()
+            for target in re.findall(r'relationships/chart" Target="([^"]+)"', rels):
+                part = target.lstrip("/") if target.startswith("/") else "ppt/" + target.replace("../", "")
+                xml = archive.read(part).decode()
+                chart_rels = archive.read(part.replace("charts/", "charts/_rels/") + ".rels").decode()
+                book = re.search(r'Target="([^"]+\.xlsx)"', chart_rels).group(1)
+                book_part = "ppt/" + book.replace("../", "")
+                with zipfile.ZipFile(archive.open(book_part)) as workbook:
+                    refs = [re.search(r'ref="([^"]+)"', workbook.read(n).decode()).group(1)
+                            for n in workbook.namelist() if n.startswith("xl/tables/") and n.endswith(".xml")]
+                charts.append({
+                    "slide": slide_index, "part": part, "xml": xml,
+                    "series": re.findall(r"<c:tx>\s*<c:strRef>.*?<c:v>([^<]*)</c:v>", xml, re.S),
+                    "types": re.findall(r"<c:(barChart|lineChart|areaChart|scatterChart)>", xml),
+                    "major_unit": [float(v) for v in re.findall(r'<c:majorUnit val="([^"]+)"', xml)],
+                    "max": [float(v) for v in re.findall(r'<c:max val="([^"]+)"', xml)],
+                    "table_refs": refs,
+                    "content_type": f'PartName="/{part}"' in content_types,
+                })
+    return charts
+
+
+def round_step(value):
+    exponent = 10 ** math.floor(math.log10(value))
+    return any(abs(value - base * exponent) < 1e-6 * exponent for base in (1, 2, 2.5, 5, 10))
+
+
+def check_executive_no_goal(deck):
+    slide = exec_slide(deck)
+    names = {shape["object_name"] for shape in slide["shapes"]}
+    assert "executive-goal-marker" not in names, "a goal marker was drawn although no goal is set"
+    assert "No goal set" in slide["text"], "the summary does not say that no goal is set"
+    assert "$1B" not in slide["text"] and "1,000,000,000" not in deck["notes"], "a default goal leaked into the deck"
+
+
 def check_full_order(deck, roadmap_marker):
-    executive = find_slide(deck, "opportunity", "realized")["index"]
-    rollups = [slide["index"] for slide in slides_with_title_prefix(deck, "Portfolio Rollup")]
-    assert rollups, "missing Portfolio Rollup section"
-    projection_matches = [slide for slide in deck["slides"] if any(
-        shape["object_name"].startswith("projection-line:") for shape in slide["shapes"]
-    )]
-    assert len(projection_matches) == 1, f"expected one projection slide, found {[slide['index'] for slide in projection_matches]}"
-    projection = projection_matches[0]["index"]
-    contributions = [slide["index"] for slide in deck["slides"] if any(
-        shape["object_name"].startswith("contribution-dollar:") for shape in slide["shapes"]
-    )]
-    assert contributions, "missing Contribution section"
-    roadmap = find_slide(deck, roadmap_marker)["index"]
-    assert executive == 1 and min(rollups) == 2, (executive, rollups)
-    assert executive < min(rollups) <= max(rollups) < projection < min(contributions) <= max(contributions) < roadmap, {
-        "Executive": executive,
-        "Rollup": rollups,
-        "Projection": projection,
-        "Contribution": contributions,
-        "Roadmaps": roadmap,
-    }
+    """Story order (audit F2.3): title, summary, bridge, timing, projection, contribution, pillar pages."""
+    order = {}
+    for slide in deck["slides"]:
+        names = {shape["object_name"] for shape in slide["shapes"]}
+        title = slide_title(slide)
+        if "deck-title" in names or "deck-subtitle" in names:
+            order.setdefault("title", slide["index"])
+        elif "executive-bar-track" in names:
+            order.setdefault("summary", slide["index"])
+        elif any(name.startswith("bridge-value:") for name in names):
+            order.setdefault("bridge", slide["index"])
+        elif title.startswith("Portfolio Rollup"):
+            order.setdefault("timing", slide["index"])
+        elif any(name.startswith("projection-label:") for name in names) or title.startswith("Projection"):
+            order.setdefault("projection", slide["index"])
+        elif any(name.startswith("contribution-") for name in names) or title.startswith("Pillar Contribution"):
+            order.setdefault("contribution", slide["index"])
+        elif any(name.startswith("initiative-label:") for name in names):
+            order.setdefault("roadmap", slide["index"])
+    expected = ["title", "summary", "bridge", "timing", "projection", "contribution", "roadmap"]
+    assert all(key in order for key in expected), order
+    assert [order[key] for key in expected] == sorted(order[key] for key in expected), order
+    assert order["title"] == 1 and order["summary"] == 2, order
+    assert roadmap_marker.upper() in "\n".join(slide["text"] for slide in deck["slides"] if slide["index"] >= order["roadmap"]).upper()
 
 
 def check_four_pillar_rollup(deck):
+    """Timing slide (audit F1.8): pillars on one page up to five; dates on the time axis, no dollar labels on bars."""
     slides = slides_with_title_prefix(deck, "Portfolio Rollup")
-    assert len(slides) == 2, f"four pillars should produce two rollup pages, found {[slide['index'] for slide in slides]}"
-    names = ["Procurement", "Operations", "Technology", "Commercial"]
-    page_counts = []
-    for slide in slides:
-        page_counts.append(len([shape for shape in slide["shapes"] if shape["object_name"].startswith("rollup-pillar:")]))
-    assert page_counts == [2, 2], f"four-pillar rollup is not split 2+2: {page_counts}"
-    for index, name in enumerate(names, start=1):
-        matches = [shape for slide in slides for shape in slide["shapes"]
-                   if shape["object_name"] == f"rollup-pillar:four-p{names.index(name) + 1}"]
+    assert len(slides) == 1, f"four pillars should share one timing page, found {[slide['index'] for slide in slides]}"
+    for name in ["Procurement", "Operations", "Technology", "Commercial"]:
+        matches = [shape for shape in slides[0]["shapes"] if shape["object_name"].startswith("rollup-pillar:") and shape["text"] == name]
         assert len(matches) == 1, f"rollup did not preserve {name}: {matches}"
-        assert min_font(matches[0]) >= 18, f"rollup row label {name} is below 18 pt"
-    for label in ["Active", "Proposed"]:
-        matches = [shape for slide in slides for shape in text_shapes(slide, label, exact=True)]
-        assert matches, f"missing explicit {label} row label"
-        colors = [color for shape in matches for color in shape["text_colors"]]
-        assert colors and all(is_neutral(color) for color in colors), f"{label} uses non-neutral label colors: {colors}"
-    assert not any(text_shapes(slide, "Approved", exact=True) or text_shapes(slide, "APPROVED", exact=True) for slide in slides), "legacy category label leaked into PowerPoint"
-    assert any(text_shapes(slide, "Realized") for slide in slides), "rollup lacks an explicit Realized label"
-    assert "Selected as active:" in deck["notes"], "PowerPoint notes lost Active classification"
-    assert "Selected as approved:" not in deck["notes"], "PowerPoint notes retain the old category"
+        assert min_font(matches[0]) >= 14, f"rollup pillar label {name} is below 14 pt"
+    bars = [shape for shape in slides[0]["shapes"] if shape["object_name"].startswith("rollup-bar:")]
+    assert bars and all("$" not in shape["text"] for shape in bars), "rollup bars carry dollar labels on a time axis"
+    assert any(text_shapes(slides[0], "Active")) and any(text_shapes(slides[0], "Proposed")), "rollup lacks Active/Proposed labels"
+    assert not any(text_shapes(slide, "Approved", exact=True) for slide in slides), "legacy category label leaked into PowerPoint"
+    assert "Active value:" in deck["notes"], "PowerPoint notes lost Active classification"
     assert "approved initiative" in deck["notes"], "renaming categories must not rewrite user-entered initiative names"
 
 
 def check_projection_contract(deck):
-    slide = find_slide(deck, "Savings only", "Savings + Avoidance")
-    lines = [shape for shape in slide["shapes"]
-             if shape["geometry"] == "line" and CORE_LINE_COLORS.intersection(shape["line_colors"])]
-    by_color = defaultdict(list)
-    for shape in lines:
-        for color in CORE_LINE_COLORS.intersection(shape["line_colors"]):
-            by_color[color].append(shape)
-    assert all(by_color[color] for color in CORE_LINE_COLORS), f"projection core lines are not native OOXML lines: {dict(by_color)}"
-    centers = [shape["y"] + (shape["h"] or 0) / 2 for shape in lines if shape["y"] is not None]
-    assert centers and max(centers) - min(centers) >= 1.2, f"far target flattened the trajectory to {max(centers) - min(centers):.2f} inches"
-    areas = [shape for shape in slide["shapes"]
-             if shape["geometry"] == "custom" and "2563EB" in shape["fill_colors"]]
-    assert areas, "Savings-to-total area is not one smooth native polygon"
-    target = text_shapes(slide, "Target")
-    assert target and any(shape["y"] is not None and shape["y"] + (shape["h"] or 0) <= 2.1 for shape in target), (
-        "far target label is not displayed outside the graph", target,
-    )
-    labels = [shape for shape in slide["shapes"] if shape["text"] and any(
-        token in shape["text"] for token in ["Savings only", "Savings + Avoidance", "Target"]
-    )]
-    for index, left in enumerate(labels):
-        if None in (left["x"], left["y"], left["w"], left["h"]):
-            continue
-        for right in labels[index + 1:]:
-            if None in (right["x"], right["y"], right["w"], right["h"]):
-                continue
-            overlap_x = min(left["x"] + left["w"], right["x"] + right["w"]) - max(left["x"], right["x"])
-            overlap_y = min(left["y"] + left["h"], right["y"] + right["h"]) - max(left["y"], right["y"])
-            assert overlap_x <= 0 or overlap_y <= 0, f"projection labels collide: {left['text']!r}, {right['text']!r}"
-    visible = slide["text"]
-    assert "Expected" not in visible and "Annualized" not in visible, "Expected/Annualized remain redundant projection boxes"
+    """Projection (audit F2.7): one native, editable line chart with round axis ticks and direct labels."""
+    charts = [chart for chart in chart_parts(deck["path"]) if "lineChart" in chart["types"]]
+    assert len(charts) == 1, f"expected one native projection chart, found {len(charts)}"
+    chart = charts[0]
+    assert {"Savings + Avoidance", "Savings only"} <= set(chart["series"]), chart["series"]
+    assert chart["major_unit"] and all(round_step(step) for step in chart["major_unit"]), chart["major_unit"]
+    assert all(not ref.endswith("'") for ref in chart["table_refs"]), chart["table_refs"]
+    assert chart["content_type"], "chart part is missing its content type"
+    slide = deck["slides"][chart["slide"] - 1]
+    labels = [shape for shape in slide["shapes"] if shape["object_name"].startswith("projection-value:")]
+    assert len(labels) >= 2 and all(MONEY3.fullmatch(shape["text"]) for shape in labels), [shape["text"] for shape in labels]
+    assert "Expected" not in slide["text"] and "Annualized" not in slide["text"], "Expected/Annualized remain redundant projection boxes"
     assert "Expected" in deck["notes"] and "Annualized" in deck["notes"], "projection notes lost Expected/Annualized metadata"
-    assert "Sep 4, 2026" in visible and "Unweighted" in visible, "projection lacks visible reporting date and weighting"
+    assert "Sep 4, 2026" in slide["text"] and "Unweighted" in slide["text"], "projection lacks visible reporting date and weighting"
 
 
 def check_roadmap_references(deck):
-    slide = find_slide(deck, "Short Commitments")
-    expected = [
-        ("short-1", "Contract reset with complete original wording", 125000, True),
-        ("short-2", "Demand hedge with complete original wording", 85000, True),
-        ("long-1", "Supplier collaboration program preserving the complete original initiative name", 300000, False),
-    ]
-    assert "Sep 4, 2026" in deck["notes"] and "Unweighted" in deck["notes"], (
-        "roadmap notes lost reporting date or weighting context"
-    )
-    for index, (item_id, name, value, must_show_full_name) in enumerate(expected, start=1):
+    """Pillar pages (audit F2.6): readable names with status pills and a value column; full detail in notes."""
+    assert "Sep 4, 2026" in deck["notes"] and "Unweighted" in deck["notes"] or "not confidence-weighted" in deck["notes"], "roadmap notes lost the reporting context"
+    roadmap = [slide for slide in deck["slides"] if any(shape["object_name"].startswith("initiative-label:") for shape in slide["shapes"])]
+    assert roadmap, "missing roadmap pages"
+    for name in ["Contract reset with complete original wording", "Demand hedge with complete original wording", "Supplier collaboration program preserving the complete original initiative name"]:
         assert name in deck["notes"], f"speaker notes lost original name: {name}"
-        value_tokens = {str(value), f"{value:,}", f"${value:,}", f"${value // 1000}K"}
-        assert any(token in deck["notes"] or token in slide["text"] for token in value_tokens), (
-            f"visible reference row and notes lost original value {value}", value_tokens,
-        )
-        visible = [shape for shape in slide["shapes"]
-                   if shape["object_name"] == f"initiative-label:{item_id}"]
-        assert len(visible) == 1, f"expected exactly one external initiative label for {name}, found {len(visible)}"
-        if must_show_full_name:
-            assert collapsed_text(normalized_text(visible[0]["text"]).removeprefix(f"{index:02d} ")) == collapsed_text(name), (
-                f"external initiative label lost its readable name: {visible[0]['text']}"
-            )
-        else:
-            measured = collapsed_text(normalized_text(visible[0]["text"]).removeprefix(f"{index:02d} ").rstrip(". …"))
-            assert measured and collapsed_text(name).startswith(measured), f"long external label is not a measured prefix: {visible[0]['text']}"
-        assert min(min_font(shape) for shape in visible) >= 18, f"roadmap reference row for {name} is below 18 pt"
-    bar_names = {shape["object_name"] for shape in slide["shapes"] if shape["object_name"].startswith("initiative-bar:")}
-    assert bar_names == {"initiative-bar:short-1", "initiative-bar:short-2", "initiative-bar:long-1"}, bar_names
-    for index, item_id in enumerate(["short-1", "short-2"], start=1):
-        bar_labels = [shape for shape in slide["shapes"] if shape["object_name"] in {
-            f"initiative-bar-label:{item_id}", f"initiative-reference:{item_id}"
-        }]
-        assert len(bar_labels) == 1 and bar_labels[0]["text"].strip() == f"{index:02d}", (
-            f"short bar {item_id} is not linked to zero-padded reference {index:02d}", bar_labels,
-        )
-    assert all(shape["text"].strip() not in {"...", "…"} for shape in slide["shapes"]), "roadmap contains an ellipsis-only label"
+    labels = [shape for slide in roadmap for shape in slide["shapes"] if shape["object_name"].startswith("initiative-label:")]
+    for shape in labels:
+        assert shape["text"].strip() not in {"...", "…"}, "roadmap contains an ellipsis-only label"
+        assert min_font(shape) >= 14, f"roadmap name {shape['text']} is below 14 pt"
+        item_id = shape["object_name"].split(":", 1)[1]
+        assert any(other["object_name"] == f"initiative-status:{item_id}" for slide in roadmap for other in slide["shapes"]), f"missing status pill for {item_id}"
+        assert any(other["object_name"] == f"initiative-value:{item_id}" for slide in roadmap for other in slide["shapes"]), f"missing value cell for {item_id}"
+    assert len({shape["object_name"] for shape in labels}) == len(labels), "an initiative appears twice on the roadmap"
 
 
 def check_contribution_contract(deck):
-    contribution_slides = [slide for slide in deck["slides"] if any(
-        shape["object_name"].startswith("contribution-dollar:") for shape in slide["shapes"]
-    )]
-    assert contribution_slides, "missing contribution section"
-    text = "\n".join(slide["text"] for slide in contribution_slides)
-    assert sum(normalized_text(shape["text"]) == "100% composition"
-               for slide in contribution_slides for shape in slide["shapes"]) == 2, (
-        "both composition bars are not explicitly labeled 100%"
-    )
-    assert "Both bars represent 100%, not equal dollar values" in text, "normalization basis is not explicit"
-    assert not MONEY_PERCENT.search(text), "contribution table still merges dollar and percentage values"
-    headers = [shape["text"].strip() for slide in contribution_slides for shape in slide["shapes"]]
-    assert any(header in {"$", "Value", "Amount"} or "Dollar" in header for header in headers), "missing separate dollar-value column"
-    assert any("%" in header or "Share" in header for header in headers), "missing separate percentage column"
-    expected_order = []
-    for index in range(1, 17):
-        name = f"Contribution Pillar {index:02d}"
-        matches = [shape for slide in contribution_slides for shape in slide["shapes"]
-                   if shape["object_name"] == f"contribution-pillar:many-p{index:02d}"]
-        assert len(matches) == 1, f"contribution pagination did not preserve {name} exactly once"
-        measured = collapsed_text(normalized_text(matches[0]["text"]).rstrip(". …"))
-        assert measured and collapsed_text(name).startswith(
-            measured
-        ), f"contribution row for {name} is not meaningful: {matches[0]['text']}"
-        assert min_font(matches[0]) >= 18, f"contribution row {name} is below 18 pt"
-        expected_order.append(f"many-p{index:02d}")
-    for kind in ["savings", "combined"]:
-        dollars = [shape["object_name"].rsplit(":", 1)[-1] for slide in contribution_slides for shape in slide["shapes"]
-                   if shape["object_name"].startswith(f"contribution-dollar:{kind}:")]
-        shares = [shape["object_name"].rsplit(":", 1)[-1] for slide in contribution_slides for shape in slide["shapes"]
-                  if shape["object_name"].startswith(f"contribution-share:{kind}:")]
-        assert dollars == expected_order, f"{kind} dollar rows do not use overall Combined-desc order: {dollars}"
-        assert shares == expected_order, f"{kind} share rows do not use overall Combined-desc order: {shares}"
+    """Pillar Contribution (audit F2.7/F2.8): native stacked value bars plus separate dollar and share columns."""
+    slides = [slide for slide in deck["slides"] if any(shape["object_name"].startswith("contribution-dollar:") for shape in slide["shapes"])]
+    assert slides, "missing contribution section"
+    charts = [chart for chart in chart_parts(deck["path"]) if chart["slide"] in {slide["index"] for slide in slides}]
+    assert len(charts) == len(slides) and all("barChart" in chart["types"] for chart in charts), "contribution pages need one native bar chart each"
+    assert all(set(chart["series"]) == {"Realized", "Active remaining", "Proposed remaining"} for chart in charts), [chart["series"] for chart in charts]
+    names = [shape["text"] for slide in slides for shape in slide["shapes"] if shape["object_name"].startswith("contribution-pillar:")]
+    expected = [f"Contribution Pillar {index:02d}" for index in range(1, 17)]
+    assert len(names) == len(expected) and all(collapsed_text(full).startswith(collapsed_text(shown).rstrip("…")) for shown, full in zip(names, expected)), names
+    for slide in slides:
+        for shape in slide["shapes"]:
+            if shape["object_name"].startswith("contribution-dollar:"):
+                assert MONEY3.fullmatch(shape["text"]), shape["text"]
+            if shape["object_name"].startswith("contribution-share:"):
+                assert re.fullmatch(r"\d+(\.\d)?%|<0\.1%", shape["text"]), shape["text"]
 
 
 def check_dense_pagination(deck):
-    appearances = Counter()
-    slide_indexes = set()
-    for index in range(1, 29):
-        item_id = f"dense-{index:02d}"
-        name = f"Dense initiative {index:02d} complete reference name"
-        for slide in deck["slides"]:
-            if any(shape["object_name"] == f"initiative-label:{item_id}" for shape in slide["shapes"]):
-                appearances[item_id] += 1
-                slide_indexes.add(slide["index"])
-        assert name in deck["notes"], f"dense notes lost {name}"
-    missing = [f"dense-{index:02d}" for index in range(1, 29)
-               if appearances[f"dense-{index:02d}"] != 1]
-    assert not missing, f"dense pagination lost or duplicated external labels: {missing}"
-    assert len(slide_indexes) >= 2, "dense roadmap was not paginated"
-    roadmap_slides = [slide for slide in deck["slides"] if any(
-        shape["object_name"].startswith("initiative-label:dense-") for shape in slide["shapes"]
-    )]
-    for slide in roadmap_slides:
-        row_count = sum(shape["object_name"].startswith("initiative-label:dense-") for shape in slide["shapes"])
-        assert row_count <= 4, f"dense roadmap slide {slide['index']} has {row_count} body rows"
-        assert "Sequenced Delivery" in slide["text"], f"slide {slide['index']} lost repeated workstream context"
+    """Dense pillars paginate at up to ten rows, repeating the workstream header (audit F2.6)."""
+    roadmap = [slide for slide in deck["slides"] if any(shape["object_name"].startswith("initiative-label:") for shape in slide["shapes"])]
+    assert len(roadmap) >= 2, "dense roadmap was not paginated"
+    seen = []
+    for slide in roadmap:
+        rows = [shape for shape in slide["shapes"] if shape["object_name"].startswith(("initiative-label:", "workstream-header:"))]
+        assert len(rows) <= 10, f"dense roadmap slide {slide['index']} has {len(rows)} rows"
+        assert any(shape["object_name"].startswith("workstream-header:") and "SEQUENCED DELIVERY" in shape["text"] for shape in rows), f"slide {slide['index']} lost the workstream header"
+        seen.extend(shape["object_name"] for shape in rows if shape["object_name"].startswith("initiative-label:"))
+    assert len(seen) == len(set(seen)) == 28, f"dense pagination lost or duplicated rows: {len(seen)}"
 
 
 def check_typography_tiers(decks):
+    """One type scale (audit F2.1): titles 28 pt, body 14 pt, captions no smaller than 10 pt."""
     for deck in decks:
-        ticks = []
         for slide in deck["slides"]:
             for shape in slide["shapes"]:
-                name = shape["object_name"]
-                if name == "slide-title":
-                    assert min_font(shape) >= 26, f"slide title is below 26 pt on slide {slide['index']}"
-                if name.startswith(("initiative-label:", "rollup-pillar:")):
-                    assert min_font(shape) >= 18, f"primary row {name} is below 18 pt"
-                if name.startswith(("contribution-dollar:", "contribution-share:")):
-                    assert min_font(shape) >= 16, f"secondary label {name} is below 16 pt"
-                if re.search(r"(?:^|\s)(?:FY\d{2,4}|Q[1-4])(?:\s|$)", shape["text"]):
-                    ticks.append(shape)
-        assert ticks, f"{deck['path'].name} did not expose fiscal tick labels"
-        assert all(min_font(shape) >= 14 for shape in ticks), (
-            f"{deck['path'].name} has ticks below 14 pt",
-            [(shape["text"], shape["font_sizes"]) for shape in ticks if min_font(shape) < 14],
-        )
+                if not shape["text"].strip():
+                    continue
+                if shape["object_name"] == "slide-title":
+                    assert min_font(shape) == 28, f"slide title is not 28 pt on slide {slide['index']}"
+                elif shape["object_name"].startswith(("initiative-label:", "rollup-pillar:", "contribution-pillar:", "initiative-value:")):
+                    assert min_font(shape) >= 14, f"primary row {shape['text']} is below 14 pt"
+                elif shape["font_sizes"]:
+                    assert min_font(shape) >= 10, f"{deck['path'].name} slide {slide['index']} has text below 10 pt: {shape['text']!r}"
 
 
 def check_ooxml_safety(decks):
     for deck in decks:
         assert not deck["negative_extents"], f"{deck['path'].name} has negative OOXML extents: {deck['negative_extents'][:4]}"
         assert not deck["autofit"], f"{deck['path'].name} uses shrink-to-fit in {deck['autofit']}"
+        for chart in chart_parts(deck["path"]):
+            assert chart["content_type"], f"{deck['path'].name}: {chart['part']} lacks a content type"
+            assert all(re.fullmatch(r"[A-Z]+\d+:[A-Z]+\d+", ref) for ref in chart["table_refs"]), f"{deck['path'].name}: invalid chart workbook range {chart['table_refs']}"
+
+
+def check_text_bounds(decks):
+    """Every text box stays on the slide and above the footer rule."""
+    for deck in decks:
+        for slide in deck["slides"]:
+            for shape in slide["shapes"]:
+                if shape["x"] is None or not shape["text"].strip():
+                    continue
+                assert shape["x"] >= 0 and shape["x"] + shape["w"] <= 13.34, (deck["path"].name, slide["index"], shape["text"][:40])
+                assert shape["y"] >= 0 and shape["y"] + shape["h"] <= 7.5, (deck["path"].name, slide["index"], shape["text"][:40])
 
 
 class Results:
@@ -676,22 +667,26 @@ def main():
     for deck, goal, total, stretch_goal, labels, percentages, stretch_percentages in stretch:
         def check_current(deck=deck, goal=goal, total=total, stretch_goal=stretch_goal, labels=labels, percentages=percentages, stretch_percentages=stretch_percentages):
             assert len(deck["slides"]) == 1, "current executive export is not one slide"
+            if not goal:
+                check_executive_no_goal(deck)
+                return
             check_executive_stretch_goal(deck, goal, total, stretch_goal, labels, percentages, stretch_percentages)
             expected_max = 1.2e9 if deck['path'].stem in ('stretch-cleared', 'stretch-goal-reached') else None
             check_executive_measurement_axis(deck, total, expected_max)
         results.check(deck["path"].stem, check_current)
     results.check("full_deck_narrative_order", lambda: check_full_order(sparse, "Short Commitments"))
-    results.check("four_pillar_rollup_2_plus_2", lambda: check_four_pillar_rollup(four))
-    results.check("projection_native_lines_area_and_far_target", lambda: check_projection_contract(projection))
+    results.check("four_pillar_timing_one_page_no_dollars_on_time_axis", lambda: check_four_pillar_rollup(four))
+    results.check("projection_native_chart_round_ticks", lambda: check_projection_contract(projection))
     results.check("current_projection_is_one_slide", lambda: (
         len(projection["slides"]) == 1 or (_ for _ in ()).throw(AssertionError(
             f"current projection exported {len(projection['slides'])} slides"
         ))
     ))
-    results.check("roadmap_numbered_references_and_full_notes", lambda: check_roadmap_references(sparse))
-    results.check("contribution_normalization_columns_and_pagination", lambda: check_contribution_contract(many))
-    results.check("dense_roadmap_pagination", lambda: check_dense_pagination(dense))
-    results.check("presentation_typography_18_16_14", lambda: check_typography_tiers([sparse, four, many, dense]))
+    results.check("roadmap_status_pills_value_column_and_full_notes", lambda: check_roadmap_references(sparse))
+    results.check("contribution_native_chart_separate_columns", lambda: check_contribution_contract(many))
+    results.check("dense_roadmap_ten_rows_per_page", lambda: check_dense_pagination(dense))
+    results.check("presentation_type_scale_28_14_10", lambda: check_typography_tiers([sparse, four, many, dense]))
+    results.check("text_inside_slide_bounds", lambda: check_text_bounds([sparse, four, many, dense, projection]))
     results.check("ooxml_positive_extents_without_autofit", lambda: check_ooxml_safety(
         [sparse, four, many, dense, projection] + [case[0] for case in stretch]
     ))

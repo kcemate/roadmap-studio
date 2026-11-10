@@ -1,8 +1,6 @@
 /* Project validation, recovery, and edit-draft support. Financial definitions live in finance.js. */
 const MAX_PROJECT_BYTES=10*1024*1024;
 const MAX_DELETED_MARKERS=50000;
-const BRAND_FONTS=['Arial','Calibri','Aptos','Helvetica','Georgia','Segoe UI','Verdana'];
-const MAX_LOGO_CHARS=400*1024;
 function projectText(value,max=240){
   return (typeof value==='string'||typeof value==='number'?String(value):'').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'').slice(0,max);
 }

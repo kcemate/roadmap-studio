@@ -2,6 +2,10 @@
    Every view, drilldown, and export derives its numbers, names, and formats from this file.
    See README "Financial Definitions" for the rules these functions implement. */
 
+/* Brand settings accepted for decks (validated in model.js). Defined here because exports bind controls at load. */
+const BRAND_FONTS=['Arial','Calibri','Aptos','Helvetica','Georgia','Segoe UI','Verdana'];
+const MAX_LOGO_CHARS=400*1024;
+
 /* ---------- names ---------- */
 const DEFAULT_PROJECT_NAME='Untitled roadmap';
 const WORKING_PLAN_NAME='Working plan';
@@ -94,11 +98,11 @@ function goalStatus(t=portfolioTotals()){
     proposedNeeded:Math.max(0,Math.min(t.Proposed,goal-t.Approved))};
 }
 function goalHeadline(gs=goalStatus()){
-  if(!gs.set)return gs.identified?`No goal set · ${fmtMoneyShort(gs.identified)} identified`:'No goal set · add initiative values to build the portfolio';
-  if(!gs.identified)return`No value identified toward the ${fmtMoneyShort(gs.goal)} goal`;
-  if(gs.gap>0)return`Identified value is ${fmtMoneyShort(gs.gap)} short of the ${fmtMoneyShort(gs.goal)} goal`;
-  if(gs.gap<0)return`Identified value exceeds the ${fmtMoneyShort(gs.goal)} goal by ${fmtMoneyShort(-gs.gap)}`;
-  return`Identified value meets the ${fmtMoneyShort(gs.goal)} goal`;
+  if(!gs.set)return gs.identified?`No goal set · ${fmtMoneyShort(gs.identified)} identified opportunity`:'No goal set · add initiative values to build the portfolio';
+  if(!gs.identified)return`No opportunity identified toward the ${fmtMoneyShort(gs.goal)} goal`;
+  if(gs.gap>0)return`Identified opportunity is ${fmtMoneyShort(gs.gap)} short of the ${fmtMoneyShort(gs.goal)} goal`;
+  if(gs.gap<0)return`Identified opportunity exceeds the ${fmtMoneyShort(gs.goal)} goal by ${fmtMoneyShort(-gs.gap)}`;
+  return`Identified opportunity meets the ${fmtMoneyShort(gs.goal)} goal`;
 }
 function goalGapText(gs=goalStatus()){
   if(!gs.set)return'No goal set';

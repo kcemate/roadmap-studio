@@ -160,3 +160,15 @@ input::placeholder,textarea::placeholder{color:#6e6e73;opacity:1}
 #pasteText{width:100%;min-height:150px;padding:10px;border:1px solid var(--hairline);border-radius:7px;font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre;overflow:auto}
 .grid-foot{display:flex;gap:8px}
 @media (max-width:860px){.ws-exception-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.ws-exception-summary button:nth-child(n){border-right:1px solid var(--hairline);border-bottom:1px solid var(--hairline)}}
+.deck-options{position:relative}
+.deck-options>summary{display:flex;align-items:center;min-height:32px;padding:6px 10px;border-radius:7px;color:var(--ink2);font-size:12px;font-weight:600;cursor:pointer;list-style:none;white-space:nowrap}
+.deck-options>summary::-webkit-details-marker{display:none}
+.deck-options>summary:hover,.deck-options[open]>summary{background:#f1f1f3;color:var(--ink)}
+.deck-options-panel{position:absolute;top:calc(100% + 6px);right:0;z-index:30;display:grid;gap:8px;width:320px;padding:12px;background:var(--surface);border:1px solid var(--hairline);border-radius:8px;box-shadow:0 12px 32px rgba(0,0,0,.12);font-size:12px;color:var(--ink)}
+.deck-options-panel label{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.deck-options-panel small{color:var(--ink2)}
+.deck-options-panel hr{border:0;border-top:1px solid var(--hairline);margin:2px 0}
+.deck-options-panel select,.deck-options-panel input[type=color]{min-height:30px}
+@media (max-width:560px){.deck-options-panel{position:fixed;inset:auto 16px 16px;width:auto}}
+#pptScope{max-width:118px}
+.workspace-tools[hidden],.baseline-pill[hidden]{display:none!important}
