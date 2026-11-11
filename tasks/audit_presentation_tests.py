@@ -249,6 +249,8 @@ def export_deck(browser, state, filename, scope="full", tab="road"):
         )
         deck = deck_data(path)
         page.evaluate("setTab('exec')")
+        deck['stretch_axis_labels'] = page.evaluate(
+            "Array.from({length:5},(_,i)=>fmtGoalMoney(executiveStretchGoalValue()*i/4))")
         deck['executive_axis'] = page.evaluate("""() => {
             const maximum=niceProjectionMax(Math.max(executiveSummaryData().totals.Total,
                 executiveGoalValue(),executiveStretchGoalValue()||0));
@@ -328,17 +330,21 @@ def check_executive_contract(deck):
 def check_executive_stretch_goal(deck, goal, total, stretch, expected_labels, expected_percentages, stretch_percentages):
     slide = exec_slide(deck)
     shapes = {shape["object_name"]: shape for shape in slide["shapes"]}
-    scale = deck['executive_axis']['maximum']
+    scale = stretch or deck['executive_axis']['maximum']
     labels = []
     kinds = ("goal", "stretch") if stretch else ("goal",)
     for kind, value, label in zip(kinds, (goal, stretch), expected_labels):
         marker = shapes.get(f"executive-{kind}-marker")
-        assert marker is not None, f"missing {kind} marker for entered goal {goal}"
-        assert abs(marker["x"] - (.76 + value / scale * 11.82)) < .001, marker
+        if value <= scale:
+            assert marker is not None, f"missing {kind} marker for entered goal {goal}"
+            assert abs(marker["x"] - (.76 + value / scale * 11.82)) < .001, marker
+        else:
+            assert marker is None, f"off-scale {kind} marker was drawn"
         amount = shapes.get(f"executive-{kind}-amount")
         assert amount and amount["text"] == label, (kind, amount, label)
         caption = shapes.get(f"executive-{kind}-label")
-        assert caption and caption["text"] == ("GOAL" if kind == "goal" else "STRETCH GOAL"), caption
+        expected_caption = "STRETCH GOAL" if kind == "stretch" else ("GOAL" if value <= scale else "GOAL (OFF SCALE)")
+        assert caption and caption["text"] == expected_caption, caption
         for shape in (amount, caption):
             assert min_font(shape) >= 14, shape
             assert .55 <= shape["x"] and shape["x"] + shape["w"] <= 12.8, shape
@@ -362,16 +368,17 @@ def check_executive_stretch_goal(deck, goal, total, stretch, expected_labels, ex
     assert "STRETCH (+20%)" not in slide["text"]
 
 
-def check_executive_measurement_axis(deck, total, expected_max=None):
+def check_executive_measurement_axis(deck, total, expected_max=None, stretch=None, goal=None):
     slide = exec_slide(deck)
     shapes = {shape['object_name']: shape for shape in slide['shapes']}
     web = deck['executive_axis']
     if expected_max is not None:
         assert web['maximum'] == expected_max, web
+    scale = stretch or web['maximum']
     track = shapes.get('executive-bar-track')
     assert track, 'missing measurement bar track'
     labels = []
-    for i, label in enumerate(web['labels']):
+    for i, label in enumerate(deck['stretch_axis_labels'] if stretch else web['labels']):
         tick = shapes.get(f'executive-axis-tick:{i}')
         caption = shapes.get(f'executive-axis-label:{i}')
         assert tick and abs(tick['x']-(track['x']+track['w']*i/4)) < .001, tick
@@ -380,8 +387,8 @@ def check_executive_measurement_axis(deck, total, expected_max=None):
         assert caption['x'] >= .55 and caption['x']+caption['w'] <= 12.8, caption
         labels.append(caption)
     for kind in ('goal', 'stretch'):
-        ratio = web[f'{kind}Ratio']
-        if ratio is not None:
+        ratio = ((1 if kind == 'stretch' else goal / scale) if stretch else web[f'{kind}Ratio'])
+        if ratio is not None and ratio <= 1:
             marker = shapes[f'executive-{kind}-marker']
             assert abs((marker['x']-track['x'])/track['w']-ratio) < .0001, (kind, marker, web)
         marker = shapes.get(f'executive-{kind}-marker')
@@ -397,7 +404,8 @@ def check_executive_measurement_axis(deck, total, expected_max=None):
                 and set(s['fill_colors']) & bar_colors]
     if total:
         right = max(s['x']+s['w'] for s in segments)
-        assert abs((right-track['x'])/track['w']-total/web['maximum']) < .001, (right, web)
+        assert abs((right-track['x'])/track['w']-min(1,total/scale)) < .001, (right, web)
+    assert bool(shapes.get('summary-stretch-overflow')) == bool(stretch and total > stretch)
     for label in labels:
         for other in slide['shapes']:
             if other is label or not other['text'] or other['x'] is None:
@@ -414,6 +422,7 @@ def stretch_cases():
         ("precise", 1e9, 900e6, 1.75e9, ("$1B", "$1.75B"), ["90%", "22.5%"], ["51.4%", "12.9%"]),
         ("above", 1e6, 20e6, 3e6, ("$1M", "$3M"), ["2000%", "500%"], ["666.7%", "166.7%"]),
         ("small", 125, 100, 200, ("$125", "$200"), ["80%", "20%"], ["50%", "12.5%"]),
+        ("goal-off-scale", 200, 100, 125, ("$200", "$125"), ["50%", "12.5%"], ["80%", "20%"]),
         ("empty", 250e6, 0, 400e6, ("$250M", "$400M"), ["0%", "0%"], ["0%", "0%"]),
         ("no-goal", 0, 500e6, '', (), [], []),
         ("cleared", 1e9, 900e6, '', ("$1B",), ["90%", "22.5%"], []),
@@ -670,7 +679,18 @@ def main():
     results.check("executive_full_deck_stretch_goal", lambda: check_executive_stretch_goal(
         four, 5000000, 1500000, 7500000, ("$5M", "$7.5M"), ["30%", "6%"], ["20%", "4%"]
     ))
-    results.check("executive_full_deck_measurement_axis", lambda: check_executive_measurement_axis(four, 1500000))
+    results.check("executive_full_deck_measurement_axis", lambda: check_executive_measurement_axis(four, 1500000, stretch=7500000, goal=5000000))
+    def check_no_title_bars():
+        with zipfile.ZipFile(four["path"]) as archive:
+            for name in archive.namelist():
+                if not name.startswith(("ppt/slideLayouts/", "ppt/slideMasters/")) or not name.endswith(".xml"):
+                    continue
+                root = ET.fromstring(archive.read(name))
+                for shape in root.findall(".//p:sp/p:spPr", NS):
+                    geom = shape.find("a:prstGeom", NS)
+                    assert not (geom is not None and geom.get("prst") == "rect" and
+                                shape.find("a:solidFill", NS) is not None), name
+    results.check("slide_masters_have_no_title_bars", check_no_title_bars)
     for deck, goal, total, stretch_goal, labels, percentages, stretch_percentages in stretch:
         def check_current(deck=deck, goal=goal, total=total, stretch_goal=stretch_goal, labels=labels, percentages=percentages, stretch_percentages=stretch_percentages):
             assert len(deck["slides"]) == 1, "current executive export is not one slide"
@@ -679,7 +699,7 @@ def main():
                 return
             check_executive_stretch_goal(deck, goal, total, stretch_goal, labels, percentages, stretch_percentages)
             expected_max = 1.2e9 if deck['path'].stem in ('stretch-cleared', 'stretch-goal-reached') else None
-            check_executive_measurement_axis(deck, total, expected_max)
+            check_executive_measurement_axis(deck, total, expected_max, stretch_goal, goal)
         results.check(deck["path"].stem, check_current)
     results.check("full_deck_narrative_order", lambda: check_full_order(sparse, "Short Commitments"))
     results.check("four_pillar_timing_one_page_no_dollars_on_time_axis", lambda: check_four_pillar_rollup(four))

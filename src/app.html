@@ -672,8 +672,8 @@ table.grid tr.excluded-from-totals td[data-total-cell]{background:#f5f5f7}
 
 <script>
 "use strict";
-const APP_VERSION = '1.7.0';
-const DEFAULT_COL_WIDTHS = {name:200,pillar:150,ws:150,start:128,end:128,mile:52,status:118,approval:112,valueType:120,value:120,include:88,realized:90,confidence:88,owner:110};
+const APP_VERSION = '1.7.1';
+const DEFAULT_COL_WIDTHS = {name:260,pillar:150,ws:150,start:128,end:128,mile:52,status:118,approval:112,valueType:120,value:120,include:88,realized:90,confidence:88,owner:110};
 const emptyFilters = () => ({q:'',status:'',owner:'',pillarId:'',valueType:''});
 const S = { view:'start', structure:[], items:[], collapsedPillars:{}, fyStart:6, tab:'struct', projectionEnd:null, projectionTarget:'', stretchGoal:'', projectionShowRealized:true,
   weightConfidence:true, showBaseline:true, roadmapGroup:'structure',
@@ -2067,8 +2067,8 @@ function gridRowHtml(it,ctx){
   const w=key=>`width:${colW(key)}px;min-width:${colW(key)}px`;
   const status=normStatus(it.status),flag=it.includeInTotals!==false;
   return`<tr data-id="${esc(it.id)}" class="${isIncludedInTotals(it)?'':'excluded-from-totals'}">
-      <td class="rownum"><div class="ws-row-selector"><input type="checkbox" data-ws-select ${workspaceSelection.has(it.id)?'checked':''} aria-label="Select ${esc(it.name||'initiative')}"><span>${ctx.index.get(it.id)+1}</span></div></td>
-      <td class="sticky-col" style="${w('name')}"><input class="cell-in" data-f="name"${cellValue('name',it.name)} maxlength="240" aria-label="Initiative"></td>
+      <td class="rownum grid-select-col"><div class="ws-row-selector"><input type="checkbox" data-ws-select ${workspaceSelection.has(it.id)?'checked':''} aria-label="Select ${esc(it.name||'initiative')}"><span>${ctx.index.get(it.id)+1}</span></div></td>
+      <td class="sticky-col" style="${w('name')}"><input class="cell-in" data-f="name"${cellValue('name',it.name)} title="${esc(draft.name??it.name)}" maxlength="240" aria-label="Initiative"></td>
       <td style="${w('pillar')}"><select class="cell-in" data-f="pillarId" aria-label="Pillar">${selectOptions(ctx.pillarOptions,it.pillarId)}</select></td>
       <td style="${w('ws')}"><select class="cell-in" data-f="wsId" aria-label="Workstream">${selectOptions(ctx.wsOptions.get(it.pillarId)||'',it.wsId)}</select></td>
       <td style="${w('start')}"><input class="cell-in" type="date" min="1900-01-01" max="2200-12-31" data-f="start"${cellValue('start',isoDate(it.start))} aria-label="Start"></td>
@@ -2125,7 +2125,7 @@ function renderGrid(){
   const L=COLUMN_LABELS;
   const maxHeight=Math.max(160,innerHeight-body.getBoundingClientRect().top-24);
   body.innerHTML=`<div class="grid-wrap" style="max-height:${maxHeight}px"><table class="grid${dense}" id="initGrid">
-    <thead><tr><th style="width:34px"></th>${th(L.name,'name')}${th(L.pillar,'pillar')}${th(L.ws,'ws')}${th(L.start,'start')}${th(L.end,'end')}${th(L.mile,'mile','text-align:center')}${th(L.status,'status')}${th(L.approval,'approval','text-align:center')}${th(L.valueType,'valueType')}${th(L.value,'value')}${th(L.include,'include','text-align:center')}${th(L.realized,'realized')}${th(L.confidence,'confidence')}${th(L.owner,'owner')}<th></th></tr></thead>
+    <thead><tr><th class="grid-select-col"></th>${th(L.name,'name')}${th(L.pillar,'pillar')}${th(L.ws,'ws')}${th(L.start,'start')}${th(L.end,'end')}${th(L.mile,'mile','text-align:center')}${th(L.status,'status')}${th(L.approval,'approval','text-align:center')}${th(L.valueType,'valueType')}${th(L.value,'value')}${th(L.include,'include','text-align:center')}${th(L.realized,'realized')}${th(L.confidence,'confidence')}${th(L.owner,'owner')}<th></th></tr></thead>
     <tbody>${items.map(it=>gridRowHtml(it,ctx)).join('')}</tbody></table>
     <div class="grid-foot"><button class="btn" id="addRow">Add initiative</button><button class="btn btn-quiet" id="pasteRows" type="button">Paste rows</button></div></div>`;
   bindColumnResize(body);

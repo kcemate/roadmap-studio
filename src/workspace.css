@@ -24,7 +24,22 @@ table.grid th .ws-sort i:before{top:0;border-bottom:4px solid currentColor}
 table.grid th .ws-sort i:after{bottom:0;border-top:4px solid currentColor}
 table.grid th[aria-sort=ascending] .ws-sort i:after,table.grid th[aria-sort=descending] .ws-sort i:before{opacity:.18}
 table.grid th[aria-sort] .ws-sort.on{color:var(--accent)}
-table.grid td.rownum{min-width:58px;width:58px}
+table.grid{--grid-selection-width:58px}
+table.grid .grid-select-col{width:var(--grid-selection-width);min-width:var(--grid-selection-width)}
+table.grid th.grid-select-col{padding-inline-start:7px}
+table.grid th.sticky-col{padding-inline-start:15px}
+table.grid.compact th.sticky-col{padding-inline-start:13px}
+table.grid input[data-f=name]{text-overflow:ellipsis}
+table.grid input[data-f=name]:focus{text-overflow:clip}
+@media(min-width:601px){
+  table.grid .grid-select-col{position:sticky;left:0;background:var(--surface);z-index:4}
+  table.grid th.grid-select-col{z-index:6}
+  table.grid th.sticky-col,table.grid td.sticky-col{left:var(--grid-selection-width)}
+}
+@media(max-width:600px){
+  table.grid th.sticky-col,table.grid td.sticky-col{left:auto;box-shadow:none}
+  table.grid td.sticky-col{position:static}
+}
 table.grid .ws-row-selector{display:grid;grid-template-columns:18px 1fr;gap:5px;align-items:center}
 table.grid td.rownum input,#wsSelectAll{width:16px;height:16px;accent-color:var(--accent)}
 
