@@ -523,7 +523,7 @@ class EditingTests(AppCase):
         self.page.click('#brandHome')
         self.page.click('#btnBlank')
         self.assertEqual(self.js('S.fyStart'), 6)
-        self.assertEqual(self.js('S.colWidths.name'), 200)
+        self.assertEqual(self.js('S.colWidths.name'), 260)
 
     def test_A36_start_error_clears(self):
         self.page.locator('#projIn').set_input_files({'name': 'bad.json', 'mimeType': 'application/json', 'buffer': b'{bad'})

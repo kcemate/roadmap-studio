@@ -185,17 +185,16 @@ function pptMoneyFormat(step,max){
 function definePptMasters(pptx,c){
   const font=pptFont(),accent=pptAccent(),logo=S.brand?.logo,aspect=S.brand?.logoAspect||1,logoH=.42,logoW=Math.min(2.2,logoH*aspect);
   const footer=[c.project,c.scenario,`As of ${fmtDate(c.asOf)}`,c.filterLabel].filter(Boolean).join('  ·  ');
-  const titleW=(logo?PPT_W-1.0-logoW-.3:PPT_W-1.0)-.22;
+  const titleW=logo?PPT_W-1.0-logoW-.3:PPT_W-1.0;
   const logoObjects=logo?[{image:{data:logo,x:PPT_W-.5-logoW,y:.32,w:logoW,h:logoH}}]:[];
   pptx.defineSlideMaster({title:'RS_CONTENT',background:{color:'FFFFFF'},margin:[.5,.5,.5,.5],
-    objects:[{rect:{x:.5,y:.36,w:.07,h:.52,fill:{color:accent},line:{color:accent}}},...logoObjects,
-      {line:{x:.5,y:6.98,w:PPT_W-1,h:0,line:{color:PPT_COLOR.hair,width:.75}}},
+    objects:[...logoObjects,
+      {line:{x:.5,y:6.98,w:PPT_W-1,h:0,line:{color:accent==='1D1D1F'?PPT_COLOR.hair:accent,width:.75}}},
       {text:{text:pptBoundText(footer,10.9,PPT_TYPE.caption),options:{x:.5,y:7.04,w:11.1,h:.26,fontFace:font,fontSize:PPT_TYPE.caption,color:PPT_COLOR.muted,valign:'middle',margin:0}}},
-      {placeholder:{options:{name:'slide-title',type:'title',x:.72,y:.27,w:titleW,h:.95,fontFace:font,fontSize:PPT_TYPE.title,bold:true,color:PPT_COLOR.ink,valign:'top',margin:0,align:'left'},text:''}}],
+      {placeholder:{options:{name:'slide-title',type:'title',x:.5,y:.27,w:titleW,h:.95,fontFace:font,fontSize:PPT_TYPE.title,bold:true,color:PPT_COLOR.ink,valign:'top',margin:0,align:'left'},text:''}}],
     slideNumber:{x:12.33,y:7.04,w:.5,h:.26,fontFace:font,fontSize:PPT_TYPE.caption,color:PPT_COLOR.muted,align:'right'}});
   pptx.defineSlideMaster({title:'RS_TITLE',background:{color:'FFFFFF'},margin:[.5,.5,.5,.5],
-    objects:[{rect:{x:0,y:0,w:.32,h:PPT_H,fill:{color:accent},line:{color:accent}}},...(logo?[{image:{data:logo,x:1.1,y:.9,w:Math.min(3,.7*aspect),h:.7}}]:[]),
-]});
+    objects:logo?[{image:{data:logo,x:1.1,y:.9,w:Math.min(3,.7*aspect),h:.7}}]:[]});
 }
 function pptSlide(pptx,master='RS_CONTENT'){ const slide=pptx.addSlide({masterName:master}); PPT_SLIDES.push(slide); return slide; }
 // Titles are action titles generated from the data; they wrap to two lines rather than shrink.
@@ -258,12 +257,12 @@ function addPptExecutiveSummarySlide(pptx){
   addGoalBlock(1.25,PPT_COLOR.ink,'IDENTIFIED OPPORTUNITY',gs.set?fmtGoalProgress(total,goal):fmtMoneyShort(total),gs.set?`${fmtMoneyShort(total)} identified toward the goal`:'Identified · no goal set','D1D1D6','identified',total);
   addGoalBlock(7.08,PPT_COLOR.savingsDark,'REALIZED',gs.set?fmtGoalProgress(t.Realized,goal):fmtMoneyShort(t.Realized),gs.set?`${fmtMoneyShort(t.Realized)} realized to date`:'Realized to date','DDF4E5','realized',t.Realized);
 
-  const barX=.76, barY=3.88, barW=11.82, barH=.64, axisMax=executiveMeasurementMax(total,goal,stretchGoal);
+  const barX=.76, barY=3.88, barW=11.82, barH=.64, axisMax=stretchGoal||executiveMeasurementMax(total,goal);
   const X=value=>barX+Math.max(0,Math.min(1,value/axisMax))*barW;
   // Same six-segment bar as the web tracker: Realized, Active remaining, Proposed remaining, each split Savings/Avoidance.
   slide.addShape('roundRect',{x:barX,y:barY,w:barW,h:barH,rectRadius:.08,fill:{color:PPT_COLOR.grey2},line:{color:PPT_COLOR.grey2},objectName:'executive-bar-track'});
   let cursor=0;const segments=[];
-  data.segments.forEach(seg=>{const start=X(cursor),end=X(cursor+seg.value);cursor+=seg.value;if(end-start>.001)segments.push({start,end,seg,color:EXEC_COLORS[seg.stage][seg.type].slice(1).toUpperCase(),name:`executive-segment:${seg.stage}:${seg.type}`});});
+  data.segments.forEach(seg=>{const start=X(cursor),end=X(cursor+seg.value),shown=Math.min(seg.value,axisMax-cursor);cursor+=seg.value;if(end-start>.001)segments.push({start,end,seg,shown,color:EXEC_COLORS[seg.stage][seg.type].slice(1).toUpperCase(),name:`executive-segment:${seg.stage}:${seg.type}`});});
   const radius=.32;
   segments.forEach((s,index)=>{
     const width=Math.max(.01,s.end-s.start),first=index===0,last=index===segments.length-1&&Math.abs(s.end-(barX+barW))<.001,name=s.name;
@@ -273,21 +272,21 @@ function addPptExecutiveSummarySlide(pptx){
       if(last&&s.start>barX)slide.addShape('rect',{x:s.start,y:barY,w:Math.min(radius,width),h:barH,fill:{color:s.color},line:{color:s.color,transparency:100}});
     }else slide.addShape('rect',{x:s.start,y:barY,w:width,h:barH,fill:{color:s.color},line:{color:s.color,transparency:100},objectName:name});
   });
-  const markerPositions=[...(gs.set?[X(goal)]:[]),...(stretchGoal?[X(stretchGoal)]:[])];
+  const markerPositions=[...(gs.set&&goal<=axisMax?[X(goal)]:[]),...(stretchGoal?[X(stretchGoal)]:[])];
   // A label is placed only in the widest gap between goal markers inside its span, and only when it fits there.
   const placeLabel=(label,start,end,size,y,h,opts,avoidMarkers=true)=>{
     const edges=[start,...(avoidMarkers?markerPositions:[]).filter(x=>x>start&&x<end).sort((a,b)=>a-b),end],spaces=edges.slice(1).map((r,i)=>({start:edges[i],width:r-edges[i]})),room=spaces.sort((a,b)=>b.width-a.width)[0];
     if(end-start>.001&&room.width>=pptTextWidthIn(label,size,true)+.16)pptText(slide,label,room.start+.08,y,room.width-.16,h,size,{bold:true,align:'center',...opts});
   };
-  segments.forEach(s=>placeLabel(`${s.seg.type} ${fmtMoneyShort(s.seg.value)}`,s.start,s.end,12,barY+.18,.28,{color:s.seg.stage==='proposed'?PPT_COLOR.ink:white,objectName:`executive-segment-label:${s.seg.stage}:${s.seg.type}`}));
+  segments.forEach(s=>placeLabel(`${s.seg.type} ${fmtMoneyShort(s.shown)}`,s.start,s.end,12,barY+.18,.28,{color:s.seg.stage==='proposed'?PPT_COLOR.ink:white,objectName:`executive-segment-label:${s.seg.stage}:${s.seg.type}`}));
   let stageCursor=0;
   ['realized','approved','proposed'].forEach(stage=>{
-    const value=t.buckets[stage].Savings+t.buckets[stage].Avoidance,start=X(stageCursor),end=X(stageCursor+value);stageCursor+=value;
-    if(value)placeLabel(`${EXEC_STAGE_NAMES[stage]} · ${fmtMoneyShort(value)}`,start,end,14,3.46,.28,{color:PPT_COLOR.muted,objectName:`executive-stage-label:${stage}`},false); // above the bar, clear of the markers
+    const value=t.buckets[stage].Savings+t.buckets[stage].Avoidance,start=X(stageCursor),end=X(stageCursor+value),shown=Math.min(value,axisMax-stageCursor);stageCursor+=value;
+    if(shown>0)placeLabel(`${EXEC_STAGE_NAMES[stage]} · ${fmtMoneyShort(shown)}`,start,end,14,3.46,.28,{color:PPT_COLOR.muted,objectName:`executive-stage-label:${stage}`},false); // above the bar, clear of the markers
   });
   pptExecLegend(slide,.78,6.64);
   const targets=[];
-  if(gs.set)targets.push({kind:'goal',value:goal,x:X(goal),color:PPT_COLOR.ink,label:'GOAL'});
+  if(gs.set)targets.push({kind:'goal',value:goal,x:X(goal),color:PPT_COLOR.ink,label:goal>axisMax?'GOAL (OFF SCALE)':'GOAL'});
   if(stretchGoal)targets.push({kind:'stretch',value:stretchGoal,x:X(stretchGoal),color:PPT_COLOR.muted,label:'STRETCH GOAL'});
   targets.forEach(target=>{
     target.amount=fmtGoalMoney(target.value);
@@ -299,9 +298,11 @@ function addPptExecutiveSummarySlide(pptx){
     targets[1].labelX=Math.max(targets[1].labelX,targets[0].labelX+targets[0].w+.2);
   }
   targets.forEach(target=>{
-    addPptSafeLine(slide,target.x,barY-.1,target.x,barY+barH+.06,target.color,1.7,{objectName:`executive-${target.kind}-marker`,...(target.kind==='stretch'?{dashType:'dash'}:{})});
-    const anchor=Math.max(target.labelX+.04,Math.min(target.x,target.labelX+target.w-.04));
-    addPptSafeLine(slide,target.x,barY+barH+.06,anchor,4.62,target.color,.75);
+    if(target.value<=axisMax){
+      addPptSafeLine(slide,target.x,barY-.1,target.x,barY+barH+.06,target.color,1.7,{objectName:`executive-${target.kind}-marker`,...(target.kind==='stretch'?{dashType:'dash'}:{})});
+      const anchor=Math.max(target.labelX+.04,Math.min(target.x,target.labelX+target.w-.04));
+      addPptSafeLine(slide,target.x,barY+barH+.06,anchor,4.62,target.color,.75);
+    }
     pptText(slide,target.amount,target.labelX,4.66,target.w,.27,16,{bold:true,color:target.color,align:'right',objectName:`executive-${target.kind}-amount`});
     pptText(slide,target.label,target.labelX,4.97,target.w,.24,14,{bold:true,color:target.color,align:'right',objectName:`executive-${target.kind}-label`});
   });
@@ -313,6 +314,7 @@ function addPptExecutiveSummarySlide(pptx){
     addPptSafeLine(slide,x,axisY-.05,x,axisY,PPT_COLOR.muted,.75,{objectName:`executive-axis-tick:${i}`});
     pptText(slide,label,labelX,axisY+.08,w,.24,14,{color:PPT_COLOR.muted,align:i===0?'left':i===4?'right':'center',objectName:`executive-axis-label:${i}`});
   }
+  if(stretchGoal&&total>stretchGoal)pptText(slide,`${fmtMoneyShort(total-stretchGoal)} beyond stretch goal`,8.5,5.64,4.08,.17,PPT_TYPE.caption,{color:PPT_COLOR.muted,align:'right',objectName:'summary-stretch-overflow'});
   pptText(slide,`Savings ${fmtMoneyShort(t.Savings)}`,.78,5.82,4.0,.38,PPT_TYPE.metric,{bold:true,color:PPT_COLOR.savings});
   pptText(slide,`${fmtMoneyShort(t.RealizedSavings)} realized savings`,.78,6.24,4.0,.3,PPT_TYPE.body,{color:PPT_COLOR.savingsDark});
   pptText(slide,`Avoidance ${fmtMoneyShort(t.Avoidance)}`,5.05,5.82,4.3,.38,PPT_TYPE.metric,{bold:true,color:PPT_COLOR.avoidance});
@@ -320,7 +322,7 @@ function addPptExecutiveSummarySlide(pptx){
   pptText(slide,goalGapText(gs),9.5,5.82,3.08,.38,PPT_TYPE.metric,{bold:true,align:'right',objectName:'summary-gap'});
   const outsidePlan=actualsOutsidePlanText(t);
   if(outsidePlan)pptText(slide,outsidePlan,9.0,6.24,3.58,.3,PPT_TYPE.caption,{color:PPT_COLOR.muted,align:'right',wrap:true});
-  pptNote(slide,`Goal: ${gs.set?fmtMoney(goal):'No goal set'}.${stretchGoal?` Stretch goal entered independently: ${fmtMoney(stretchGoal)}. Stretch percentages use this amount, with no automatic multiplier.`:''} Identified value is lifetime planned Savings plus Avoidance for included initiatives (Active and Proposed), unweighted; this is the one goal basis used on every slide. The dollar scale matches the Executive Summary web tracker, from $0 to ${fmtGoalMoney(axisMax)}; the scale endpoint is not an additional goal.`);
+  pptNote(slide,`Goal: ${gs.set?fmtMoney(goal):'No goal set'}.${stretchGoal?` Stretch goal entered independently: ${fmtMoney(stretchGoal)}. Stretch percentages use this amount, with no automatic multiplier.`:''} Identified value is lifetime planned Savings plus Avoidance for included initiatives (Active and Proposed), unweighted; this is the one goal basis used on every slide. ${stretchGoal?`The bar stops at the entered stretch goal.${total>stretchGoal?` ${fmtMoney(total-stretchGoal)} of identified value is above the displayed scale.`:''}`:`The dollar scale matches the Executive Summary web tracker, from $0 to ${fmtGoalMoney(axisMax)}; the scale endpoint is not an additional goal.`}`);
   pptNote(slide,`Realized: ${fmtMoney(t.Realized)} (recorded actual dollars where entered, otherwise realization percentages or dated phases; never confidence-weighted). Cancelled initiatives contribute recorded actuals only. The bar matches the web tracker: each planned dollar appears once, as Realized, Active remaining, or Proposed remaining, each split Savings/Avoidance; realized value is capped at each included initiative's plan${outsidePlan?`; ${outsidePlan}`:''}.`);
 }
 

@@ -235,6 +235,30 @@ class WorkspaceAuditTests(unittest.TestCase):
                         self.assertLessEqual(abs(row["checkboxDelta"]), 1, row)
                         self.assertLessEqual(abs(row["numberDelta"]), 1, row)
 
+    def test_initiative_column_preserves_full_name_and_selection(self):
+        name = "An exceptionally long initiative name that should truncate cleanly in the grid"
+        self.page.evaluate("name => { S.items[0].name=name; renderAll(); }", name)
+        field = self.page.locator('#initGrid input[data-f=name]').first
+        self.assertEqual(field.input_value(), name)
+        self.assertEqual(field.get_attribute('title'), name)
+        self.assertEqual(field.evaluate("el => getComputedStyle(el).textOverflow"), 'ellipsis')
+        for width in (1440, 390):
+            self.page.set_viewport_size({"width": width, "height": 900})
+            geometry = self.page.evaluate("""() => {
+                const wrap=document.querySelector('.grid-wrap');
+                const row=wrap.querySelector('tbody tr'), select=row.cells[0], name=row.cells[1];
+                const measure=()=>({left:select.getBoundingClientRect().left,
+                    gap:name.getBoundingClientRect().left-select.getBoundingClientRect().right});
+                wrap.scrollLeft=0; const before=measure(); wrap.scrollLeft=230; const after=measure();
+                return {before,after,scroll:wrap.scrollLeft};
+            }""")
+            self.assertGreater(geometry['scroll'], 0)
+            self.assertLessEqual(abs(geometry['after']['gap']), 1)
+            if width == 1440:
+                self.assertLessEqual(abs(geometry['after']['left'] - geometry['before']['left']), 1)
+            else:
+                self.assertLess(geometry['after']['left'], geometry['before']['left'])
+
     def test_selection_checkbox_keyboard_and_header_state(self):
         checkbox = self.page.locator('table.grid tbody [data-ws-select]').first
         checkbox.focus()

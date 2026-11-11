@@ -5,6 +5,17 @@ Roadmap Studio releases are offline packages. They contain exactly the generated
 `SHA256SUMS`. Project files, test artifacts, source files, tasks, browser storage,
 credentials, and other user-entered data are never packaged.
 
+## 1.7.1 Initiative Grid and PowerPoint Polish
+
+Initiative names have more room, show an ellipsis when shortened, and expose
+the full name on hover. Desktop keeps the row selector and initiative name
+together while scrolling. On narrow screens both columns scroll normally.
+
+The PowerPoint Executive Summary bar ends at the entered stretch goal. If
+identified value exceeds it, the slide shows the excess separately. Without
+a stretch goal, the slide keeps the web tracker scale. The vertical title
+accents were removed from the cover and content slides.
+
 ## 1.7.0 Audit Release (2026-11)
 
 Implements the 1.6.7 audit: one totals path for every view and export, an explicit
