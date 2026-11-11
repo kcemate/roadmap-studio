@@ -34,6 +34,11 @@ jobs:
           node-version: '22'
       - name: Install axe-core (test only)
         run: npm install --prefix tasks/test-artifacts/tools --no-save axe-core@4.10.3
+      - name: Prepare the container for Firefox and Git verification
+        run: |
+          chown "$(id -u):$(id -g)" "$HOME"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git ls-files --error-unmatch index.html
       - name: Run all release gates
         run: python tasks/verify_all.py
       - name: Fail if the gate changed tracked files
