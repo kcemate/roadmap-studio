@@ -356,6 +356,34 @@ class FeatureTests(AppCase):
         self.assertIn('On Hold', body)
         self.assertEqual(self.js("projectionFinancialItems().map(i=>i.source.id).includes('c')"), False)
 
+    def test_cancelled_keeps_recorded_actuals_but_never_projects_the_plan(self):
+        self.open_project(project(items=[
+            item('active', realizedPct=10),
+            item('cancelled', status='Cancelled', actualValue=125000, actualAsOf='2026-06-01'),
+            item('avoidance', status='Cancelled', valueType='Avoidance', actualValue=25000),
+            item('future', status='Cancelled', actualValue=50000, actualAsOf='2026-07-01'),
+            item('estimate', status='Cancelled', realizedPct=50),
+            item('excluded', status='Cancelled', includeInTotals=False, actualValue=90000),
+        ], projectionTarget=2000000))
+        t = self.js('portfolioTotals()')
+        self.assertEqual((t['Total'], t['Remaining'], t['Realized'], t['RealizedInPlan']),
+                         (1000000, 900000, 250000, 100000))
+        self.assertEqual((t['RealizedSavings'], t['RealizedAvoidance']), (225000, 25000))
+        self.assertEqual(self.js('portfolioRollupData().groups[0].summary.realized'), 250000)
+        self.assertEqual(self.js('projectionFinancialItems().map(i=>i.source.id)'), ['active'])
+        self.assertEqual(self.js('projectionTotalsAt(projectionFinancialItems(), selectedProjectionEnd()).Realized'), 250000)
+        self.assertEqual(self.js("projectionSeries(projectionFinancialItems(), [new Date('2026-05-31'), new Date('2026-06-01'), new Date('2026-12-31')]).Realized"), [125000, 250000, 250000])
+        self.page.click('#segExec')
+        self.assertEqual(self.page.text_content('#execRealized'), '$250K')
+        self.page.click('#execRealized')
+        included = self.page.locator('#workspaceDrilldown tr[data-population=included]').all_inner_texts()
+        self.assertTrue(any('Item cancelled' in row and '$125K' in row for row in included), included)
+        self.assertFalse(any('Item excluded' in row for row in included), included)
+        self.js('closeWorkspaceDrilldown()')
+        summary = next(s for s in slide_texts(self.pptx()) if 'IDENTIFIED OPPORTUNITY' in s)
+        self.assertIn('$250K realized to date', summary)
+        self.assertIn('$150K of actuals outside the identified plan', summary)
+
     def test_G11_filtered_export(self):
         self.open_project(project(projectionTarget=5000000))
         self.page.click('#segData')

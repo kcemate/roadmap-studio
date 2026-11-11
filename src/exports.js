@@ -318,9 +318,10 @@ function addPptExecutiveSummarySlide(pptx){
   pptText(slide,`Avoidance ${fmtMoneyShort(t.Avoidance)}`,5.05,5.82,4.3,.38,PPT_TYPE.metric,{bold:true,color:PPT_COLOR.avoidance});
   pptText(slide,`${fmtMoneyShort(t.RealizedAvoidance)} realized avoidance`,5.05,6.24,4.3,.3,PPT_TYPE.body,{color:PPT_COLOR.avoidanceDark});
   pptText(slide,goalGapText(gs),9.5,5.82,3.08,.38,PPT_TYPE.metric,{bold:true,align:'right',objectName:'summary-gap'});
-  if(t.RealizedBeyondPlan>0)pptText(slide,`${fmtMoneyShort(t.RealizedBeyondPlan)} of actuals exceed plan and are not added to identified value`,9.0,6.24,3.58,.3,PPT_TYPE.caption,{color:PPT_COLOR.muted,align:'right',wrap:true});
+  const outsidePlan=actualsOutsidePlanText(t);
+  if(outsidePlan)pptText(slide,outsidePlan,9.0,6.24,3.58,.3,PPT_TYPE.caption,{color:PPT_COLOR.muted,align:'right',wrap:true});
   pptNote(slide,`Goal: ${gs.set?fmtMoney(goal):'No goal set'}.${stretchGoal?` Stretch goal entered independently: ${fmtMoney(stretchGoal)}. Stretch percentages use this amount, with no automatic multiplier.`:''} Identified value is lifetime planned Savings plus Avoidance for included initiatives (Active and Proposed), unweighted; this is the one goal basis used on every slide. The dollar scale matches the Executive Summary web tracker, from $0 to ${fmtGoalMoney(axisMax)}; the scale endpoint is not an additional goal.`);
-  pptNote(slide,`Realized: ${fmtMoney(t.Realized)} (recorded actual dollars where entered, otherwise realization percentages or dated phases; never confidence-weighted). The bar matches the web tracker: each planned dollar appears once, as Realized, Active remaining, or Proposed remaining, each split Savings/Avoidance; realized value is capped at each initiative's plan${t.RealizedBeyondPlan>0?`; ${fmtMoney(t.RealizedBeyondPlan)} of actuals exceed plan`:''}.`);
+  pptNote(slide,`Realized: ${fmtMoney(t.Realized)} (recorded actual dollars where entered, otherwise realization percentages or dated phases; never confidence-weighted). Cancelled initiatives contribute recorded actuals only. The bar matches the web tracker: each planned dollar appears once, as Realized, Active remaining, or Proposed remaining, each split Savings/Avoidance; realized value is capped at each included initiative's plan${outsidePlan?`; ${outsidePlan}`:''}.`);
 }
 
 /* ---------- 3. bridge to goal (native, editable waterfall) ---------- */
@@ -344,7 +345,8 @@ function addPptBridgeSlide(pptx){
   if(gs.set)rows.push([gs.gap>0?'Gap to goal':'Above goal',Math.abs(gs.gap),gs.gap>0?PPT_COLOR.grey1:PPT_COLOR.savings],['Goal',gs.goal,PPT_COLOR.muted]);
   let y=1.7;rows.forEach(([label,amount,color])=>{slide.addShape('rect',{x:9.35,y:y+.08,w:.16,h:.16,fill:{color},line:{color:PPT_COLOR.grey1,width:.5}});
     pptText(slide,label,9.62,y,2.0,.32,PPT_TYPE.body,{color:PPT_COLOR.ink});pptText(slide,fmtMoneyShort(amount),11.4,y,1.43,.32,PPT_TYPE.body,{bold:true,align:'right',objectName:`bridge-value:${label}`});y+=.5;});
-  if(t.RealizedBeyondPlan>0){pptText(slide,`Realized to date is ${fmtMoneyShort(t.Realized)}: ${fmtMoneyShort(t.RealizedBeyondPlan)} of actuals exceed plan and are not added to identified value.`,9.35,y+.05,3.48,.6,PPT_TYPE.caption,{color:PPT_COLOR.muted,wrap:true,valign:'top'});y+=.7;}
+  const outsidePlan=actualsOutsidePlanText(t);
+  if(outsidePlan){pptText(slide,`Realized to date is ${fmtMoneyShort(t.Realized)}. ${outsidePlan}.`,9.35,y+.05,3.48,.6,PPT_TYPE.caption,{color:PPT_COLOR.muted,wrap:true,valign:'top'});y+=.7;}
   if(!gs.set)pptText(slide,'No goal set: enter a portfolio goal to show the gap.',9.35,y+.1,3.5,.5,PPT_TYPE.caption,{color:PPT_COLOR.muted,wrap:true,valign:'top'});
   pptNote(slide,`Bridge on the headline basis: identified planned value (Active + Proposed, lifetime, unweighted). Realized ${fmtMoney(realized)} is capped at each initiative's plan; Active remaining ${fmtMoney(active)}; Proposed remaining ${fmtMoney(proposed)}; Identified ${fmtMoney(t.Total)}.${gs.set?` Goal ${fmtMoney(gs.goal)}; ${gs.gap>0?`gap ${fmtMoney(gs.gap)}`:`above goal by ${fmtMoney(-gs.gap)}`}.`:' No goal set.'} The chart is a native stacked column chart with a transparent base series, so values stay editable.`);
 }

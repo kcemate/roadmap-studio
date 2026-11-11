@@ -17,14 +17,14 @@ const LABELS={
 const COLUMN_LABELS={name:'Initiative',pillar:'Pillar',ws:'Workstream',start:'Start',end:'End',mile:'Milestone',status:'Status',approval:'Approval',valueType:'Savings / Avoidance',value:'$ Value',include:'In totals',realized:'% Realized',confidence:'Confidence',owner:'Owner'};
 
 /* ---------- statuses ----------
-   Cancelled initiatives leave every financial total (they are listed with excluded value).
+   Cancelled initiatives leave the plan; explicitly recorded actuals still count.
    Blocked and On Hold stay in totals and are flagged for review. Unrecognized imported statuses
    load as Not Started, keep the original text in importedStatus, and are flagged for review. */
 const STATUSES=['Not Started','On Track','At Risk','Blocked','On Hold','Complete','Cancelled'];
 const STATUS_RULES={
   'Not Started':'In totals.','On Track':'In totals.','At Risk':'In totals; flagged as a risk.',
   'Blocked':'In totals; flagged for a decision.','On Hold':'In totals; flagged for review.','Complete':'In totals.',
-  'Cancelled':'Excluded from every financial total, projection, and goal measure.'
+  'Cancelled':'No planned value or forecast. Recorded actuals still count unless explicitly excluded.'
 };
 function recognizeStatus(v){
   const s=textOf(v).trim().toLowerCase().replace(/[\s_-]+/g,' ');
@@ -47,7 +47,10 @@ function isRiskStatus(status){ return ['At Risk','Blocked'].includes(normStatus(
 
 /* ---------- inclusion, timing, financial initiatives ---------- */
 function isIncludedInTotals(it){ return !it||(it.includeInTotals!==false&&statusCountsInTotals(it.status)); }
-function exclusionLabel(it){ return it.includeInTotals===false?'Excluded from portfolio totals':normStatus(it.status)==='Cancelled'?'Cancelled · excluded from totals':''; }
+function hasReportableActuals(it){
+  return it.includeInTotals!==false&&(statusCountsInTotals(it.status)||parseMoney(it.actualValue)!=='');
+}
+function exclusionLabel(it){ return it.includeInTotals===false?'Excluded from portfolio totals':normStatus(it.status)==='Cancelled'?'Cancelled · plan excluded':''; }
 function itemDates(it){
   const start=projectionDateOf(it,'start'),end=it.milestone?start:projectionDateOf(it,'end');
   return{start,end};
@@ -57,24 +60,30 @@ function itemDates(it){
 function isUndated(it){ const{start,end}=itemDates(it); return !start||!end||end<start; }
 /* A financial initiative is included in totals and carries planned value or recorded realization. */
 function isFinancialInitiative(it,date=reportingDate()){
-  return isIncludedInTotals(it)&&(itemValue(it)>0||Math.max(0,realizedItemValue(it,date))>0);
+  return totalItemValue(it)>0||totalRealizedItemValue(it,date)>0;
 }
 
 /* ---------- the single aggregation path ---------- */
 function emptyTotals(){
   return{Total:0,Savings:0,Avoidance:0,Approved:0,Proposed:0,Realized:0,RealizedSavings:0,RealizedAvoidance:0,
-    RealizedInPlan:0,RealizedBeyondPlan:0,Remaining:0,Expected:0,Undated:0,UndatedCount:0,Excluded:0,ExcludedCount:0,
+    RealizedInPlan:0,RealizedBeyondPlan:0,CancelledActuals:0,Remaining:0,Expected:0,Undated:0,UndatedCount:0,Excluded:0,ExcludedCount:0,
     Count:0,FinancialCount:0,Cost:0,Net:0,
     buckets:{realized:{Savings:0,Avoidance:0},approved:{Savings:0,Avoidance:0},proposed:{Savings:0,Avoidance:0}}};
 }
 function addItemToTotals(out,it,date){
   const value=itemValue(it);
-  if(!isIncludedInTotals(it)){out.Excluded+=value;out.ExcludedCount++;return;}
-  const type=normValueType(it.valueType),approval=approvalStatus(it),realized=Math.max(0,realizedItemValue(it,date));
+  const type=normValueType(it.valueType),realized=totalRealizedItemValue(it,date);
+  out.Realized+=realized;out['Realized'+type]+=realized;
+  if(!isIncludedInTotals(it)){
+    out.Excluded+=value;out.ExcludedCount++;out.CancelledActuals+=realized;
+    if(realized>0)out.FinancialCount++;
+    return;
+  }
+  const approval=approvalStatus(it);
   const inPlan=Math.min(value,realized),cost=parseMoney(it.cost)||0;
   out.Count++;if(value>0||realized>0)out.FinancialCount++;
   out.Total+=value;out[type]+=value;out[approval]+=value;
-  out.Realized+=realized;out['Realized'+type]+=realized;out.RealizedInPlan+=inPlan;out.RealizedBeyondPlan+=realized-inPlan;
+  out.RealizedInPlan+=inPlan;out.RealizedBeyondPlan+=realized-inPlan;
   out.Remaining+=value-inPlan;out.Expected+=value*parseConfidence(it.confidence)/100;
   out.buckets.realized[type]+=inPlan;out.buckets[approval==='Approved'?'approved':'proposed'][type]+=value-inPlan;
   out.Cost+=cost;out.Net+=value-cost;
@@ -82,6 +91,10 @@ function addItemToTotals(out,it,date){
 }
 function portfolioTotals(items=S.items,date=reportingDate()){
   const out=emptyTotals();items.forEach(it=>addItemToTotals(out,it,date));return out;
+}
+function actualsOutsidePlanText(t){
+  return t.CancelledActuals>0?`${fmtMoneyShort(t.CancelledActuals+t.RealizedBeyondPlan)} of actuals outside the identified plan`:
+    t.RealizedBeyondPlan>0?`${fmtMoneyShort(t.RealizedBeyondPlan)} of actuals exceed plan`:'';
 }
 // Retained name used by register, drilldown, and comparison code.
 function portfolioFinancialTotals(items=S.items,date=reportingDate()){ return portfolioTotals(items,date); }

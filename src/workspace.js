@@ -338,7 +338,7 @@ function financialTargetSpec(target){
   if(map[id])return map[id];
   if(target.matches('.stack-segment'))return{title:'Pillar contribution',metric:'planned',pillarId:target.dataset.pillar,type:target.dataset.series==='savings'?'Savings':null};
   if(target.matches('.rollup-bar'))return{title:'Pillar contribution',metric:'planned',pillarId:target.dataset.pillar,approval:target.dataset.approval};
-  if(target.matches('.exec-segment'))return{title:'Portfolio contribution',metric:target.dataset.stage==='realized'?'actual':'planned',approval:target.dataset.stage==='approved'?'Approved':target.dataset.stage==='proposed'?'Proposed':null,type:target.dataset.type};
+  if(target.matches('.exec-segment'))return{title:'Portfolio contribution',metric:target.dataset.stage==='realized'?'actual':'planned',inPlan:true,approval:target.dataset.stage==='approved'?'Approved':target.dataset.stage==='proposed'?'Proposed':null,type:target.dataset.type};
   if(target.matches('#projectionHoverCombined,#projectionHoverSavings,#projectionHoverRealized'))return id.includes('Realized')?{title:'Realized at the projection end',metric:'actual'}:{title:'Projection at the selected end date',metric:'projected',weighted,type:id.includes('Savings')?'Savings':null};
   return null;
 }
@@ -351,7 +351,7 @@ function drilldownMatches(item,spec){
 }
 
 function drilldownValue(item,spec){
-  if(spec.metric==='actual')return Math.max(0,realizedItemValue(item,reportingDate()));
+  if(spec.metric==='actual')return spec.inPlan?Math.min(itemValue(item),Math.max(0,realizedItemValue(item))):Math.max(0,realizedItemValue(item));
   if(spec.metric==='expected')return itemValue(item)*parseConfidence(item.confidence)/100;
   if(spec.metric==='annualized')return annualizedValue(item)*(spec.weighted?parseConfidence(item.confidence)/100:1);
   if(spec.metric==='projected'){const fin=projectionFinancialItems([item],{weightConfidence:!!spec.weighted})[0];return fin?projectedValueAt(fin,selectedProjectionEnd()):0;}
@@ -378,14 +378,15 @@ function openWorkspaceDrilldown(spec,trigger){
   const dialog=$('workspaceDrilldown'); if(!dialog||!spec)return;
   workspaceReturnFocus=trigger||document.activeElement;
   const matched=S.items.filter(item=>drilldownMatches(item,spec));
-  const included=matched.filter(isIncludedInTotals),excluded=matched.filter(item=>!isIncludedInTotals(item));
+  const counts=spec.metric==='actual'&&!spec.inPlan?hasReportableActuals:isIncludedInTotals;
+  const included=matched.filter(counts),excluded=matched.filter(item=>!counts(item));
   const undated=included.filter(isUndated);
   const showCosts=matched.some(item=>(parseMoney(item.cost)||0)>0);
   const reconciled=portfolioTotals(matched,reportingDate());
-  const total=spec.metric==='planned'?(spec.type?reconciled[spec.type]:spec.approval?reconciled[spec.approval]:reconciled.Total):spec.metric==='actual'?(spec.type?reconciled['Realized'+spec.type]:reconciled.Realized):included.reduce((sum,item)=>sum+drilldownValue(item,spec),0),asOf=reportingDate();
+  const total=spec.metric==='planned'?(spec.type?reconciled[spec.type]:spec.approval?reconciled[spec.approval]:reconciled.Total):spec.metric==='actual'&&!spec.inPlan?(spec.type?reconciled['Realized'+spec.type]:reconciled.Realized):included.reduce((sum,item)=>sum+drilldownValue(item,spec),0),asOf=reportingDate();
   $('workspaceDrilldownTitle').textContent=spec.title;
   $('workspaceDrilldownBody').innerHTML=`<div class="ws-drill-summary"><div><span>Included total</span><b>${esc(fmtMoneyShort(total))}</b></div><p>As of ${esc(fmtDate(asOf))}</p></div>
-    <p class="ws-formula"><b>Formula</b> Planned values use lifetime economics. Realized values are recorded actuals where entered, otherwise the realization schedule, and are never confidence-weighted. Excluded and Cancelled rows never enter the headline total.${spec.metric==='projected'?' Projected values count planned recognition through the selected projection end date; undated work cannot be projected.':''}${showCosts?' Net benefit equals lifetime planned value minus implementation cost.':''}</p>
+    <p class="ws-formula"><b>Formula</b> Planned values use lifetime economics. Realized values use recorded actuals where entered, otherwise the realization schedule, without confidence weighting. Excluded rows never count. Cancelled initiatives count only recorded actuals in realized totals.${spec.metric==='actual'&&spec.inPlan?' This bar segment shows realized value within the identified plan.':''}${spec.metric==='projected'?' Projected values count planned recognition through the selected projection end date; undated work cannot be projected.':''}${showCosts?' Net benefit equals lifetime planned value minus implementation cost.':''}</p>
     ${[['included','Included',included],['excluded','Excluded',excluded],['undated','Undated',undated]].map(([key,label,items])=>`<section class="ws-drill-group"><header><h4>${label}</h4><span>${items.length}</span></header>${items.length?`<table><thead><tr><th>Initiative</th><th>Value</th>${showCosts?'<th>Implementation cost</th><th>Net benefit</th>':''}<th>Calculation</th></tr></thead><tbody>${items.map(item=>drilldownRow(item,key,spec,showCosts)).join('')}</tbody></table>`:'<p>No initiatives in this population.</p>'}</section>`).join('')}`;
   dialog.querySelectorAll('[data-drill-item]').forEach(button=>button.onclick=()=>{ closeWorkspaceDrilldown(); openDrawer(button.dataset.drillItem); });
   if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');

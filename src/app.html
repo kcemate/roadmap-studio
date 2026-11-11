@@ -480,7 +480,7 @@ table.grid tr.excluded-from-totals td[data-total-cell]{background:#f5f5f7}
           <button type="button" class="btn" id="registerPpt">Register PowerPoint</button>
         </div>
       </div>
-      <p id="registerSummary"></p><p class="register-note">Totals exclude marked initiatives. All initiative values are shown.</p>
+      <p id="registerSummary"></p><p class="register-note">Excluded initiatives do not count. Cancelled initiatives count only recorded actuals. All initiative values are shown.</p>
       <div id="registerBody"></div>
     </div>
     <!-- ROADMAP -->
@@ -768,7 +768,7 @@ function itemValue(it){ const v=parseMoney(it.value); if(v===''||v<0)return 0;
   if(it.benefitKind==='recurring'&&it.valueBasis==='annual')return v*initiativeYears(it);
   return v; }
 function totalItemValue(it){ return isIncludedInTotals(it)?itemValue(it):0; }
-function totalRealizedItemValue(it,date=reportingDate()){ return isIncludedInTotals(it)?realizedItemValue(it,date):0; }
+function totalRealizedItemValue(it,date=reportingDate()){ return hasReportableActuals(it)?Math.max(0,realizedItemValue(it,date)):0; }
 function normApproval(v,status='Not Started'){
   const s=textOf(v).trim().toLowerCase();
   if(s==='approved'||s==='active')return'Approved';
@@ -1098,7 +1098,7 @@ function projectionTotalsAt(items,date){
     totals[it.type]+=v; totals.Combined+=v;
   });
   const actualDate=new Date(Math.min(date,reportingDate()));
-  totals.Realized=(items.sourceItems||items.map(i=>i.source)).filter(isIncludedInTotals).reduce((sum,it)=>sum+Math.max(0,realizedItemValue(it,actualDate)),0);
+  totals.Realized=(items.sourceItems||items.map(i=>i.source)).reduce((sum,it)=>sum+totalRealizedItemValue(it,actualDate),0);
   return totals;
 }
 /* Realization as a step function of date: [{t,delta}] whose running sum equals realizedItemValue(it,t). */
@@ -1129,7 +1129,7 @@ function projectionSeries(items,dates){
   ['Savings','Avoidance'].forEach(type=>{const a=acc[type];let step=0,slope=0,icpt=0;
     for(let i=0;i<n;i++){step+=a.step[i];slope+=a.slope[i];icpt+=a.icpt[i];out[type][i]=Math.max(0,step+slope*t[i]+icpt);}});
   const rep=reportingDate().getTime(),events=[];
-  (items.sourceItems||items.map(i=>i.source)).forEach(it=>{if(isIncludedInTotals(it))realizedSteps(it).forEach(e=>{if(e.t<=rep)events.push(e);});});
+  (items.sourceItems||items.map(i=>i.source)).forEach(it=>{if(hasReportableActuals(it))realizedSteps(it).forEach(e=>{if(e.t<=rep)events.push(e);});});
   events.sort((a,b)=>a.t-b.t);
   let k=0,realized=0;
   for(let i=0;i<n;i++){const limit=Math.min(dates[i].getTime(),rep);while(k<events.length&&events[k].t<=limit)realized+=events[k++].delta;out.Realized[i]=Math.max(0,realized);}
@@ -1417,6 +1417,7 @@ function bindExecutiveControls(){
   $('execStretchInput').onchange=()=>setGoalFromInput($('execStretchInput'),'stretchGoal','Stretch goal');
 }
 function realizedNoteText(t){
+  if(t.CancelledActuals>0)return actualsOutsidePlanText(t);
   if(t.RealizedBeyondPlan>0)return`${fmtMoneyShort(t.RealizedBeyondPlan)} beyond plan · not added to identified value`;
   return`${fmtPct(t.Total?t.RealizedInPlan/t.Total*100:0)} of identified value`;
 }
@@ -1489,13 +1490,18 @@ function renderExecutiveSummary(){
 
   const groupHtml=(stage,label)=>{ const rows=data.segments.filter(segment=>segment.stage===stage), value=rows.reduce((sum,row)=>sum+row.value,0);
     return`<div class="exec-breakdown-group"><h4>${esc(label)} · ${esc(fmtMoneyShort(value))}</h4>${rows.map(row=>`<div class="exec-breakdown-row"><span><i style="background:${row.color}"></i>${row.type}</span><b>${esc(fmtMoneyShort(row.value))}</b></div>`).join('')}</div>`; };
-  $('execBreakdown').innerHTML=groupHtml('realized','Realized')+groupHtml('approved','Active remaining')+groupHtml('proposed','Proposed remaining')+(t.RealizedBeyondPlan>0?`<p class="exec-beyond">${esc(fmtMoneyShort(t.RealizedBeyondPlan))} of recorded actuals exceed planned value. The bar shows each planned dollar once; the Realized total above includes every recorded dollar.</p>`:'');
+  const outsidePlan=actualsOutsidePlanText(t);
+  $('execBreakdown').innerHTML=groupHtml('realized','Realized')+groupHtml('approved','Active remaining')+groupHtml('proposed','Proposed remaining')+(outsidePlan?`<p class="exec-beyond">${esc(outsidePlan)}. The bar shows identified value; the Realized total above also includes these actuals.</p>`:'');
 }
 
 /* ============ PORTFOLIO ROLLUP ============ */
 // Rollup lanes aggregate included initiatives only; the time axis uses fiscal years like every other timeline.
 function portfolioRollupData(){
   const date=reportingDate();
+  const cancelledByPillar=new Map();
+  S.items.forEach(it=>{
+    if(!isIncludedInTotals(it))cancelledByPillar.set(it.pillarId,(cancelledByPillar.get(it.pillarId)||0)+totalRealizedItemValue(it,date));
+  });
   const items=S.items.filter(isIncludedInTotals).map(it=>{
     const{start,end}=itemDates(it),dated=!isUndated(it),value=itemValue(it),realized=Math.max(0,realizedItemValue(it,date));
     return{source:it,start:dated?start:null,end:dated?end:null,value,realized,realizedPct:value?clampPercent(Math.min(value,realized)/value*100):0,
@@ -1504,7 +1510,7 @@ function portfolioRollupData(){
   const groups=S.structure.map(p=>{
     const rows=items.filter(row=>row.source.pillarId===p.id);
     const bucket=()=>({count:0,value:0,Savings:0,Avoidance:0,realized:0,realizedPct:0,undated:0,undatedCount:0,scheduledCount:0,scheduledValue:0,scheduledRealized:0,scheduledSavings:0,scheduledAvoidance:0,start:null,end:null,items:[]});
-    const summary={Approved:bucket(),Proposed:bucket(),realized:0,total:0};
+    const summary={Approved:bucket(),Proposed:bucket(),realized:cancelledByPillar.get(p.id)||0,total:0};
     rows.forEach(row=>{ const b=summary[row.approval];
       b.count++; b.value+=row.value; b[row.type]+=row.value; b.realized+=row.realized; b.items.push(row.source);
       if(!row.start){b.undated+=row.value;b.undatedCount++;}
@@ -2072,7 +2078,7 @@ function gridRowHtml(it,ctx){
       <td style="${w('approval')}"><select class="cell-in" data-f="approval" aria-label="Approval">${selectOptions(ctx.approvalOptions,approvalStatus(it))}</select></td>
       <td style="${w('valueType')}"><select class="cell-in" data-f="valueType" aria-label="Savings or Avoidance">${selectOptions(ctx.typeOptions,normValueType(it.valueType))}</select></td>
       <td style="${w('value')}"><input class="cell-in money-in" data-f="value" inputmode="decimal"${cellValue('value',fmtMoney(it.value))} maxlength="40" aria-label="Savings or avoidance dollar value" placeholder="$0"${it.benefitKind==='recurring'&&it.valueBasis==='annual'?` title="Annual value · ${esc(fmtMoneyShort(itemValue(it)))} over the initiative"`:''}></td>
-      <td data-total-cell style="text-align:center;${w('include')}"><label class="total-switch" title="${flag?(status==='Cancelled'?'Cancelled initiatives are excluded from totals':'Included in portfolio financial totals'):'Excluded from portfolio financial totals'}"><input type="checkbox" data-f="includeInTotals" ${flag?'checked':''} aria-label="Include ${esc(it.name)} in portfolio totals"><span aria-hidden="true"></span></label></td>
+      <td data-total-cell style="text-align:center;${w('include')}"><label class="total-switch" title="${flag?(status==='Cancelled'?STATUS_RULES.Cancelled:'Included in portfolio financial totals'):'Excluded from portfolio financial totals'}"><input type="checkbox" data-f="includeInTotals" ${flag?'checked':''} aria-label="Include ${esc(it.name)} in portfolio totals"><span aria-hidden="true"></span></label></td>
       <td style="${w('realized')}"><input class="cell-in money-in" data-f="realizedPct" inputmode="decimal"${cellValue('realizedPct',rf.value)} ${rf.disabled?'disabled':''} maxlength="20" aria-label="Percentage realized" placeholder="0%" title="${esc(rf.title)}"></td>
       <td style="${w('confidence')}"><select class="cell-in" data-f="confidence" aria-label="Confidence">${confidenceOptions(conf)}</select></td>
       <td style="${w('owner')}"><input class="cell-in" data-f="owner" list="ownerList"${cellValue('owner',it.owner||'')} maxlength="120" aria-label="Owner"></td>

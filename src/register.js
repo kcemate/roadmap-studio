@@ -111,7 +111,7 @@ function addPptInitiativeRegister(pptx){
       });
       pptText(slide,REGISTER_HEADINGS[5],.56,5.6,2,.26,PPT_TYPE.caption,{bold:true,color:PPT_COLOR.muted});
       pptText(slide,registerPptLines(cells[5],12.2,font).join('\n'),.56,5.9,12.2,.7,font,{wrap:true,valign:'top',objectName:`register-row:${it.id}:5`});
-      pptText(slide,'Totals exclude marked and Cancelled initiatives. All initiative values are shown.',.5,6.68,8.5,.24,PPT_TYPE.caption,{color:PPT_COLOR.muted});
+      pptText(slide,'Excluded initiatives do not count. Cancelled initiatives count only recorded actuals.',.5,6.68,8.5,.24,PPT_TYPE.caption,{color:PPT_COLOR.muted});
       pptItemNotes(slide,[it]);return;
     }
     let x=.5;
@@ -123,7 +123,7 @@ function addPptInitiativeRegister(pptx){
       y+=row.h;addPptSafeLine(slide,.5,y,12.83,y,PPT_COLOR.hair,.5);
     });
     if(!page.rows.length)pptText(slide,'No initiatives yet.',.56,bodyTop+.2,10,.4,PPT_TYPE.body);
-    pptText(slide,'Totals exclude marked and Cancelled initiatives. All initiative values are shown.',.5,6.68,8.5,.24,PPT_TYPE.caption,{color:PPT_COLOR.muted});
+    pptText(slide,'Excluded initiatives do not count. Cancelled initiatives count only recorded actuals.',.5,6.68,8.5,.24,PPT_TYPE.caption,{color:PPT_COLOR.muted});
     pptItemNotes(slide,page.rows.map(row=>row.it));
   });
 }

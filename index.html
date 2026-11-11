@@ -707,7 +707,7 @@ input::placeholder,textarea::placeholder{color:#6e6e73;opacity:1}
           <button type="button" class="btn" id="registerPpt">Register PowerPoint</button>
         </div>
       </div>
-      <p id="registerSummary"></p><p class="register-note">Totals exclude marked initiatives. All initiative values are shown.</p>
+      <p id="registerSummary"></p><p class="register-note">Excluded initiatives do not count. Cancelled initiatives count only recorded actuals. All initiative values are shown.</p>
       <div id="registerBody"></div>
     </div>
     <!-- ROADMAP -->
@@ -934,14 +934,14 @@ const LABELS={
 const COLUMN_LABELS={name:'Initiative',pillar:'Pillar',ws:'Workstream',start:'Start',end:'End',mile:'Milestone',status:'Status',approval:'Approval',valueType:'Savings / Avoidance',value:'$ Value',include:'In totals',realized:'% Realized',confidence:'Confidence',owner:'Owner'};
 
 /* ---------- statuses ----------
-   Cancelled initiatives leave every financial total (they are listed with excluded value).
+   Cancelled initiatives leave the plan; explicitly recorded actuals still count.
    Blocked and On Hold stay in totals and are flagged for review. Unrecognized imported statuses
    load as Not Started, keep the original text in importedStatus, and are flagged for review. */
 const STATUSES=['Not Started','On Track','At Risk','Blocked','On Hold','Complete','Cancelled'];
 const STATUS_RULES={
   'Not Started':'In totals.','On Track':'In totals.','At Risk':'In totals; flagged as a risk.',
   'Blocked':'In totals; flagged for a decision.','On Hold':'In totals; flagged for review.','Complete':'In totals.',
-  'Cancelled':'Excluded from every financial total, projection, and goal measure.'
+  'Cancelled':'No planned value or forecast. Recorded actuals still count unless explicitly excluded.'
 };
 function recognizeStatus(v){
   const s=textOf(v).trim().toLowerCase().replace(/[\s_-]+/g,' ');
@@ -964,7 +964,10 @@ function isRiskStatus(status){ return ['At Risk','Blocked'].includes(normStatus(
 
 /* ---------- inclusion, timing, financial initiatives ---------- */
 function isIncludedInTotals(it){ return !it||(it.includeInTotals!==false&&statusCountsInTotals(it.status)); }
-function exclusionLabel(it){ return it.includeInTotals===false?'Excluded from portfolio totals':normStatus(it.status)==='Cancelled'?'Cancelled · excluded from totals':''; }
+function hasReportableActuals(it){
+  return it.includeInTotals!==false&&(statusCountsInTotals(it.status)||parseMoney(it.actualValue)!=='');
+}
+function exclusionLabel(it){ return it.includeInTotals===false?'Excluded from portfolio totals':normStatus(it.status)==='Cancelled'?'Cancelled · plan excluded':''; }
 function itemDates(it){
   const start=projectionDateOf(it,'start'),end=it.milestone?start:projectionDateOf(it,'end');
   return{start,end};
@@ -974,24 +977,30 @@ function itemDates(it){
 function isUndated(it){ const{start,end}=itemDates(it); return !start||!end||end<start; }
 /* A financial initiative is included in totals and carries planned value or recorded realization. */
 function isFinancialInitiative(it,date=reportingDate()){
-  return isIncludedInTotals(it)&&(itemValue(it)>0||Math.max(0,realizedItemValue(it,date))>0);
+  return totalItemValue(it)>0||totalRealizedItemValue(it,date)>0;
 }
 
 /* ---------- the single aggregation path ---------- */
 function emptyTotals(){
   return{Total:0,Savings:0,Avoidance:0,Approved:0,Proposed:0,Realized:0,RealizedSavings:0,RealizedAvoidance:0,
-    RealizedInPlan:0,RealizedBeyondPlan:0,Remaining:0,Expected:0,Undated:0,UndatedCount:0,Excluded:0,ExcludedCount:0,
+    RealizedInPlan:0,RealizedBeyondPlan:0,CancelledActuals:0,Remaining:0,Expected:0,Undated:0,UndatedCount:0,Excluded:0,ExcludedCount:0,
     Count:0,FinancialCount:0,Cost:0,Net:0,
     buckets:{realized:{Savings:0,Avoidance:0},approved:{Savings:0,Avoidance:0},proposed:{Savings:0,Avoidance:0}}};
 }
 function addItemToTotals(out,it,date){
   const value=itemValue(it);
-  if(!isIncludedInTotals(it)){out.Excluded+=value;out.ExcludedCount++;return;}
-  const type=normValueType(it.valueType),approval=approvalStatus(it),realized=Math.max(0,realizedItemValue(it,date));
+  const type=normValueType(it.valueType),realized=totalRealizedItemValue(it,date);
+  out.Realized+=realized;out['Realized'+type]+=realized;
+  if(!isIncludedInTotals(it)){
+    out.Excluded+=value;out.ExcludedCount++;out.CancelledActuals+=realized;
+    if(realized>0)out.FinancialCount++;
+    return;
+  }
+  const approval=approvalStatus(it);
   const inPlan=Math.min(value,realized),cost=parseMoney(it.cost)||0;
   out.Count++;if(value>0||realized>0)out.FinancialCount++;
   out.Total+=value;out[type]+=value;out[approval]+=value;
-  out.Realized+=realized;out['Realized'+type]+=realized;out.RealizedInPlan+=inPlan;out.RealizedBeyondPlan+=realized-inPlan;
+  out.RealizedInPlan+=inPlan;out.RealizedBeyondPlan+=realized-inPlan;
   out.Remaining+=value-inPlan;out.Expected+=value*parseConfidence(it.confidence)/100;
   out.buckets.realized[type]+=inPlan;out.buckets[approval==='Approved'?'approved':'proposed'][type]+=value-inPlan;
   out.Cost+=cost;out.Net+=value-cost;
@@ -999,6 +1008,10 @@ function addItemToTotals(out,it,date){
 }
 function portfolioTotals(items=S.items,date=reportingDate()){
   const out=emptyTotals();items.forEach(it=>addItemToTotals(out,it,date));return out;
+}
+function actualsOutsidePlanText(t){
+  return t.CancelledActuals>0?`${fmtMoneyShort(t.CancelledActuals+t.RealizedBeyondPlan)} of actuals outside the identified plan`:
+    t.RealizedBeyondPlan>0?`${fmtMoneyShort(t.RealizedBeyondPlan)} of actuals exceed plan`:'';
 }
 // Retained name used by register, drilldown, and comparison code.
 function portfolioFinancialTotals(items=S.items,date=reportingDate()){ return portfolioTotals(items,date); }
@@ -1142,7 +1155,7 @@ function itemValue(it){ const v=parseMoney(it.value); if(v===''||v<0)return 0;
   if(it.benefitKind==='recurring'&&it.valueBasis==='annual')return v*initiativeYears(it);
   return v; }
 function totalItemValue(it){ return isIncludedInTotals(it)?itemValue(it):0; }
-function totalRealizedItemValue(it,date=reportingDate()){ return isIncludedInTotals(it)?realizedItemValue(it,date):0; }
+function totalRealizedItemValue(it,date=reportingDate()){ return hasReportableActuals(it)?Math.max(0,realizedItemValue(it,date)):0; }
 function normApproval(v,status='Not Started'){
   const s=textOf(v).trim().toLowerCase();
   if(s==='approved'||s==='active')return'Approved';
@@ -1472,7 +1485,7 @@ function projectionTotalsAt(items,date){
     totals[it.type]+=v; totals.Combined+=v;
   });
   const actualDate=new Date(Math.min(date,reportingDate()));
-  totals.Realized=(items.sourceItems||items.map(i=>i.source)).filter(isIncludedInTotals).reduce((sum,it)=>sum+Math.max(0,realizedItemValue(it,actualDate)),0);
+  totals.Realized=(items.sourceItems||items.map(i=>i.source)).reduce((sum,it)=>sum+totalRealizedItemValue(it,actualDate),0);
   return totals;
 }
 /* Realization as a step function of date: [{t,delta}] whose running sum equals realizedItemValue(it,t). */
@@ -1503,7 +1516,7 @@ function projectionSeries(items,dates){
   ['Savings','Avoidance'].forEach(type=>{const a=acc[type];let step=0,slope=0,icpt=0;
     for(let i=0;i<n;i++){step+=a.step[i];slope+=a.slope[i];icpt+=a.icpt[i];out[type][i]=Math.max(0,step+slope*t[i]+icpt);}});
   const rep=reportingDate().getTime(),events=[];
-  (items.sourceItems||items.map(i=>i.source)).forEach(it=>{if(isIncludedInTotals(it))realizedSteps(it).forEach(e=>{if(e.t<=rep)events.push(e);});});
+  (items.sourceItems||items.map(i=>i.source)).forEach(it=>{if(hasReportableActuals(it))realizedSteps(it).forEach(e=>{if(e.t<=rep)events.push(e);});});
   events.sort((a,b)=>a.t-b.t);
   let k=0,realized=0;
   for(let i=0;i<n;i++){const limit=Math.min(dates[i].getTime(),rep);while(k<events.length&&events[k].t<=limit)realized+=events[k++].delta;out.Realized[i]=Math.max(0,realized);}
@@ -1791,6 +1804,7 @@ function bindExecutiveControls(){
   $('execStretchInput').onchange=()=>setGoalFromInput($('execStretchInput'),'stretchGoal','Stretch goal');
 }
 function realizedNoteText(t){
+  if(t.CancelledActuals>0)return actualsOutsidePlanText(t);
   if(t.RealizedBeyondPlan>0)return`${fmtMoneyShort(t.RealizedBeyondPlan)} beyond plan · not added to identified value`;
   return`${fmtPct(t.Total?t.RealizedInPlan/t.Total*100:0)} of identified value`;
 }
@@ -1863,13 +1877,18 @@ function renderExecutiveSummary(){
 
   const groupHtml=(stage,label)=>{ const rows=data.segments.filter(segment=>segment.stage===stage), value=rows.reduce((sum,row)=>sum+row.value,0);
     return`<div class="exec-breakdown-group"><h4>${esc(label)} · ${esc(fmtMoneyShort(value))}</h4>${rows.map(row=>`<div class="exec-breakdown-row"><span><i style="background:${row.color}"></i>${row.type}</span><b>${esc(fmtMoneyShort(row.value))}</b></div>`).join('')}</div>`; };
-  $('execBreakdown').innerHTML=groupHtml('realized','Realized')+groupHtml('approved','Active remaining')+groupHtml('proposed','Proposed remaining')+(t.RealizedBeyondPlan>0?`<p class="exec-beyond">${esc(fmtMoneyShort(t.RealizedBeyondPlan))} of recorded actuals exceed planned value. The bar shows each planned dollar once; the Realized total above includes every recorded dollar.</p>`:'');
+  const outsidePlan=actualsOutsidePlanText(t);
+  $('execBreakdown').innerHTML=groupHtml('realized','Realized')+groupHtml('approved','Active remaining')+groupHtml('proposed','Proposed remaining')+(outsidePlan?`<p class="exec-beyond">${esc(outsidePlan)}. The bar shows identified value; the Realized total above also includes these actuals.</p>`:'');
 }
 
 /* ============ PORTFOLIO ROLLUP ============ */
 // Rollup lanes aggregate included initiatives only; the time axis uses fiscal years like every other timeline.
 function portfolioRollupData(){
   const date=reportingDate();
+  const cancelledByPillar=new Map();
+  S.items.forEach(it=>{
+    if(!isIncludedInTotals(it))cancelledByPillar.set(it.pillarId,(cancelledByPillar.get(it.pillarId)||0)+totalRealizedItemValue(it,date));
+  });
   const items=S.items.filter(isIncludedInTotals).map(it=>{
     const{start,end}=itemDates(it),dated=!isUndated(it),value=itemValue(it),realized=Math.max(0,realizedItemValue(it,date));
     return{source:it,start:dated?start:null,end:dated?end:null,value,realized,realizedPct:value?clampPercent(Math.min(value,realized)/value*100):0,
@@ -1878,7 +1897,7 @@ function portfolioRollupData(){
   const groups=S.structure.map(p=>{
     const rows=items.filter(row=>row.source.pillarId===p.id);
     const bucket=()=>({count:0,value:0,Savings:0,Avoidance:0,realized:0,realizedPct:0,undated:0,undatedCount:0,scheduledCount:0,scheduledValue:0,scheduledRealized:0,scheduledSavings:0,scheduledAvoidance:0,start:null,end:null,items:[]});
-    const summary={Approved:bucket(),Proposed:bucket(),realized:0,total:0};
+    const summary={Approved:bucket(),Proposed:bucket(),realized:cancelledByPillar.get(p.id)||0,total:0};
     rows.forEach(row=>{ const b=summary[row.approval];
       b.count++; b.value+=row.value; b[row.type]+=row.value; b.realized+=row.realized; b.items.push(row.source);
       if(!row.start){b.undated+=row.value;b.undatedCount++;}
@@ -2446,7 +2465,7 @@ function gridRowHtml(it,ctx){
       <td style="${w('approval')}"><select class="cell-in" data-f="approval" aria-label="Approval">${selectOptions(ctx.approvalOptions,approvalStatus(it))}</select></td>
       <td style="${w('valueType')}"><select class="cell-in" data-f="valueType" aria-label="Savings or Avoidance">${selectOptions(ctx.typeOptions,normValueType(it.valueType))}</select></td>
       <td style="${w('value')}"><input class="cell-in money-in" data-f="value" inputmode="decimal"${cellValue('value',fmtMoney(it.value))} maxlength="40" aria-label="Savings or avoidance dollar value" placeholder="$0"${it.benefitKind==='recurring'&&it.valueBasis==='annual'?` title="Annual value · ${esc(fmtMoneyShort(itemValue(it)))} over the initiative"`:''}></td>
-      <td data-total-cell style="text-align:center;${w('include')}"><label class="total-switch" title="${flag?(status==='Cancelled'?'Cancelled initiatives are excluded from totals':'Included in portfolio financial totals'):'Excluded from portfolio financial totals'}"><input type="checkbox" data-f="includeInTotals" ${flag?'checked':''} aria-label="Include ${esc(it.name)} in portfolio totals"><span aria-hidden="true"></span></label></td>
+      <td data-total-cell style="text-align:center;${w('include')}"><label class="total-switch" title="${flag?(status==='Cancelled'?STATUS_RULES.Cancelled:'Included in portfolio financial totals'):'Excluded from portfolio financial totals'}"><input type="checkbox" data-f="includeInTotals" ${flag?'checked':''} aria-label="Include ${esc(it.name)} in portfolio totals"><span aria-hidden="true"></span></label></td>
       <td style="${w('realized')}"><input class="cell-in money-in" data-f="realizedPct" inputmode="decimal"${cellValue('realizedPct',rf.value)} ${rf.disabled?'disabled':''} maxlength="20" aria-label="Percentage realized" placeholder="0%" title="${esc(rf.title)}"></td>
       <td style="${w('confidence')}"><select class="cell-in" data-f="confidence" aria-label="Confidence">${confidenceOptions(conf)}</select></td>
       <td style="${w('owner')}"><input class="cell-in" data-f="owner" list="ownerList"${cellValue('owner',it.owner||'')} maxlength="120" aria-label="Owner"></td>
@@ -3019,7 +3038,7 @@ function addPptInitiativeRegister(pptx){
       });
       pptText(slide,REGISTER_HEADINGS[5],.56,5.6,2,.26,PPT_TYPE.caption,{bold:true,color:PPT_COLOR.muted});
       pptText(slide,registerPptLines(cells[5],12.2,font).join('\n'),.56,5.9,12.2,.7,font,{wrap:true,valign:'top',objectName:`register-row:${it.id}:5`});
-      pptText(slide,'Totals exclude marked and Cancelled initiatives. All initiative values are shown.',.5,6.68,8.5,.24,PPT_TYPE.caption,{color:PPT_COLOR.muted});
+      pptText(slide,'Excluded initiatives do not count. Cancelled initiatives count only recorded actuals.',.5,6.68,8.5,.24,PPT_TYPE.caption,{color:PPT_COLOR.muted});
       pptItemNotes(slide,[it]);return;
     }
     let x=.5;
@@ -3031,7 +3050,7 @@ function addPptInitiativeRegister(pptx){
       y+=row.h;addPptSafeLine(slide,.5,y,12.83,y,PPT_COLOR.hair,.5);
     });
     if(!page.rows.length)pptText(slide,'No initiatives yet.',.56,bodyTop+.2,10,.4,PPT_TYPE.body);
-    pptText(slide,'Totals exclude marked and Cancelled initiatives. All initiative values are shown.',.5,6.68,8.5,.24,PPT_TYPE.caption,{color:PPT_COLOR.muted});
+    pptText(slide,'Excluded initiatives do not count. Cancelled initiatives count only recorded actuals.',.5,6.68,8.5,.24,PPT_TYPE.caption,{color:PPT_COLOR.muted});
     pptItemNotes(slide,page.rows.map(row=>row.it));
   });
 }
@@ -3356,9 +3375,10 @@ function addPptExecutiveSummarySlide(pptx){
   pptText(slide,`Avoidance ${fmtMoneyShort(t.Avoidance)}`,5.05,5.82,4.3,.38,PPT_TYPE.metric,{bold:true,color:PPT_COLOR.avoidance});
   pptText(slide,`${fmtMoneyShort(t.RealizedAvoidance)} realized avoidance`,5.05,6.24,4.3,.3,PPT_TYPE.body,{color:PPT_COLOR.avoidanceDark});
   pptText(slide,goalGapText(gs),9.5,5.82,3.08,.38,PPT_TYPE.metric,{bold:true,align:'right',objectName:'summary-gap'});
-  if(t.RealizedBeyondPlan>0)pptText(slide,`${fmtMoneyShort(t.RealizedBeyondPlan)} of actuals exceed plan and are not added to identified value`,9.0,6.24,3.58,.3,PPT_TYPE.caption,{color:PPT_COLOR.muted,align:'right',wrap:true});
+  const outsidePlan=actualsOutsidePlanText(t);
+  if(outsidePlan)pptText(slide,outsidePlan,9.0,6.24,3.58,.3,PPT_TYPE.caption,{color:PPT_COLOR.muted,align:'right',wrap:true});
   pptNote(slide,`Goal: ${gs.set?fmtMoney(goal):'No goal set'}.${stretchGoal?` Stretch goal entered independently: ${fmtMoney(stretchGoal)}. Stretch percentages use this amount, with no automatic multiplier.`:''} Identified value is lifetime planned Savings plus Avoidance for included initiatives (Active and Proposed), unweighted; this is the one goal basis used on every slide. The dollar scale matches the Executive Summary web tracker, from $0 to ${fmtGoalMoney(axisMax)}; the scale endpoint is not an additional goal.`);
-  pptNote(slide,`Realized: ${fmtMoney(t.Realized)} (recorded actual dollars where entered, otherwise realization percentages or dated phases; never confidence-weighted). The bar matches the web tracker: each planned dollar appears once, as Realized, Active remaining, or Proposed remaining, each split Savings/Avoidance; realized value is capped at each initiative's plan${t.RealizedBeyondPlan>0?`; ${fmtMoney(t.RealizedBeyondPlan)} of actuals exceed plan`:''}.`);
+  pptNote(slide,`Realized: ${fmtMoney(t.Realized)} (recorded actual dollars where entered, otherwise realization percentages or dated phases; never confidence-weighted). Cancelled initiatives contribute recorded actuals only. The bar matches the web tracker: each planned dollar appears once, as Realized, Active remaining, or Proposed remaining, each split Savings/Avoidance; realized value is capped at each included initiative's plan${outsidePlan?`; ${outsidePlan}`:''}.`);
 }
 
 /* ---------- 3. bridge to goal (native, editable waterfall) ---------- */
@@ -3382,7 +3402,8 @@ function addPptBridgeSlide(pptx){
   if(gs.set)rows.push([gs.gap>0?'Gap to goal':'Above goal',Math.abs(gs.gap),gs.gap>0?PPT_COLOR.grey1:PPT_COLOR.savings],['Goal',gs.goal,PPT_COLOR.muted]);
   let y=1.7;rows.forEach(([label,amount,color])=>{slide.addShape('rect',{x:9.35,y:y+.08,w:.16,h:.16,fill:{color},line:{color:PPT_COLOR.grey1,width:.5}});
     pptText(slide,label,9.62,y,2.0,.32,PPT_TYPE.body,{color:PPT_COLOR.ink});pptText(slide,fmtMoneyShort(amount),11.4,y,1.43,.32,PPT_TYPE.body,{bold:true,align:'right',objectName:`bridge-value:${label}`});y+=.5;});
-  if(t.RealizedBeyondPlan>0){pptText(slide,`Realized to date is ${fmtMoneyShort(t.Realized)}: ${fmtMoneyShort(t.RealizedBeyondPlan)} of actuals exceed plan and are not added to identified value.`,9.35,y+.05,3.48,.6,PPT_TYPE.caption,{color:PPT_COLOR.muted,wrap:true,valign:'top'});y+=.7;}
+  const outsidePlan=actualsOutsidePlanText(t);
+  if(outsidePlan){pptText(slide,`Realized to date is ${fmtMoneyShort(t.Realized)}. ${outsidePlan}.`,9.35,y+.05,3.48,.6,PPT_TYPE.caption,{color:PPT_COLOR.muted,wrap:true,valign:'top'});y+=.7;}
   if(!gs.set)pptText(slide,'No goal set: enter a portfolio goal to show the gap.',9.35,y+.1,3.5,.5,PPT_TYPE.caption,{color:PPT_COLOR.muted,wrap:true,valign:'top'});
   pptNote(slide,`Bridge on the headline basis: identified planned value (Active + Proposed, lifetime, unweighted). Realized ${fmtMoney(realized)} is capped at each initiative's plan; Active remaining ${fmtMoney(active)}; Proposed remaining ${fmtMoney(proposed)}; Identified ${fmtMoney(t.Total)}.${gs.set?` Goal ${fmtMoney(gs.goal)}; ${gs.gap>0?`gap ${fmtMoney(gs.gap)}`:`above goal by ${fmtMoney(-gs.gap)}`}.`:' No goal set.'} The chart is a native stacked column chart with a transparent base series, so values stay editable.`);
 }
@@ -4457,7 +4478,7 @@ function financialTargetSpec(target){
   if(map[id])return map[id];
   if(target.matches('.stack-segment'))return{title:'Pillar contribution',metric:'planned',pillarId:target.dataset.pillar,type:target.dataset.series==='savings'?'Savings':null};
   if(target.matches('.rollup-bar'))return{title:'Pillar contribution',metric:'planned',pillarId:target.dataset.pillar,approval:target.dataset.approval};
-  if(target.matches('.exec-segment'))return{title:'Portfolio contribution',metric:target.dataset.stage==='realized'?'actual':'planned',approval:target.dataset.stage==='approved'?'Approved':target.dataset.stage==='proposed'?'Proposed':null,type:target.dataset.type};
+  if(target.matches('.exec-segment'))return{title:'Portfolio contribution',metric:target.dataset.stage==='realized'?'actual':'planned',inPlan:true,approval:target.dataset.stage==='approved'?'Approved':target.dataset.stage==='proposed'?'Proposed':null,type:target.dataset.type};
   if(target.matches('#projectionHoverCombined,#projectionHoverSavings,#projectionHoverRealized'))return id.includes('Realized')?{title:'Realized at the projection end',metric:'actual'}:{title:'Projection at the selected end date',metric:'projected',weighted,type:id.includes('Savings')?'Savings':null};
   return null;
 }
@@ -4470,7 +4491,7 @@ function drilldownMatches(item,spec){
 }
 
 function drilldownValue(item,spec){
-  if(spec.metric==='actual')return Math.max(0,realizedItemValue(item,reportingDate()));
+  if(spec.metric==='actual')return spec.inPlan?Math.min(itemValue(item),Math.max(0,realizedItemValue(item))):Math.max(0,realizedItemValue(item));
   if(spec.metric==='expected')return itemValue(item)*parseConfidence(item.confidence)/100;
   if(spec.metric==='annualized')return annualizedValue(item)*(spec.weighted?parseConfidence(item.confidence)/100:1);
   if(spec.metric==='projected'){const fin=projectionFinancialItems([item],{weightConfidence:!!spec.weighted})[0];return fin?projectedValueAt(fin,selectedProjectionEnd()):0;}
@@ -4497,14 +4518,15 @@ function openWorkspaceDrilldown(spec,trigger){
   const dialog=$('workspaceDrilldown'); if(!dialog||!spec)return;
   workspaceReturnFocus=trigger||document.activeElement;
   const matched=S.items.filter(item=>drilldownMatches(item,spec));
-  const included=matched.filter(isIncludedInTotals),excluded=matched.filter(item=>!isIncludedInTotals(item));
+  const counts=spec.metric==='actual'&&!spec.inPlan?hasReportableActuals:isIncludedInTotals;
+  const included=matched.filter(counts),excluded=matched.filter(item=>!counts(item));
   const undated=included.filter(isUndated);
   const showCosts=matched.some(item=>(parseMoney(item.cost)||0)>0);
   const reconciled=portfolioTotals(matched,reportingDate());
-  const total=spec.metric==='planned'?(spec.type?reconciled[spec.type]:spec.approval?reconciled[spec.approval]:reconciled.Total):spec.metric==='actual'?(spec.type?reconciled['Realized'+spec.type]:reconciled.Realized):included.reduce((sum,item)=>sum+drilldownValue(item,spec),0),asOf=reportingDate();
+  const total=spec.metric==='planned'?(spec.type?reconciled[spec.type]:spec.approval?reconciled[spec.approval]:reconciled.Total):spec.metric==='actual'&&!spec.inPlan?(spec.type?reconciled['Realized'+spec.type]:reconciled.Realized):included.reduce((sum,item)=>sum+drilldownValue(item,spec),0),asOf=reportingDate();
   $('workspaceDrilldownTitle').textContent=spec.title;
   $('workspaceDrilldownBody').innerHTML=`<div class="ws-drill-summary"><div><span>Included total</span><b>${esc(fmtMoneyShort(total))}</b></div><p>As of ${esc(fmtDate(asOf))}</p></div>
-    <p class="ws-formula"><b>Formula</b> Planned values use lifetime economics. Realized values are recorded actuals where entered, otherwise the realization schedule, and are never confidence-weighted. Excluded and Cancelled rows never enter the headline total.${spec.metric==='projected'?' Projected values count planned recognition through the selected projection end date; undated work cannot be projected.':''}${showCosts?' Net benefit equals lifetime planned value minus implementation cost.':''}</p>
+    <p class="ws-formula"><b>Formula</b> Planned values use lifetime economics. Realized values use recorded actuals where entered, otherwise the realization schedule, without confidence weighting. Excluded rows never count. Cancelled initiatives count only recorded actuals in realized totals.${spec.metric==='actual'&&spec.inPlan?' This bar segment shows realized value within the identified plan.':''}${spec.metric==='projected'?' Projected values count planned recognition through the selected projection end date; undated work cannot be projected.':''}${showCosts?' Net benefit equals lifetime planned value minus implementation cost.':''}</p>
     ${[['included','Included',included],['excluded','Excluded',excluded],['undated','Undated',undated]].map(([key,label,items])=>`<section class="ws-drill-group"><header><h4>${label}</h4><span>${items.length}</span></header>${items.length?`<table><thead><tr><th>Initiative</th><th>Value</th>${showCosts?'<th>Implementation cost</th><th>Net benefit</th>':''}<th>Calculation</th></tr></thead><tbody>${items.map(item=>drilldownRow(item,key,spec,showCosts)).join('')}</tbody></table>`:'<p>No initiatives in this population.</p>'}</section>`).join('')}`;
   dialog.querySelectorAll('[data-drill-item]').forEach(button=>button.onclick=()=>{ closeWorkspaceDrilldown(); openDrawer(button.dataset.drillItem); });
   if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');

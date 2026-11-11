@@ -29,8 +29,8 @@ Earlier releases are summarized in [docs/releases.md](docs/releases.md).
 | Concept | Definition |
 | --- | --- |
 | Identified value | Included lifetime Savings plus Avoidance, Active and Proposed, unweighted. Undated work stays in the total. This is the one basis for every goal comparison. |
-| Included | An initiative counts in totals unless it is marked "Excluded from portfolio totals" or its status is Cancelled. |
-| Statuses | Not Started, On Track, At Risk, Blocked, On Hold, Complete: in totals. Cancelled: excluded from every total, projection, and goal measure. At Risk and Blocked are flagged as risks; Blocked and On Hold appear in Review under "Needs a decision". |
+| Included | "Excluded from portfolio totals" removes both planned and realized dollars. Cancelled status removes the plan but keeps recorded actuals in realized totals. |
+| Statuses | Not Started, On Track, At Risk, Blocked, On Hold, Complete: in totals. Cancelled: no identified opportunity or planned projection; only recorded actual dollars count as realized, starting at their as-of date. Percentage estimates and scheduled phases do not count after cancellation. At Risk and Blocked are flagged as risks; Blocked and On Hold appear in Review under "Needs a decision". |
 | Financial initiative | An included initiative with planned value or recorded realization. Initiative counts on financial views use this definition. |
 | Undated | No start, no end (unless a milestone), or an end before the start. Undated work cannot be projected or placed on a timeline. |
 | Goal | A positive dollar amount. Blank or zero means "No goal set". Gap = goal − identified value. |
