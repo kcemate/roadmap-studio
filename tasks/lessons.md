@@ -24,3 +24,4 @@
 - Playwright `wait_for_function` with a plain string re-evaluates it with `eval`, which the app's CSP blocks; pass a function expression instead.
 - Check adjacent sticky table columns together after horizontal scrolling on desktop and mobile. Make truncated editable names identifiable without losing their full value.
 - When PowerPoint has an entered stretch goal, use it as the bar endpoint, disclose excess above the scale, and check inherited slide-master shapes when removing repeated title decorations.
+- Check rendered row separators through the pinned columns; collapsed table borders can paint underneath sticky cells. Use a shared stretch scale rule across the web tracker and PowerPoint so an endpoint change reaches both.

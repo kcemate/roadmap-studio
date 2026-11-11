@@ -2,6 +2,7 @@
 """Regression coverage for the workspace audit upgrade."""
 
 import copy
+import io
 import json
 import os
 import subprocess
@@ -9,6 +10,7 @@ import unittest
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
+from PIL import Image
 
 from test_paths import require_current_build
 from verify_release import source_version
@@ -258,6 +260,25 @@ class WorkspaceAuditTests(unittest.TestCase):
                 self.assertLessEqual(abs(geometry['after']['left'] - geometry['before']['left']), 1)
             else:
                 self.assertLess(geometry['after']['left'], geometry['before']['left'])
+
+    def test_pinned_initiative_row_dividers_are_visible(self):
+        self.page.set_viewport_size({"width": 1440, "height": 1000})
+        for scroll in (0, 110):
+            sample = self.page.evaluate("""scroll => {
+                const wrap=document.querySelector('.grid-wrap');
+                wrap.scrollLeft=scroll;
+                const row=wrap.querySelector('tbody tr');
+                const [select,name]=[...row.cells].map(cell=>cell.getBoundingClientRect());
+                return {y:Math.round(name.bottom), xs:[Math.ceil(select.left)+5,
+                    Math.ceil(name.left)+10, Math.ceil(name.right)+24]};
+            }""", scroll)
+            image = Image.open(io.BytesIO(self.page.screenshot(scale='css'))).convert('RGB')
+            y = sample['y']
+            lines = [line for line in range(y-2, y+1) if all(
+                sum(image.getpixel((x,line))) < sum(image.getpixel((x,y-5)))-20
+                for x in sample['xs']
+            )]
+            self.assertTrue(lines, f"Row divider disappears across pinned cells at scrollLeft={scroll}")
 
     def test_selection_checkbox_keyboard_and_header_state(self):
         checkbox = self.page.locator('table.grid tbody [data-ws-select]').first

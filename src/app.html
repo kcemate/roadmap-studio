@@ -191,7 +191,8 @@ svg text{user-select:none}
 .tip b{font-size:13px;display:block;margin-bottom:2px}.tip .t2{color:#a1a1a6}
 
 .grid-wrap{border:1px solid var(--hairline);border-radius:var(--radius-card);background:var(--surface);box-shadow:var(--shadow-card);overflow:auto}
-table.grid{width:100%;border-collapse:collapse;font-size:13px;min-width:1400px}
+/* Keep row dividers attached to their cells when the header and name columns stick. */
+table.grid{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:1400px}
 table.grid th{position:sticky;top:0;background:var(--surface);z-index:5;text-align:left;font-size:11px;font-weight:600;
   letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);padding:12px 10px;border-bottom:1px solid var(--hairline)}
 table.grid td{border-bottom:1px solid var(--hairline);padding:4px 6px;vertical-align:middle}
@@ -672,7 +673,7 @@ table.grid tr.excluded-from-totals td[data-total-cell]{background:#f5f5f7}
 
 <script>
 "use strict";
-const APP_VERSION = '1.7.1';
+const APP_VERSION = '1.7.2';
 const DEFAULT_COL_WIDTHS = {name:260,pillar:150,ws:150,start:128,end:128,mile:52,status:118,approval:112,valueType:120,value:120,include:88,realized:90,confidence:88,owner:110};
 const emptyFilters = () => ({q:'',status:'',owner:'',pillarId:'',valueType:''});
 const S = { view:'start', structure:[], items:[], collapsedPillars:{}, fyStart:6, tab:'struct', projectionEnd:null, projectionTarget:'', stretchGoal:'', projectionShowRealized:true,
@@ -1399,7 +1400,7 @@ function executiveSummaryData(items=S.items){
 function executiveGoalValue(){ return portfolioGoal(); }
 function executiveStretchGoalValue(){ return portfolioStretchGoal(); }
 function executiveMeasurementMax(total,goal=executiveGoalValue(),stretch=executiveStretchGoalValue()){
-  return niceProjectionMax(Math.max(total,goal||0,stretch||0));
+  return stretch||niceProjectionMax(Math.max(total,goal||0));
 }
 /* Goal amounts are shown as entered: compact only when the compact form is exact ($1.75B, $1.5M), otherwise full
    dollars ($1,500,001). Headlines and gaps use the shared three-significant-figure rule. */
@@ -1459,31 +1460,38 @@ function renderExecutiveSummary(){
   svg+=`<rect x="${L}" y="${barY}" width="${plotW}" height="${barH}" rx="11" fill="#f1f1f3"/>`;
   let cursor=0;
   data.segments.forEach(segment=>{
-    const x=X(cursor), width=Math.max(0,X(cursor+segment.value)-x), ink=segment.stage==='proposed'?'#1d1d1f':'#fff';
+    const x=X(cursor), width=Math.max(0,X(cursor+segment.value)-x), shown=Math.min(segment.value,axisMax-cursor), ink=segment.stage==='proposed'?'#1d1d1f':'#fff';
     const tip=`${segment.name} · ${segment.type}\n${fmtMoneyShort(segment.value)} · ${share(segment.value)} of portfolio`;
     svg+=`<rect class="exec-segment" data-stage="${segment.stage}" data-type="${segment.type}" data-value="${segment.value}" x="${x}" y="${barY}" width="${width}" height="${barH}" fill="${segment.color}" clip-path="url(#execBarClip)"><title>${esc(tip)}</title></rect>`;
-    if(segment.value&&width>=92)svg+=`<text x="${x+width/2}" y="${barY+34}" text-anchor="middle" font-size="11" font-weight="700" fill="${ink}" pointer-events="none">${esc(segment.type)} ${esc(fmtMoneyShort(segment.value))}</text>`;
+    const label=`${segment.type} ${fmtMoneyShort(shown)}`;
+    if(shown>0&&width>=measureTextPx(label,11,700)+12)svg+=`<text x="${x+width/2}" y="${barY+34}" text-anchor="middle" font-size="11" font-weight="700" fill="${ink}" pointer-events="none">${esc(label)}</text>`;
     cursor+=segment.value;
   });
   let stageCursor=0;
   ['realized','approved','proposed'].forEach(stage=>{
-    const value=t.buckets[stage].Savings+t.buckets[stage].Avoidance, x1=X(stageCursor), x2=X(stageCursor+value);
-    if(value&&x2-x1>=76)svg+=`<text x="${(x1+x2)/2}" y="${barY-15}" text-anchor="middle" font-size="11" font-weight="650" fill="#6e6e73">${EXEC_STAGE_NAMES[stage]} · ${esc(fmtMoneyShort(value))}</text>`;
+    const value=t.buckets[stage].Savings+t.buckets[stage].Avoidance, x1=X(stageCursor), x2=X(stageCursor+value), shown=Math.min(value,axisMax-stageCursor);
+    const label=`${EXEC_STAGE_NAMES[stage]} · ${fmtMoneyShort(shown)}`;
+    if(shown>0&&x2-x1>=measureTextPx(label,11,650)+10)svg+=`<text x="${(x1+x2)/2}" y="${barY-15}" text-anchor="middle" font-size="11" font-weight="650" fill="#6e6e73">${esc(label)}</text>`;
     stageCursor+=value;
   });
   const totalX=X(total);
   const labelX=(text,x,size=12)=>{const half=measureTextPx(text,size,750)/2+4;return Math.max(half,Math.min(W-half,x));};
   const targets=[];
-  if(gs.set)targets.push({id:'execGoalMarker',value:goal,label:'goal',color:'#1d1d1f',y:stretch?18:25});
+  if(gs.set)targets.push({id:'execGoalMarker',value:goal,label:goal>axisMax?'goal (off scale)':'goal',color:'#1d1d1f',y:stretch?18:25});
   if(stretch)targets.push({id:'execStretchMarker',value:stretch,label:'stretch goal',color:'#5d6168',y:gs.set?40:25});
   targets.forEach(target=>{
     const x=X(target.value),label=`${fmtGoalMoney(target.value)} ${target.label}`,top=targets.length>1?55:36;
-    svg+=`<g id="${target.id}" data-goal="${target.value}"><line x1="${x}" y1="${top}" x2="${x}" y2="${barY+barH+18}" stroke="${target.color}" stroke-width="2"${target.id==='execStretchMarker'?' stroke-dasharray="5 4"':''}/><path d="M ${x-5} ${top} L ${x+5} ${top} L ${x} ${top+7} Z" fill="${target.color}"/><text x="${labelX(label,x)}" y="${target.y}" text-anchor="middle" font-size="12" font-weight="750" fill="${target.color}">${esc(label)}</text></g>`;
+    const marker=target.value<=axisMax?`<line x1="${x}" y1="${top}" x2="${x}" y2="${barY+barH+18}" stroke="${target.color}" stroke-width="2"${target.id==='execStretchMarker'?' stroke-dasharray="5 4"':''}/><path d="M ${x-5} ${top} L ${x+5} ${top} L ${x} ${top+7} Z" fill="${target.color}"/>`:'';
+    svg+=`<g id="${target.id}" data-goal="${target.value}">${marker}<text x="${labelX(label,x)}" y="${target.y}" text-anchor="middle" font-size="12" font-weight="750" fill="${target.color}">${esc(label)}</text></g>`;
   });
-  svg+=`<line x1="${totalX}" y1="${barY+barH}" x2="${totalX}" y2="${barY+barH+11}" stroke="#1d1d1f" stroke-width="2"/><text x="${totalX}" y="${barY+barH+27}" text-anchor="middle" font-size="11" font-weight="700" fill="#1d1d1f">Current ${esc(fmtMoneyShort(total))}</text>`;
+  if(total<axisMax){
+    const label=`Current ${fmtMoneyShort(total)}`;
+    svg+=`<line x1="${totalX}" y1="${barY+barH}" x2="${totalX}" y2="${barY+barH+11}" stroke="#1d1d1f" stroke-width="2"/><text x="${labelX(label,totalX,11)}" y="${barY+barH+27}" text-anchor="middle" font-size="11" font-weight="700" fill="#1d1d1f">${esc(label)}</text>`;
+  }
   const tickCount=compact?2:4;
   for(let i=0;i<=tickCount;i++){ const value=axisMax*i/tickCount, x=X(value);
-    svg+=`<line x1="${x}" y1="${axisY-5}" x2="${x}" y2="${axisY}" stroke="#aeaeb2"/><text x="${x}" y="${axisY+17}" text-anchor="middle" font-size="10.5" fill="#6e6e73">${esc(fmtMoneyShort(value))}</text>`;
+    const label=stretch&&i===tickCount?fmtGoalMoney(stretch):fmtMoneyShort(value);
+    svg+=`<line x1="${x}" y1="${axisY-5}" x2="${x}" y2="${axisY}" stroke="#aeaeb2"/><text x="${labelX(label,x,10.5)}" y="${axisY+17}" text-anchor="middle" font-size="10.5" fill="#6e6e73">${esc(label)}</text>`;
   }
   svg+=`<line x1="${L}" y1="${axisY}" x2="${W-R}" y2="${axisY}" stroke="#d1d1d6"/></svg>`;
   $('execTrackerBody').innerHTML=svg;
@@ -1491,7 +1499,8 @@ function renderExecutiveSummary(){
   const groupHtml=(stage,label)=>{ const rows=data.segments.filter(segment=>segment.stage===stage), value=rows.reduce((sum,row)=>sum+row.value,0);
     return`<div class="exec-breakdown-group"><h4>${esc(label)} · ${esc(fmtMoneyShort(value))}</h4>${rows.map(row=>`<div class="exec-breakdown-row"><span><i style="background:${row.color}"></i>${row.type}</span><b>${esc(fmtMoneyShort(row.value))}</b></div>`).join('')}</div>`; };
   const outsidePlan=actualsOutsidePlanText(t);
-  $('execBreakdown').innerHTML=groupHtml('realized','Realized')+groupHtml('approved','Active remaining')+groupHtml('proposed','Proposed remaining')+(outsidePlan?`<p class="exec-beyond">${esc(outsidePlan)}. The bar shows identified value; the Realized total above also includes these actuals.</p>`:'');
+  const overflow=stretch&&total>stretch?`<p class="exec-beyond">${esc(fmtMoneyShort(total-stretch))} beyond stretch goal. Totals include the full portfolio.</p>`:'';
+  $('execBreakdown').innerHTML=groupHtml('realized','Realized')+groupHtml('approved','Active remaining')+groupHtml('proposed','Proposed remaining')+overflow+(outsidePlan?`<p class="exec-beyond">${esc(outsidePlan)}. The bar shows identified value within the scale; the Realized total above also includes these actuals.</p>`:'');
 }
 
 /* ============ PORTFOLIO ROLLUP ============ */

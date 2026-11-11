@@ -304,6 +304,26 @@ class AuditRegressionTests(unittest.TestCase):
         self.page.evaluate("setTab('exec')")
         self.assertEqual(self.page.inner_text('#execStretchAmount'),'$2.5M')
 
+    def test_web_bar_ends_at_exact_stretch_goal(self):
+        self.page.evaluate("S.projectionTarget=1500000;setTab('exec')")
+        for stretch, label in [('1500001', '$1,500,001'), ('1M', '$1M')]:
+            self.enter_stretch(stretch)
+            for width in (1440, 390):
+                self.page.set_viewport_size({'width':width,'height':900})
+                self.page.evaluate('renderExecutiveSummary()')
+                marker = self.page.evaluate("""() => {
+                    const bar=document.querySelector('#execBarClip rect');
+                    const line=document.querySelector('#execStretchMarker line');
+                    return {right:Number(bar.getAttribute('x'))+Number(bar.getAttribute('width')),
+                        marker:Number(line.getAttribute('x1'))};
+                }""")
+                self.assertAlmostEqual(marker['right'], marker['marker'], delta=.01)
+                self.assertEqual(self.page.locator('#execTrackerSvg text').last.text_content(), label)
+        self.assertIn('$370K beyond stretch goal', self.page.inner_text('#execBreakdown'))
+        self.assertIn('off scale', self.page.text_content('#execGoalMarker'))
+        self.assertEqual(self.page.locator('#execGoalMarker line').count(), 0)
+        self.assertEqual(self.page.text_content('#execTotal'), '$1.37M')
+
     def test_36_stretch_save_open_autosave_and_undo(self):
         self.page.evaluate("setTab('exec')");self.enter_stretch('2M')
         self.page.evaluate('undo()');self.assertEqual(self.page.evaluate('S.stretchGoal'),'')

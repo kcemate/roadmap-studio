@@ -257,7 +257,7 @@ function addPptExecutiveSummarySlide(pptx){
   addGoalBlock(1.25,PPT_COLOR.ink,'IDENTIFIED OPPORTUNITY',gs.set?fmtGoalProgress(total,goal):fmtMoneyShort(total),gs.set?`${fmtMoneyShort(total)} identified toward the goal`:'Identified · no goal set','D1D1D6','identified',total);
   addGoalBlock(7.08,PPT_COLOR.savingsDark,'REALIZED',gs.set?fmtGoalProgress(t.Realized,goal):fmtMoneyShort(t.Realized),gs.set?`${fmtMoneyShort(t.Realized)} realized to date`:'Realized to date','DDF4E5','realized',t.Realized);
 
-  const barX=.76, barY=3.88, barW=11.82, barH=.64, axisMax=stretchGoal||executiveMeasurementMax(total,goal);
+  const barX=.76, barY=3.88, barW=11.82, barH=.64, axisMax=executiveMeasurementMax(total,goal,stretchGoal);
   const X=value=>barX+Math.max(0,Math.min(1,value/axisMax))*barW;
   // Same six-segment bar as the web tracker: Realized, Active remaining, Proposed remaining, each split Savings/Avoidance.
   slide.addShape('roundRect',{x:barX,y:barY,w:barW,h:barH,rectRadius:.08,fill:{color:PPT_COLOR.grey2},line:{color:PPT_COLOR.grey2},objectName:'executive-bar-track'});

@@ -1,4 +1,4 @@
-# Roadmap Studio 1.7.1
+# Roadmap Studio 1.7.2
 
 A local-first app for turning strategic pillars, workstreams, and initiatives into an executive roadmap and a defensible financial story.
 

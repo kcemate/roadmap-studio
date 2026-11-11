@@ -5,6 +5,13 @@ Roadmap Studio releases are offline packages. They contain exactly the generated
 `SHA256SUMS`. Project files, test artifacts, source files, tasks, browser storage,
 credentials, and other user-entered data are never packaged.
 
+## 1.7.2 Row Dividers and Web Stretch Scale
+
+Initiative row dividers continue through the pinned selection and name columns.
+The web Executive Summary bar ends at the entered stretch goal, matching the
+PowerPoint export. Excess is shown separately, and reported totals are unchanged.
+Without a stretch goal, both views retain their automatic scale.
+
 ## 1.7.1 Initiative Grid and PowerPoint Polish
 
 Initiative names have more room, show an ellipsis when shortened, and expose

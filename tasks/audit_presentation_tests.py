@@ -249,17 +249,15 @@ def export_deck(browser, state, filename, scope="full", tab="road"):
         )
         deck = deck_data(path)
         page.evaluate("setTab('exec')")
-        deck['stretch_axis_labels'] = page.evaluate(
-            "Array.from({length:5},(_,i)=>fmtGoalMoney(executiveStretchGoalValue()*i/4))")
         deck['executive_axis'] = page.evaluate("""() => {
-            const maximum=niceProjectionMax(Math.max(executiveSummaryData().totals.Total,
-                executiveGoalValue(),executiveStretchGoalValue()||0));
+            const maximum=executiveStretchGoalValue()||niceProjectionMax(Math.max(
+                executiveSummaryData().totals.Total,executiveGoalValue()));
             const track=document.querySelector('#execBarClip rect');
             const ratio=id=>{
                 const marker=document.querySelector(`#${id} line`);
                 return track&&marker?(Number(marker.getAttribute('x1'))-Number(track.getAttribute('x')))/Number(track.getAttribute('width')):null;
             };
-            return {maximum,goalRatio:ratio('execGoalMarker'),stretchRatio:ratio('execStretchMarker'),
+            return {maximum,hasTrack:!!track,goalRatio:ratio('execGoalMarker'),stretchRatio:ratio('execStretchMarker'),
                 labels:Array.from({length:5},(_,i)=>fmtGoalMoney(maximum*i/4))};
         }""")
         return deck
@@ -378,7 +376,7 @@ def check_executive_measurement_axis(deck, total, expected_max=None, stretch=Non
     track = shapes.get('executive-bar-track')
     assert track, 'missing measurement bar track'
     labels = []
-    for i, label in enumerate(deck['stretch_axis_labels'] if stretch else web['labels']):
+    for i, label in enumerate(web['labels']):
         tick = shapes.get(f'executive-axis-tick:{i}')
         caption = shapes.get(f'executive-axis-label:{i}')
         assert tick and abs(tick['x']-(track['x']+track['w']*i/4)) < .001, tick
@@ -388,6 +386,12 @@ def check_executive_measurement_axis(deck, total, expected_max=None, stretch=Non
         labels.append(caption)
     for kind in ('goal', 'stretch'):
         ratio = ((1 if kind == 'stretch' else goal / scale) if stretch else web[f'{kind}Ratio'])
+        if stretch and web['hasTrack']:
+            observed = web[f'{kind}Ratio']
+            if ratio <= 1:
+                assert observed is not None and abs(observed-ratio) < .0001, (kind, web)
+            else:
+                assert observed is None, (kind, web)
         if ratio is not None and ratio <= 1:
             marker = shapes[f'executive-{kind}-marker']
             assert abs((marker['x']-track['x'])/track['w']-ratio) < .0001, (kind, marker, web)
