@@ -387,7 +387,8 @@ def check_executive_measurement_axis(deck, total, expected_max=None):
         marker = shapes.get(f'executive-{kind}-marker')
         if marker:
             for label in slide['shapes']:
-                if label['object_name'].startswith('executive-stage-label:'):
+                # Labels inside the bar must avoid the marker; stage labels sit above the marker's top end.
+                if label['object_name'].startswith(('executive-segment-label:', 'executive-stage-label:')) and label['y'] + label['h'] > marker['y']:
                     assert not label['x'] < marker['x'] < label['x']+label['w'], (
                         f"{kind} marker crosses {label['text']} bar label", marker, label)
     # 1.7.0 shares the web tracker's six stage colours (audit B28): realized, active remaining, proposed remaining.

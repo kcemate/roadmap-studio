@@ -256,6 +256,7 @@ table.grid tr.excluded-from-totals td[data-total-cell]{background:#f5f5f7}
 .grid-meta-row h2{font-size:22px;font-weight:600;letter-spacing:-.02em}
 
 /* ---------- health panel ---------- */
+.legend-pill{display:inline-block;padding:1px 7px;border-radius:8px;background:#eef0f3;color:#4b5058;font-size:10px;font-weight:650;margin-right:4px}
 .health-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
 .health-card{background:var(--surface);border:1px solid var(--hairline);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow-card);min-width:0}
 .health-card .hk{font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin-bottom:4px;display:flex;align-items:center;gap:6px}
@@ -363,7 +364,8 @@ table.grid tr.excluded-from-totals td[data-total-cell]{background:#f5f5f7}
 .exec-tracker-head p{font-size:11px;color:var(--ink2);margin-top:4px}
 .exec-key{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end;font-size:11px;color:var(--ink2)}
 .exec-key span{display:flex;align-items:center;gap:6px;white-space:nowrap}
-.exec-key i{display:inline-block;width:18px;height:7px;border-radius:3px}
+.exec-key i{display:inline-block;width:12px;height:9px;border-radius:2px}
+.exec-key i+i{margin-left:-4px}
 .exec-tracker-scroll{overflow-x:auto;overflow-y:hidden}
 .exec-tracker-svg{display:block;width:100%;height:auto}
 .exec-breakdown{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--hairline);margin-top:4px}
@@ -719,10 +721,12 @@ input::placeholder,textarea::placeholder{color:#6e6e73;opacity:1}
           <div class="legend">
             <span class="impact-stack" data-impact="savings"><i style="background:#188038"></i><span class="impact-main"><b class="total" id="savingsTotal">$0</b><span class="label">Savings</span></span><span class="impact-realized"><b class="total" id="realizedSavingsTotal">$0</b><span class="label">Realized</span></span></span>
             <span class="impact-stack" data-impact="avoidance"><i style="background:#2563eb"></i><span class="impact-main"><b class="total" id="avoidanceTotal">$0</b><span class="label">Avoidance</span></span><span class="impact-realized"><b class="total" id="realizedAvoidanceTotal">$0</b><span class="label">Realized</span></span></span>
-            <span><i style="background:#1d1d1f"></i>Not Started</span>
-            <span><i style="background:#fff;border:2px solid #b45309"></i>At Risk / Blocked border</span>
-            <span><i style="background:#1d1d1f;opacity:.5"></i>Complete / On Hold fade</span>
-            <span><i style="background:#1d1d1f;opacity:.25"></i>Cancelled</span>
+            <span><i style="background:#188038"></i>Savings planned</span>
+            <span><i style="background:#0e5a27"></i>Savings realized</span>
+            <span><i style="background:#2563eb"></i>Avoidance planned</span>
+            <span><i style="background:#1e3a8a"></i>Avoidance realized</span>
+            <span><i style="background:#fff;border:2px solid #b45309"></i>Amber outline = at risk or blocked</span>
+            <span><b class="legend-pill">Status</b>Pill = status</span>
           </div>
         </div>
       </div>
@@ -757,7 +761,7 @@ input::placeholder,textarea::placeholder{color:#6e6e73;opacity:1}
       <div class="exec-tracker-panel" id="execTrackerPanel">
         <div class="exec-tracker-head">
           <div><h3 id="execTrackerTitle">How the portfolio builds</h3><p>One reconciled path from captured value to the full opportunity.</p></div>
-          <div class="exec-key" aria-label="Tracker color key"><span><i style="background:#188038"></i>Savings</span><span><i style="background:#2563eb"></i>Avoidance</span><span><i style="background:#1d1d1f"></i>Darker = more certain</span></div>
+          <div class="exec-key" aria-label="Tracker color key"><span><i style="background:#0e5a27"></i><i style="background:#1e3a8a"></i>Realized</span><span><i style="background:#188038"></i><i style="background:#2563eb"></i>Active remaining</span><span><i style="background:#a8d5b5"></i><i style="background:#a9c1f5"></i>Proposed remaining</span><span>Green = Savings · Blue = Avoidance</span></div>
         </div>
         <div class="exec-tracker-scroll" id="execTrackerScroll"><div id="execTrackerBody"></div></div>
         <div class="exec-breakdown" id="execBreakdown"></div>
@@ -952,6 +956,8 @@ function recognizeStatus(v){
   if(/track|green|progress|active|underway|started|ongoing/.test(s))return'On Track';
   return null;
 }
+/* Status pills: [fill, text] used by the web roadmap and every slide, so status never depends on bar colour. */
+const STATUS_PILL={'Not Started':['EEF0F3','4B5058'],'On Track':['E6F4EA','0E5A27'],'At Risk':['FDF1E4','B45309'],'Blocked':['B45309','FFFFFF'],'On Hold':['EEF0F3','4B5058'],'Complete':['E8ECF2','33415C'],'Cancelled':['F4F4F5','8E8E93']};
 function normStatus(v){ return recognizeStatus(v)||'Not Started'; }
 function statusCountsInTotals(status){ return normStatus(status)!=='Cancelled'; }
 function isRiskStatus(status){ return ['At Risk','Blocked'].includes(normStatus(status)); }
@@ -1282,13 +1288,14 @@ function togglePillarCollapsed(id){ if(S.collapsedPillars[id])delete S.collapsed
 /* ---------- palette ---------- */
 function pal(){ const d=S.presenting&&S.dark;
   return d?{bg:'#070708',ink:'#f5f5f7',ink2:'#a1a1a6',hair:'rgba(255,255,255,.12)',band:'rgba(255,255,255,.05)',
-    accent:'#2997ff',risk:'#d97a2b',notFill:'#000000',notText:'#ffffff',
-    savings:'#30d158',savingsText:'#071a0b',avoidance:'#64d2ff',avoidanceText:'#07151c'}
+    accent:'#2997ff',risk:'#d97a2b',
+    savings:'#30d158',savingsDark:'#1a9e44',savingsText:'#071a0b',avoidance:'#64d2ff',avoidanceDark:'#2a9fd8',avoidanceText:'#07151c'}
   :{bg:'#ffffff',ink:'#1d1d1f',ink2:'#6e6e73',hair:'rgba(0,0,0,.09)',band:'rgba(0,0,0,.03)',
-    accent:'#0071e3',risk:'#b45309',notFill:'#1d1d1f',notText:'#ffffff',
-    savings:'#188038',savingsText:'#ffffff',avoidance:'#2563eb',avoidanceText:'#ffffff'}; }
-function valueColor(it,P){ if(normStatus(it.status)==='Not Started')return[P.notFill,P.notText];
-  return normValueType(it.valueType)==='Avoidance'?[P.avoidance,P.avoidanceText]:[P.savings,P.savingsText]; }
+    accent:'#0071e3',risk:'#b45309',
+    savings:'#188038',savingsDark:'#0e5a27',savingsText:'#ffffff',avoidance:'#2563eb',avoidanceDark:'#1e3a8a',avoidanceText:'#ffffff'}; }
+/* Roadmap marks: colour is the value type (planned, with a darker realized fill); status is the pill beside the mark. */
+function valueColor(it,P){
+  return normValueType(it.valueType)==='Avoidance'?[P.avoidance,P.avoidanceText,P.avoidanceDark]:[P.savings,P.savingsText,P.savingsDark]; }
 /* roadmapLabel defined near renderTimeline */
 
 /* ---------- screens ---------- */
@@ -2151,10 +2158,16 @@ function bindStructureDnD(root){
 /* ============ TIMELINE ============ */
 const GUTTER=236, AXIS_H=46, PILLAR_H=54, ROW_H=38, BAR_H=24, WS_PAD=7;
 // Packing returns lane numbers without writing temporary fields onto initiatives.
-function packItems(items){ const sorted=items.filter(i=>i.start).sort((a,b)=>a.start-b.start); const ends=[],lanes=new Map();
-  for(const it of sorted){ const s=it.start.getTime(), e=(it.milestone?addDays(it.start,16):(it.end||it.start)).getTime();
+// Lanes reserve room after each mark for its status pill (and a milestone's label start) so pills never collide.
+function packItems(items,pxDay=1){ const sorted=items.filter(i=>i.start).sort((a,b)=>a.start-b.start); const ends=[],lanes=new Map();
+  for(const it of sorted){ const s=it.start.getTime(),reserve=(statusPillWidth(it)+(it.milestone?30:10))/pxDay*MS_DAY,e=(it.milestone?it.start:(it.end||it.start)).getTime()+MS_DAY+reserve;
     let sub=ends.findIndex(x=>x<=s); if(sub===-1){sub=ends.length;ends.push(0);} ends[sub]=e+MS_DAY*5; lanes.set(it.id,sub); }
   return{count:Math.max(1,ends.length),lanes}; }
+function statusPillWidth(it){ return measureTextPx(normStatus(it.status),10,650)+12; }
+function statusPillMarkup(it,x,cy){
+  const st=normStatus(it.status),[fill,ink]=STATUS_PILL[st],w=statusPillWidth(it);
+  return`<g class="status-pill" data-status="${esc(st)}" pointer-events="none"><rect x="${x}" y="${cy-8}" width="${w}" height="16" rx="8" fill="#${fill}"/><text x="${x+w/2}" y="${cy+3.5}" text-anchor="middle" font-size="10" font-weight="650" fill="#${ink}">${esc(st)}</text></g>`;
+}
 const STATUS_COLORS={'Not Started':'#1d1d1f','On Track':'#188038','At Risk':'#b45309','Blocked':'#9a3412','On Hold':'#8e8e93','Complete':'#8e8e93','Cancelled':'#c7c7cc'};
 function healthSummary(){
   const out={}; STATUSES.forEach(s=>out[s]={count:0,value:0});
@@ -2209,18 +2222,21 @@ function timelineAxis(){
 }
 let TL_LAYOUT=null;
 function statusStyle(it,P){
-  const st=normStatus(it.status);
-  return{stroke:isRiskStatus(st)?` stroke="${P.risk}" stroke-width="${st==='Blocked'?3:2}"`:st==='On Hold'?` stroke="${P.ink2}" stroke-width="1.5" stroke-dasharray="4 3"`:'',
-    opacity:st==='Complete'||st==='On Hold'?'.62':st==='Cancelled'?'.3':'1'};
+  return{stroke:isRiskStatus(it.status)?` stroke="${P.risk}" stroke-width="2"`:''};
 }
 function timelineItemMarkup(it,y,P,X,W){
-  const col=valueColor(it,P),style=statusStyle(it,P),label=roadmapLabel(it);
-  if(it.milestone){ const sx=X(it.start),cy=y+BAR_H/2,r=7;
-    return`<g class="bar-grab" data-id="${esc(it.id)}" data-kind="move"><title>${esc(label)}</title><rect x="${sx-r}" y="${cy-r}" width="${r*2}" height="${r*2}" rx="2.5" transform="rotate(45 ${sx} ${cy})" fill="${col[0]}" opacity="${style.opacity}"${style.stroke||` stroke="${col[0]}" stroke-width="1.5"`}/><text x="${sx+13}" y="${cy+4}" font-size="12" fill="${P.ink}" pointer-events="none">${esc(fitSvgText(label,W-sx-20))}</text></g>`;
+  const col=valueColor(it,P),style=statusStyle(it,P),label=roadmapLabel(it),cy=y+BAR_H/2;
+  if(it.milestone){ const sx=X(it.start),r=7,pw=statusPillWidth(it);
+    return`<g class="bar-grab" data-id="${esc(it.id)}" data-kind="move"><title>${esc(label)}</title><rect x="${sx-r}" y="${cy-r}" width="${r*2}" height="${r*2}" rx="2.5" transform="rotate(45 ${sx} ${cy})" fill="${col[0]}"${style.stroke||` stroke="${col[0]}" stroke-width="1.5"`}/>${statusPillMarkup(it,sx+13,cy)}<text x="${sx+19+pw}" y="${cy+4}" font-size="12" fill="${P.ink}" pointer-events="none">${esc(fitSvgText(label,Math.max(0,W-sx-pw-26)))}</text></g>`;
   }
-  const sx=X(it.start),ex=X(addDays(it.end||it.start,1)),w=Math.max(ex-sx,8),fontSize=12,pad=Math.min(11,Math.max(2,w*.1));
-  const maxChars=Math.max(1,Math.floor(Math.max(4,w-pad*2)/(fontSize*.57))),displayLabel=fitSvgText(conciseRoadmapLabel(it,maxChars),w-pad*2,fontSize,500);
-  return`<g data-id="${esc(it.id)}"><rect class="bar-grab" data-id="${esc(it.id)}" data-kind="move" x="${sx}" y="${y}" width="${w}" height="${BAR_H}" rx="7" fill="${col[0]}" opacity="${style.opacity}"${style.stroke}/>`+
+  const sx=X(it.start),ex=X(addDays(it.end||it.start,1)),w=Math.max(ex-sx,8),fontSize=12,pad=Math.min(11,Math.max(2,w*.1)),pw=statusPillWidth(it);
+  // At the right edge of the timeline the pill moves inside the end of the bar instead of being clipped.
+  const pillInside=sx+w+6+pw>W-4&&w>=pw+24,pillX=pillInside?sx+w-pw-4:Math.min(sx+w+6,W-pw-2),textRoom=w-pad*2-(pillInside?pw+6:0);
+  const maxChars=Math.max(1,Math.floor(Math.max(4,textRoom)/(fontSize*.57))),displayLabel=fitSvgText(conciseRoadmapLabel(it,maxChars),textRoom,fontSize,500);
+  const value=itemValue(it),ratio=value?Math.min(1,Math.max(0,realizedItemValue(it,reportingDate()))/value):0,rw=ratio>0?Math.max(4,w*ratio):0;
+  return`<g data-id="${esc(it.id)}"><rect class="bar-grab" data-id="${esc(it.id)}" data-kind="move" x="${sx}" y="${y}" width="${w}" height="${BAR_H}" rx="7" fill="${col[0]}"${style.stroke}/>`+
+    (rw?`<rect class="bar-realized" data-id="${esc(it.id)}" x="${sx}" y="${y}" width="${rw}" height="${BAR_H}" rx="7" fill="${col[2]}"${style.stroke} pointer-events="none"/>`:'')+
+    statusPillMarkup(it,pillX,cy)+
     `<text class="bar-label" data-id="${esc(it.id)}" data-full-label="${esc(label)}" x="${sx+pad}" y="${y+BAR_H/2+4.5}" font-size="${fontSize}" font-weight="500" fill="${col[1]}" pointer-events="none">${esc(displayLabel)}</text>`+
     `<rect class="edge" data-id="${esc(it.id)}" data-kind="start" x="${sx-3}" y="${y}" width="8" height="${BAR_H}" fill="transparent"/><rect class="edge" data-id="${esc(it.id)}" data-kind="end" x="${sx+w-5}" y="${y}" width="8" height="${BAR_H}" fill="transparent"/></g>`;
 }
@@ -2245,7 +2261,7 @@ function renderTimeline(){
       const items=S.items.filter(i=>(i.owner||'Unassigned')===owner);
       const wlanes=[];
       if(!collapsed){
-        const pack=packItems(items);
+        const pack=packItems(items,axis.pxDay);
         const top=H, h=pack.count*ROW_H+WS_PAD; H+=h;
         wlanes.push({w:{name:items.length?countLabel(items.length,'initiative'):'No initiatives'},items,top,h,lanes:pack.lanes});
       }
@@ -2255,7 +2271,7 @@ function renderTimeline(){
     S.structure.forEach(p=>{ const pTop=H; H+=PILLAR_H;
       const collapsed=isPillarCollapsed(p.id), wlanes=[];
       if(!collapsed){
-        p.workstreams.forEach(w=>{ const items=itemsForWs(w.id); const pack=packItems(items);
+        p.workstreams.forEach(w=>{ const items=itemsForWs(w.id); const pack=packItems(items,axis.pxDay);
           const top=H, h=pack.count*ROW_H+WS_PAD; H+=h; wlanes.push({w,items,top,h,lanes:pack.lanes}); });
         if(!p.workstreams.length)H+=ROW_H;
       }
@@ -3029,7 +3045,7 @@ const PPT_COLOR={ink:'1D1D1F',muted:'5D6168',grey1:'C9CDD4',grey2:'EEF0F3',hair:
   savings:'188038',savingsDark:'0E5A27',savingsLight:'A8D5B5',avoidance:'2563EB',avoidanceDark:'1E3A8A',avoidanceLight:'A9C1F5',
   risk:'B45309',riskLight:'FDF1E4'};
 const PPT_STAGE_COLORS={realized:{Savings:PPT_COLOR.savingsDark,Avoidance:PPT_COLOR.avoidanceDark},approved:{Savings:PPT_COLOR.savings,Avoidance:PPT_COLOR.avoidance},proposed:{Savings:PPT_COLOR.savingsLight,Avoidance:PPT_COLOR.avoidanceLight}};
-const PPT_STATUS_PILL={'Not Started':['EEF0F3','4B5058'],'On Track':['E6F4EA','0E5A27'],'At Risk':[PPT_COLOR.riskLight,PPT_COLOR.risk],'Blocked':[PPT_COLOR.risk,'FFFFFF'],'On Hold':['EEF0F3','4B5058'],'Complete':['E8ECF2','33415C'],'Cancelled':['F4F4F5','8E8E93']};
+const PPT_STATUS_PILL=STATUS_PILL;
 let PPT_EXPORT_CONTEXT=null,PPT_SLIDES=[];
 
 function pptFont(){ return S.brand?.font||'Arial'; }
@@ -3256,6 +3272,14 @@ function addPptTitleSlide(pptx){
 }
 
 /* ---------- 2. one-page summary (approved composition: two centered blocks above one continuous bar) ---------- */
+/* The tracker key, shared with the web Executive Summary: one two-tone swatch per stage. */
+const EXEC_LEGEND=[['realized','Realized'],['approved','Active remaining'],['proposed','Proposed remaining']];
+function pptExecLegend(slide,x,y){
+  let cx=x;EXEC_LEGEND.forEach(([stage,label])=>{
+    ['Savings','Avoidance'].forEach((type,i)=>{const color=EXEC_COLORS[stage][type].slice(1).toUpperCase();slide.addShape('rect',{x:cx+i*.17,y:y+.06,w:.15,h:.13,fill:{color},line:{color}});});
+    pptText(slide,label,cx+.42,y,2.1,.24,PPT_TYPE.caption,{color:PPT_COLOR.muted});cx+=pptTextWidthIn(label,PPT_TYPE.caption)+.85;});
+  pptText(slide,'Green = Savings · Blue = Avoidance',cx,y,3.5,.24,PPT_TYPE.caption,{color:PPT_COLOR.muted});
+}
 function addPptExecutiveSummarySlide(pptx){
   const slide=pptSlide(pptx), data=executiveSummaryData(), t=data.totals, total=t.Total, gs=goalStatus(t), goal=gs.goal, stretchGoal=gs.stretch;
   const white='FFFFFF';
@@ -3274,15 +3298,10 @@ function addPptExecutiveSummarySlide(pptx){
 
   const barX=.76, barY=3.88, barW=11.82, barH=.64, axisMax=executiveMeasurementMax(total,goal,stretchGoal);
   const X=value=>barX+Math.max(0,Math.min(1,value/axisMax))*barW;
-  const realizedSavings=t.buckets.realized.Savings,realizedAvoidance=t.buckets.realized.Avoidance;
-  const legend=[[PPT_COLOR.savingsDark,'Realized savings',2.45],[PPT_COLOR.savings,'Savings remaining',2.45],[PPT_COLOR.avoidanceDark,'Realized avoidance',2.55],[PPT_COLOR.avoidance,'Avoidance remaining',2.65]];
-  [.78,3.8,6.78,9.9].forEach((lx,i)=>{const [color,label,w]=legend[i];slide.addShape('ellipse',{x:lx,y:3.42,w:.14,h:.14,fill:{color},line:{color}});pptText(slide,label,lx+.23,3.37,w,.28,16,{color:PPT_COLOR.muted});});
+  // Same six-segment bar as the web tracker: Realized, Active remaining, Proposed remaining, each split Savings/Avoidance.
   slide.addShape('roundRect',{x:barX,y:barY,w:barW,h:barH,rectRadius:.08,fill:{color:PPT_COLOR.grey2},line:{color:PPT_COLOR.grey2},objectName:'executive-bar-track'});
-  const savingsEnd=X(t.Savings),segments=[
-    {start:barX,end:X(realizedSavings),color:PPT_COLOR.savingsDark,name:'executive-segment:realized:Savings'},
-    {start:X(realizedSavings),end:savingsEnd,color:PPT_COLOR.savings,name:'executive-segment:remaining:Savings'},
-    {start:savingsEnd,end:X(t.Savings+realizedAvoidance),color:PPT_COLOR.avoidanceDark,name:'executive-segment:realized:Avoidance'},
-    {start:X(t.Savings+realizedAvoidance),end:X(total),color:PPT_COLOR.avoidance,name:'executive-segment:remaining:Avoidance'}].filter(s=>s.end-s.start>.001);
+  let cursor=0;const segments=[];
+  data.segments.forEach(seg=>{const start=X(cursor),end=X(cursor+seg.value);cursor+=seg.value;if(end-start>.001)segments.push({start,end,seg,color:EXEC_COLORS[seg.stage][seg.type].slice(1).toUpperCase(),name:`executive-segment:${seg.stage}:${seg.type}`});});
   const radius=.32;
   segments.forEach((s,index)=>{
     const width=Math.max(.01,s.end-s.start),first=index===0,last=index===segments.length-1&&Math.abs(s.end-(barX+barW))<.001,name=s.name;
@@ -3293,10 +3312,18 @@ function addPptExecutiveSummarySlide(pptx){
     }else slide.addShape('rect',{x:s.start,y:barY,w:width,h:barH,fill:{color:s.color},line:{color:s.color,transparency:100},objectName:name});
   });
   const markerPositions=[...(gs.set?[X(goal)]:[]),...(stretchGoal?[X(stretchGoal)]:[])];
-  [['SAVINGS',barX,savingsEnd],['AVOIDANCE',savingsEnd,X(total)]].forEach(([label,start,end])=>{
-    const edges=[start,...markerPositions.filter(x=>x>start&&x<end).sort((a,b)=>a-b),end],spaces=edges.slice(1).map((r,i)=>({start:edges[i],width:r-edges[i]})),room=spaces.sort((a,b)=>b.width-a.width)[0];
-    if(end-start>.001&&room.width>=pptTextWidthIn(label,18,true)+.24)pptText(slide,label,room.start+.12,barY+.17,room.width-.24,.3,18,{bold:true,color:white,align:'center',objectName:`executive-stage-label:${label}`});
+  // A label is placed only in the widest gap between goal markers inside its span, and only when it fits there.
+  const placeLabel=(label,start,end,size,y,h,opts,avoidMarkers=true)=>{
+    const edges=[start,...(avoidMarkers?markerPositions:[]).filter(x=>x>start&&x<end).sort((a,b)=>a-b),end],spaces=edges.slice(1).map((r,i)=>({start:edges[i],width:r-edges[i]})),room=spaces.sort((a,b)=>b.width-a.width)[0];
+    if(end-start>.001&&room.width>=pptTextWidthIn(label,size,true)+.16)pptText(slide,label,room.start+.08,y,room.width-.16,h,size,{bold:true,align:'center',...opts});
+  };
+  segments.forEach(s=>placeLabel(`${s.seg.type} ${fmtMoneyShort(s.seg.value)}`,s.start,s.end,12,barY+.18,.28,{color:s.seg.stage==='proposed'?PPT_COLOR.ink:white,objectName:`executive-segment-label:${s.seg.stage}:${s.seg.type}`}));
+  let stageCursor=0;
+  ['realized','approved','proposed'].forEach(stage=>{
+    const value=t.buckets[stage].Savings+t.buckets[stage].Avoidance,start=X(stageCursor),end=X(stageCursor+value);stageCursor+=value;
+    if(value)placeLabel(`${EXEC_STAGE_NAMES[stage]} · ${fmtMoneyShort(value)}`,start,end,14,3.46,.28,{color:PPT_COLOR.muted,objectName:`executive-stage-label:${stage}`},false); // above the bar, clear of the markers
   });
+  pptExecLegend(slide,.78,6.64);
   const targets=[];
   if(gs.set)targets.push({kind:'goal',value:goal,x:X(goal),color:PPT_COLOR.ink,label:'GOAL'});
   if(stretchGoal)targets.push({kind:'stretch',value:stretchGoal,x:X(stretchGoal),color:PPT_COLOR.muted,label:'STRETCH GOAL'});
@@ -3331,7 +3358,7 @@ function addPptExecutiveSummarySlide(pptx){
   pptText(slide,goalGapText(gs),9.5,5.82,3.08,.38,PPT_TYPE.metric,{bold:true,align:'right',objectName:'summary-gap'});
   if(t.RealizedBeyondPlan>0)pptText(slide,`${fmtMoneyShort(t.RealizedBeyondPlan)} of actuals exceed plan and are not added to identified value`,9.0,6.24,3.58,.3,PPT_TYPE.caption,{color:PPT_COLOR.muted,align:'right',wrap:true});
   pptNote(slide,`Goal: ${gs.set?fmtMoney(goal):'No goal set'}.${stretchGoal?` Stretch goal entered independently: ${fmtMoney(stretchGoal)}. Stretch percentages use this amount, with no automatic multiplier.`:''} Identified value is lifetime planned Savings plus Avoidance for included initiatives (Active and Proposed), unweighted; this is the one goal basis used on every slide. The dollar scale matches the Executive Summary web tracker, from $0 to ${fmtGoalMoney(axisMax)}; the scale endpoint is not an additional goal.`);
-  pptNote(slide,`Realized: ${fmtMoney(t.Realized)} (recorded actual dollars where entered, otherwise realization percentages or dated phases; never confidence-weighted). Dark segments show the realized portion of Savings and Avoidance, capped at each initiative's plan${t.RealizedBeyondPlan>0?`; ${fmtMoney(t.RealizedBeyondPlan)} of actuals exceed plan`:''}. The Bridge slide splits the same value into Realized, Active remaining, and Proposed remaining.`);
+  pptNote(slide,`Realized: ${fmtMoney(t.Realized)} (recorded actual dollars where entered, otherwise realization percentages or dated phases; never confidence-weighted). The bar matches the web tracker: each planned dollar appears once, as Realized, Active remaining, or Proposed remaining, each split Savings/Avoidance; realized value is capped at each initiative's plan${t.RealizedBeyondPlan>0?`; ${fmtMoney(t.RealizedBeyondPlan)} of actuals exceed plan`:''}.`);
 }
 
 /* ---------- 3. bridge to goal (native, editable waterfall) ---------- */
@@ -3552,14 +3579,15 @@ function addPptPillarSlide(pptx,p,idx,total,options={}){
       pptText(slide,isIncludedInTotals(it)?fmtMoneyShort(value):`(${fmtMoneyShort(value)})`,valueX,y,valueW,rowH,PPT_TYPE.body,{align:'right',color:isIncludedInTotals(it)?PPT_COLOR.ink:PPT_COLOR.muted,objectName:`initiative-value:${it.id}`});
       addPptSafeLine(slide,nameX,y+rowH,12.83,y+rowH,PPT_COLOR.hair,.4);
       if(!it.start){pptText(slide,'Undated',timeX+.08,y,1.4,rowH,PPT_TYPE.caption,{italic:true,color:PPT_COLOR.muted,objectName:`initiative-undated:${it.id}`});return;}
-      const [base,dark]=type==='Avoidance'?[PPT_COLOR.avoidanceLight,PPT_COLOR.avoidance]:[PPT_COLOR.savingsLight,PPT_COLOR.savings];
+      // Same marks as the web roadmap: type colour for planned value, darker shade for the realized share.
+      const [base,dark]=type==='Avoidance'?[PPT_COLOR.avoidance,PPT_COLOR.avoidanceDark]:[PPT_COLOR.savings,PPT_COLOR.savingsDark];
       const by=y+(rowH-.2)/2;
       if(it.milestone){slide.addShape('diamond',{x:X(it.start)-.1,y:by-.01,w:.2,h:.22,fill:{color:dark},line:{color:dark},objectName:`initiative-bar:${it.id}`});return;}
       const sx=X(it.start),ex=X(addDays(it.end||it.start,1)),bw=Math.max(.04,ex-sx),ratio=value?Math.min(1,realized/value):0;
       slide.addShape('roundRect',{x:sx,y:by,w:bw,h:.2,rectRadius:.05,fill:{color:base},line:{color:isRiskStatus(status)?PPT_COLOR.risk:base,width:isRiskStatus(status)?1.25:.5},objectName:`initiative-bar:${it.id}`});
       if(ratio>0)slide.addShape('roundRect',{x:sx,y:by,w:Math.max(.04,bw*ratio),h:.2,rectRadius:.05,fill:{color:dark},line:{color:dark,width:.5},objectName:`initiative-realized:${it.id}`});
     });
-    pptLegend(slide,[[PPT_COLOR.savingsLight,'Savings planned'],[PPT_COLOR.savings,'Savings realized'],[PPT_COLOR.avoidanceLight,'Avoidance planned'],[PPT_COLOR.avoidance,'Avoidance realized'],[PPT_COLOR.risk,'Amber outline = at risk or blocked']]);
+    pptLegend(slide,[[PPT_COLOR.savings,'Savings planned'],[PPT_COLOR.savingsDark,'Savings realized'],[PPT_COLOR.avoidance,'Avoidance planned'],[PPT_COLOR.avoidanceDark,'Avoidance realized'],[PPT_COLOR.risk,'Amber outline = at risk or blocked'],['EEF0F3','Pill = status']]);
     const items=rows.filter(r=>r.kind==='item').map(r=>r.it);
     pptAddFullNameNotes(slide,[p.name,...rows.filter(r=>r.kind==='ws').map(r=>r.name)]);pptItemNotes(slide,items);
   });

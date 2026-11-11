@@ -308,6 +308,41 @@ class FeatureTests(AppCase):
         texts = slide_texts(self.pptx())
         self.assertTrue(any(t.startswith('Since ') and '+$500K' in t for t in texts))
 
+    def test_G4_since_last_review_default_and_absent_without_baseline(self):
+        self.open_project(project())
+        self.assertTrue(self.js('exportPrefs().sinceReview'))
+        self.assertFalse(any(t.startswith('Since ') for t in slide_texts(self.pptx())))
+        self.page.click('#baselineBtn')
+        self.assertTrue(any(t.startswith('Since ') for t in slide_texts(self.pptx())))
+        self.js("S.exportPrefs.sinceReview=false")
+        self.assertFalse(any(t.startswith('Since ') for t in slide_texts(self.pptx())))
+
+    def test_owner_marks_and_keys_match_web_and_slides(self):
+        """Owner decision (1.7.0): type colour plus status pill everywhere; one six-segment summary bar and key."""
+        self.open_project(project(items=[item('n', status='Not Started', realizedPct=25), item('a', valueType='Avoidance', value=400000), item('r', status='At Risk', valueType='Avoidance', approval='Proposed')]))
+        self.page.click('#segRoad')
+        self.assertEqual(self.page.get_attribute(".bar-grab[data-id=n][data-kind=move]", 'fill'), '#188038')
+        self.assertEqual(self.page.locator(".tl-item[data-item=n] .status-pill text").text_content(), 'Not Started')
+        web_road = [t.strip() for t in self.page.locator('.legend > span:not(.impact-stack)').all_text_contents()]
+        self.page.click('#segExec')
+        web_exec = [t.strip() for t in self.page.locator('.exec-key span').all_text_contents()]
+        texts = slide_texts(self.pptx())
+        roadmap_slide = next(t for t in texts if 'Item n' in t and 'Pill = status' in t)
+        summary_slide = next(t for t in texts if 'IDENTIFIED OPPORTUNITY' in t)
+        for label in ['Savings planned', 'Savings realized', 'Avoidance planned', 'Avoidance realized', 'Amber outline = at risk or blocked']:
+            self.assertIn(label, web_road)
+            self.assertIn(label, roadmap_slide)
+        self.assertIn('Pill = status', ' '.join(web_road))
+        for label in web_exec:
+            self.assertIn(label, summary_slide)
+        self.assertEqual(self.js("executiveSummaryData().segments.map(s=>s.stage+':'+s.type)"),
+                         ['realized:Savings', 'realized:Avoidance', 'approved:Savings', 'approved:Avoidance', 'proposed:Savings', 'proposed:Avoidance'])
+        with zipfile.ZipFile(self.pptx()) as z:
+            xml = next(z.read(n).decode() for n in z.namelist() if n.startswith('ppt/slides/slide') and 'executive-bar-track' in z.read(n).decode())
+        order = re.findall(r'name="executive-segment:(\w+):(\w+)"', xml)
+        self.assertEqual(order, [('realized', 'Savings'), ('approved', 'Savings'), ('approved', 'Avoidance'), ('proposed', 'Avoidance')])
+        self.assertEqual(len(re.findall(r'<a:prstGeom prst="roundRect"', xml.split('executive-bar-track', 1)[1].split('executive-axis', 1)[0])), 2)  # only the outer ends are rounded
+
     def test_G6_status_rules(self):
         self.open_project(project(items=[item('a'), item('c', status='Cancelled', value=400000), item('b', status='Blocked', value=200000), item('h', status='On Hold', value=100000)]))
         t = self.js('portfolioTotals()')

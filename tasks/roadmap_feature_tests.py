@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import csv
 import json
 import re
 import shutil
@@ -16,12 +15,134 @@ from test_paths import relative
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT / "index.html"
-TRACKER = ROOT / "tasks" / "roadmap-studio-feature-tracker.csv"
 ARTIFACTS = ROOT / "tasks" / "test-artifacts"
 RESULTS_JSON = ARTIFACTS / "results" / "roadmap-studio-test-results.json"
-# The tracked tracker CSV is rewritten only on request; a normal run writes an updated copy to test-artifacts.
-UPDATE_TRACKER = "--update-tracker" in sys.argv
-TRACKER_OUT = TRACKER if UPDATE_TRACKER else ARTIFACTS / "results" / "roadmap-studio-feature-tracker.csv"
+# Every check the suite must run, with its area and feature (formerly the tracker CSV). A run fails if any
+# check fails, if an expected check is not run, or if a check is recorded that is not listed here.
+EXPECTED_CHECKS = {
+    'START-001': 'Start: Cold start without saved data',
+    'START-002': 'Start: Automatic restore on launch',
+    'START-003': 'Start: Resume last session from start screen',
+    'START-004': 'Start: Start blank outline',
+    'START-005': 'Start: Return to start screen from brand',
+    'PROJECT-001': 'Project files: Download project JSON',
+    'PROJECT-002': 'Project files: Open valid project JSON',
+    'PROJECT-003': 'Project files: Reject invalid project JSON',
+    'NAV-001': 'Navigation: Tab order and switching',
+    'FY-001': 'Fiscal year: Fiscal year selector',
+    'UNDO-001': 'Undo redo: Toolbar undo and redo',
+    'UNDO-002': 'Undo redo: Keyboard shortcuts',
+    'STRUCT-001': 'Structure: Structure metadata',
+    'STRUCT-002': 'Structure: Edit pillar name',
+    'STRUCT-003': 'Structure: Add pillar',
+    'STRUCT-004': 'Structure: Move pillars',
+    'STRUCT-005': 'Structure: Delete pillar',
+    'STRUCT-006': 'Structure: Edit workstream name',
+    'STRUCT-007': 'Structure: Add workstream by button',
+    'STRUCT-008': 'Structure: Add workstream by Enter',
+    'STRUCT-009': 'Structure: Remove empty workstream by Backspace',
+    'STRUCT-010': 'Structure: Move workstreams',
+    'STRUCT-011': 'Structure: Delete workstream',
+    'STRUCT-012': 'Structure: Workstream initiative counts',
+    'INIT-001': 'Initiatives: Empty initiatives state',
+    'INIT-002': 'Initiatives: Add initiative',
+    'INIT-003': 'Initiatives: Edit initiative name',
+    'INIT-004': 'Initiatives: Change initiative pillar',
+    'INIT-005': 'Initiatives: Change initiative workstream',
+    'INIT-006': 'Initiatives: Edit start and end dates',
+    'INIT-007': 'Initiatives: Milestone toggle',
+    'INIT-008': 'Initiatives: Status selection',
+    'INIT-009': 'Initiatives: Savings or avoidance selection',
+    'INIT-010': 'Initiatives: Dollar value entry',
+    'INIT-014': 'Initiatives: Realized percentage entry',
+    'INIT-011': 'Initiatives: Owner entry and suggestions',
+    'INIT-012': 'Initiatives: Move initiative rows',
+    'INIT-013': 'Initiatives: Delete initiative row',
+    'ROAD-001': 'Roadmap: Roadmap empty structure fallback',
+    'ROAD-002': 'Roadmap: Roadmap metadata',
+    'ROAD-003': 'Roadmap: Savings and avoidance totals',
+    'ROAD-012': 'Roadmap: Realized Savings total',
+    'ROAD-013': 'Roadmap: Realized Avoidance total',
+    'ROAD-014': 'Roadmap: Per-pillar financial rollups',
+    'ROAD-004': 'Roadmap: Timeline lanes and labels',
+    'ROAD-005': 'Roadmap: Roadmap item money labels',
+    'ROAD-006': 'Roadmap: Roadmap tooltip',
+    'ROAD-007': 'Roadmap: Drag roadmap item',
+    'ROAD-008': 'Roadmap: Resize roadmap item edges',
+    'ROAD-009': 'Roadmap: Responsive roadmap sizing',
+    'ROAD-010': 'Roadmap: Collapse and expand pillar sections',
+    'ROAD-011': 'Roadmap: Not Started black styling',
+    'PROJ-001': 'Projection: Projection tab after Roadmap',
+    'PROJ-002': 'Projection: Projection end date',
+    'PROJ-003': 'Projection: Savings-only trajectory',
+    'PROJ-004': 'Projection: Savings plus avoidance trajectory',
+    'PROJ-005': 'Projection: Milestone accrual',
+    'PROJ-006': 'Projection: Ranged linear accrual',
+    'PROJ-007': 'Projection: Projection empty state',
+    'PROJ-008': 'Projection: Projection executive headline',
+    'PROJ-009': 'Projection: Projection target line',
+    'PROJ-010': 'Projection: Projection realized overlay',
+    'PROJ-011': 'Projection: Projection top drivers',
+    'PROJ-012': 'Projection: Projection chart inspection',
+    'PROJ-013': 'Projection: Projection avoidance lift band',
+    'STACK-001': 'Stacked bar: Stacked Bar Chart tab',
+    'STACK-002': 'Stacked bar: Savings-only pillar concentration',
+    'STACK-003': 'Stacked bar: Savings plus avoidance pillar concentration',
+    'STACK-004': 'Stacked bar: Stacked bar empty state',
+    'EXPORT-002': 'Export: Export PNG from roadmap',
+    'EXPORT-003': 'Export: PNG guard outside roadmap',
+    'EXPORT-004': 'Export: Export PowerPoint roadmap',
+    'EXPORT-005': 'Export: PowerPoint same-workstream initiative layout',
+    'EXPORT-006': 'Export: PowerPoint projection and stacked chart slides',
+    'EXPORT-007': 'Export: PowerPoint projection chart redesign',
+    'EXPORT-008': 'Export: PowerPoint stacked chart redesign',
+    'EXPORT-009': 'Export: PowerPoint repair-safe XML',
+    'PRESENT-001': 'Presentation: Enter presentation mode',
+    'PRESENT-002': 'Presentation: Toggle dark presentation theme',
+    'PRESENT-003': 'Presentation: Exit presentation mode',
+    'PERSIST-001': 'Persistence: Autosave after changes',
+    'PERSIST-002': 'Persistence: Start fresh after restore toast',
+    'PRIVACY-001': 'Privacy: Local-only privacy statement',
+    'SECURITY-001': 'Security: No remote runtime dependency',
+    'SECURITY-002': 'Security: No-egress content security policy',
+    'ACCESS-001': 'Accessibility: Basic semantic controls',
+    'A11Y-002': 'Accessibility: Reduced motion preference',
+    'ROAD-015': 'Roadmap: Concise inside-bar labels',
+    'EXPORT-010': 'Export: Concise inside-bar PowerPoint labels',
+    'NAV-002': 'Navigation: Desktop sub-tab row',
+    'ROLLUP-001': 'Portfolio Rollup: Portfolio Rollup tab',
+    'ROLLUP-002': 'Portfolio Rollup: Selectable approval classification',
+    'ROLLUP-003': 'Portfolio Rollup: Pillar approval totals',
+    'ROLLUP-004': 'Portfolio Rollup: Aggregate approval date spans',
+    'ROLLUP-005': 'Portfolio Rollup: Aggregate realized progress',
+    'EXPORT-011': 'Export: PowerPoint Portfolio Rollup slide',
+    'ROLLUP-006': 'Portfolio Rollup: Aggregate bars only',
+    'ROLLUP-007': 'Portfolio Rollup: Readable narrow aggregate labels',
+    'EXPORT-012': 'Export: Web-parity Portfolio Rollup slide',
+    'SCEN-001': 'Scenarios: Preserve the shared initiative portfolio',
+    'EXEC-001': 'Executive Summary: Executive Summary tab',
+    'EXEC-002': 'Executive Summary: Reconciled portfolio tracker',
+    'EXEC-003': 'Executive Summary: Dollar goal marker',
+    'EXEC-004': 'Executive Summary: Empty financial state',
+    'EXPORT-013': 'Export: Web-parity Executive Summary slide',
+    'EXPORT-014': 'Export: Readable Executive Summary slide',
+    'EXPORT-015': 'Export: Keynote Executive View opening slide',
+    'INIT-015': 'Initiatives: Include in totals switch',
+    'TOTAL-001': 'Financial totals: Excluded initiative aggregation',
+    'EXPORT-016': 'Export: Excluded initiative PowerPoint totals',
+    'EXPORT-017': 'Export: Centered Executive View goal metrics',
+    'GRID-001': 'Initiatives: Keyboard focus continuity',
+    'GRID-002': 'Initiatives: Contained grid scrolling',
+    'GRID-003': 'Initiatives: Filter-aware new initiative',
+    'UNDO-003': 'Undo: Native field undo',
+    'DRAWER-001': 'Initiatives: Protect drawer edits',
+    'PERSIST-003': 'Persistence: Autosave failure warning',
+    'SCEN-002': 'Scenarios: Delete selected scenario',
+    'SAFETY-001': 'Data safety: Confirm and undo destructive deletes',
+    'SHELL-001': 'Project shell: Project identity and save state',
+    'A11Y-003': 'Accessibility: Keyboard-visible row actions',
+}
+
 APP_URL = APP.as_uri()
 
 def now_iso():
@@ -496,45 +617,31 @@ class Runner:
     def check(self, ids, condition, passed_result, failed_result):
         self.record(ids, bool(condition), passed_result if condition else failed_result, failed_result)
 
-    def update_tracker(self):
-        with TRACKER.open(newline="") as f:
-            rows = list(csv.DictReader(f))
-            fields = f.seek(0) or next(csv.reader(TRACKER.open(newline="")))
-        untouched = []
-        for row in rows:
-            res = self.results.get(row["ID"])
-            if not res:
-                untouched.append(row["ID"])
-                continue
-            row["Feature Status"] = res["status"]
-            row["Latest Test Result"] = res["result"]
-            row["Issue ID"] = res["issue_id"]
-            row["Fix Status"] = "" if res["status"] == "Passed" else "Needs fix"
-        TRACKER_OUT.parent.mkdir(parents=True, exist_ok=True)
+    def write_results(self):
+        untested = [check for check in EXPECTED_CHECKS if check not in self.results]
+        unexpected = sorted(check for check in self.results if check not in EXPECTED_CHECKS)
         RESULTS_JSON.parent.mkdir(parents=True, exist_ok=True)
-        with TRACKER_OUT.open("w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=fields, lineterminator="\n")
-            writer.writeheader()
-            writer.writerows(rows)
         RESULTS_JSON.write_text(
             json.dumps(
                 {
                     "generatedAt": now_iso(),
                     "app": relative(APP),
-                    "tracker": relative(TRACKER_OUT),
-                    "results": self.results,
+                    "results": {check: {"feature": EXPECTED_CHECKS.get(check, ""), **result} for check, result in self.results.items()},
                     "issues": self.issues,
-                    "untested": untouched,
+                    "untested": untested,
+                    "unexpected": unexpected,
                     "summary": {
+                        "expected": len(EXPECTED_CHECKS),
                         "passed": sum(1 for r in self.results.values() if r["status"] == "Passed"),
                         "failed": sum(1 for r in self.results.values() if r["status"] == "Failed"),
-                        "untested": len(untouched),
+                        "untested": len(untested),
+                        "unexpected": len(unexpected),
                     },
                 },
                 indent=2,
             )
         )
-        return untouched
+        return untested + unexpected
 
 
 def reset_artifacts():
@@ -1180,8 +1287,12 @@ def run_tests():
         not_started_fill = page.locator(".bar-grab[data-id='i3'][data-kind='move']").get_attribute("fill")
         runner.check(
             "ROAD-011",
-            not_started_fill == "#1d1d1f" and "Not Started" in text(page, ".legend"),
-            "Not Started roadmap items render black and the legend includes Not Started.",
+            # Owner-approved in 1.7.0: marks use the value-type colour everywhere; status is a labelled pill (was black Not Started bars).
+            not_started_fill == "#188038"
+            and page.locator("#tlSvg .tl-item[data-item='i3'] .status-pill[data-status='Not Started'] text").text_content() == "Not Started"
+            and "Pill = status" in text(page, ".legend")
+            and "Savings realized" in text(page, ".legend"),
+            "Not Started items keep their Savings/Avoidance colour, carry a 'Not Started' pill, and the legend explains both.",
             f"Not Started roadmap styling was wrong; observed fill {not_started_fill}.",
         )
         page.locator("[data-id='i1']").first.hover()
@@ -1902,8 +2013,8 @@ def run_tests():
             and "Foam Cup Damage" in slide_xml
             and "initiative-status:i1" in slide_xml
             and "initiative-value:i1" in slide_xml
-            and "SAVINGS" in slide_xml
-            and "AVOIDANCE" in slide_xml
+            and "executive-segment:approved:Savings" in slide_xml
+            and "Pill = status" in slide_xml
             and "REALIZED" in slide_xml
             and "FY2026" in slide_xml
             and "FY2027" in slide_xml,
@@ -1947,11 +2058,10 @@ def run_tests():
         expected_goal_labels = {
             "executive-axis-label:0": "$0", "executive-axis-label:1": "$400K",
             "executive-axis-label:2": "$800K", "executive-axis-label:3": "$1.2M",
-            "executive-axis-label:4": "$1.6M", "executive-stage-label:SAVINGS": "SAVINGS",
-            "executive-stage-label:AVOIDANCE": "AVOIDANCE",
+            "executive-axis-label:4": "$1.6M"
         }
         executive_goal_labels = {box["object_name"]: box["text"] for box in executive_boxes
-                                 if box["object_name"].startswith("executive-") and box["text"]}
+                                 if box["object_name"].startswith(("executive-axis", "executive-goal", "executive-stretch")) and box["text"]}
         opportunity_headlines = [box for box in executive_boxes
                                  if "opportun" in box["text"].lower() and max(box["font_sizes"] or [0]) >= 26]
         runner.check(
@@ -1960,8 +2070,8 @@ def run_tests():
             and all("achiev" not in box["text"].lower() for box in opportunity_headlines)
             and "OPPORTUNITY" in executive_slide_xml.upper()
             and "REALIZED" in executive_slide_xml.upper()
-            and "Realized savings" in executive_slide_xml
-            and "Realized avoidance" in executive_slide_xml
+            and "Active remaining" in executive_slide_xml
+            and "Proposed remaining" in executive_slide_xml
             and "$1.37M" in executive_slide_xml
             and "No goal set" in executive_slide_xml
             and "$1B" not in executive_slide_xml
@@ -2037,12 +2147,11 @@ def run_tests():
         stage_exec_goal = [box for box in stage_slide_boxes[stage_exec_index]
                            if box["object_name"] == "executive-goal-amount"]
         stage_goal_labels = {box["object_name"]: box["text"] for box in stage_slide_boxes[stage_exec_index]
-                             if box["object_name"].startswith("executive-") and box["text"]}
+                             if box["object_name"].startswith(("executive-axis", "executive-goal", "executive-stretch")) and box["text"]}
         stage_expected_labels = {
             "executive-axis-label:0": "$0", "executive-axis-label:1": "$300M",
             "executive-axis-label:2": "$600M", "executive-axis-label:3": "$900M",
-            "executive-axis-label:4": "$1.2B", "executive-stage-label:SAVINGS": "SAVINGS",
-            "executive-stage-label:AVOIDANCE": "AVOIDANCE",
+            "executive-axis-label:4": "$1.2B"
         }
         runner.check(
             "EXPORT-014",
@@ -2052,10 +2161,10 @@ def run_tests():
             and len(stage_exec_realized) == 1
             and len(stage_exec_goal) == 0
             and stage_goal_labels == stage_expected_labels
-            and "SAVINGS" in stage_exec_xml
-            and "AVOIDANCE" in stage_exec_xml
-            and "Realized savings" in stage_exec_xml
-            and "Realized avoidance" in stage_exec_xml
+            and "executive-segment:realized:Savings" in stage_exec_xml
+            and "executive-segment:approved:Avoidance" in stage_exec_xml
+            and "Active remaining" in stage_exec_xml
+            and "Proposed remaining" in stage_exec_xml
             and not stage_repair_extents,
             "Executive View PowerPoint uses readable type, a direct value bar, and repair-safe geometry.",
             f"Executive View slide became unreadable or unsafe; titles={stage_exec_titles}, total={stage_exec_total}, goal={stage_exec_goal}, extents={stage_repair_extents[:3]}",
@@ -2068,17 +2177,17 @@ def run_tests():
             and all("achiev" not in box["text"].lower() for box in keynote_titles)
             and "OPPORTUNITY" in stage_exec_xml.upper()
             and "REALIZED" in stage_exec_xml.upper()
-            and "SAVINGS" in stage_exec_xml
-            and "AVOIDANCE" in stage_exec_xml
-            and "Realized savings" in stage_exec_xml
-            and "Realized avoidance" in stage_exec_xml
+            and "executive-segment:realized:Savings" in stage_exec_xml
+            and "executive-segment:approved:Avoidance" in stage_exec_xml
+            and "Active remaining" in stage_exec_xml
+            and "Proposed remaining" in stage_exec_xml
             and stage_goal_labels == stage_expected_labels
             and len(stage_rollup_indexes) == 1
             and "PATH TO PORTFOLIO GOAL" not in stage_exec_xml
             and "How the portfolio builds" not in stage_exec_xml
             and "Darker = more certain" not in stage_exec_xml
             and "Approved remaining" not in stage_exec_xml
-            and "Active remaining" not in stage_exec_xml
+            and "Active remaining" in stage_exec_xml
             and not stage_repair_extents,
             "Every PowerPoint opens with a live, keynote-style Executive View followed by Portfolio Rollup.",
             f"Executive View was missing, stale, dashboard-like, or unsafe; title={keynote_titles}, extents={stage_repair_extents[:3]}",
@@ -2097,11 +2206,10 @@ def run_tests():
             and len(realized_pct) == 1
             and max(identified_pct[0]["font_sizes"], default=0) >= 44
             and max(realized_pct[0]["font_sizes"], default=0) >= 44
-            and "Realized savings" in stage_exec_xml
-            and "Savings" in stage_exec_xml
-            and "Realized avoidance" in stage_exec_xml
-            and "Avoidance" in stage_exec_xml,
-            "Executive View centers two large blocks (goal percentages, or dollars when no goal is set) above a four-part financial legend.",
+            and "Green = Savings · Blue = Avoidance" in stage_exec_xml
+            and "Realized" in stage_exec_xml
+            and "Proposed remaining" in stage_exec_xml,
+            "Executive View centers two large blocks (goal percentages, or dollars when no goal is set) above the web tracker's six-segment bar and key.",
             f"Centered Executive View hierarchy was missing or undersized; identified={stage_exec_total}, realized={stage_exec_realized}, percentages={identified_pct + realized_pct}",
         )
         runner.check(
@@ -2391,7 +2499,7 @@ def run_tests():
 
         browser.close()
 
-    untested = runner.update_tracker()
+    untested = runner.write_results()
     return runner, untested
 
 
@@ -2404,6 +2512,6 @@ if __name__ == "__main__":
         "issues": runner.issues,
         "untested": untested,
         "resultsJson": relative(RESULTS_JSON),
-        "tracker": relative(TRACKER_OUT),
+        "expected": len(EXPECTED_CHECKS),
     }, indent=2))
     sys.exit(1 if any(r['status']=='Failed' for r in runner.results.values()) or untested else 0)

@@ -6,7 +6,8 @@ The product must make every reported value explainable, preserve work across edi
 
 ## Constraints
 
-- No backend, external runtime calls, CDN scripts, CSV import, or audit log.
+- No backend, external runtime calls, CDN scripts, or audit log.
+- No CSV or Excel file import, intentionally. Rows copied from a spreadsheet can be pasted from the clipboard (tab-separated cells only).
 - Local autosave, local recovery versions, and portable JSON project files.
 - Keep Savings, Avoidance, approvals, and actual realization distinct.
 - Preserve existing project compatibility and the user's approved executive presentation composition.
@@ -14,4 +15,4 @@ The product must make every reported value explainable, preserve work across edi
 
 ## Visual Authority
 
-The current application is the design authority: restrained white/near-white surfaces, system typography, compact operating controls, green Savings, blue Avoidance, and black Not Started roadmap marks. The Executive View PowerPoint has two centered prominent blocks above a continuous segmented bar. Readability and accurate financial meaning outrank decorative changes.
+The current application is the design authority: restrained white/near-white surfaces, system typography, compact operating controls, green Savings and blue Avoidance. Roadmap marks use the value-type colour with a darker realized share on the web, in PNG, in Present mode, and on slides; status is a labelled pill beside each mark (never colour alone), and an amber outline marks At Risk or Blocked work. The Executive Summary, on the web and as the first content slide, has two centered prominent blocks above one continuous bar of six segments (Realized, Active remaining, Proposed remaining, each split Savings/Avoidance), rounded only at its outer ends, with the same key on both. Readability and accurate financial meaning outrank decorative changes.

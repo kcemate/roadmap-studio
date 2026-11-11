@@ -256,6 +256,7 @@ table.grid tr.excluded-from-totals td[data-total-cell]{background:#f5f5f7}
 .grid-meta-row h2{font-size:22px;font-weight:600;letter-spacing:-.02em}
 
 /* ---------- health panel ---------- */
+.legend-pill{display:inline-block;padding:1px 7px;border-radius:8px;background:#eef0f3;color:#4b5058;font-size:10px;font-weight:650;margin-right:4px}
 .health-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
 .health-card{background:var(--surface);border:1px solid var(--hairline);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow-card);min-width:0}
 .health-card .hk{font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin-bottom:4px;display:flex;align-items:center;gap:6px}
@@ -363,7 +364,8 @@ table.grid tr.excluded-from-totals td[data-total-cell]{background:#f5f5f7}
 .exec-tracker-head p{font-size:11px;color:var(--ink2);margin-top:4px}
 .exec-key{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end;font-size:11px;color:var(--ink2)}
 .exec-key span{display:flex;align-items:center;gap:6px;white-space:nowrap}
-.exec-key i{display:inline-block;width:18px;height:7px;border-radius:3px}
+.exec-key i{display:inline-block;width:12px;height:9px;border-radius:2px}
+.exec-key i+i{margin-left:-4px}
 .exec-tracker-scroll{overflow-x:auto;overflow-y:hidden}
 .exec-tracker-svg{display:block;width:100%;height:auto}
 .exec-breakdown{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--hairline);margin-top:4px}
@@ -492,10 +494,12 @@ table.grid tr.excluded-from-totals td[data-total-cell]{background:#f5f5f7}
           <div class="legend">
             <span class="impact-stack" data-impact="savings"><i style="background:#188038"></i><span class="impact-main"><b class="total" id="savingsTotal">$0</b><span class="label">Savings</span></span><span class="impact-realized"><b class="total" id="realizedSavingsTotal">$0</b><span class="label">Realized</span></span></span>
             <span class="impact-stack" data-impact="avoidance"><i style="background:#2563eb"></i><span class="impact-main"><b class="total" id="avoidanceTotal">$0</b><span class="label">Avoidance</span></span><span class="impact-realized"><b class="total" id="realizedAvoidanceTotal">$0</b><span class="label">Realized</span></span></span>
-            <span><i style="background:#1d1d1f"></i>Not Started</span>
-            <span><i style="background:#fff;border:2px solid #b45309"></i>At Risk / Blocked border</span>
-            <span><i style="background:#1d1d1f;opacity:.5"></i>Complete / On Hold fade</span>
-            <span><i style="background:#1d1d1f;opacity:.25"></i>Cancelled</span>
+            <span><i style="background:#188038"></i>Savings planned</span>
+            <span><i style="background:#0e5a27"></i>Savings realized</span>
+            <span><i style="background:#2563eb"></i>Avoidance planned</span>
+            <span><i style="background:#1e3a8a"></i>Avoidance realized</span>
+            <span><i style="background:#fff;border:2px solid #b45309"></i>Amber outline = at risk or blocked</span>
+            <span><b class="legend-pill">Status</b>Pill = status</span>
           </div>
         </div>
       </div>
@@ -530,7 +534,7 @@ table.grid tr.excluded-from-totals td[data-total-cell]{background:#f5f5f7}
       <div class="exec-tracker-panel" id="execTrackerPanel">
         <div class="exec-tracker-head">
           <div><h3 id="execTrackerTitle">How the portfolio builds</h3><p>One reconciled path from captured value to the full opportunity.</p></div>
-          <div class="exec-key" aria-label="Tracker color key"><span><i style="background:#188038"></i>Savings</span><span><i style="background:#2563eb"></i>Avoidance</span><span><i style="background:#1d1d1f"></i>Darker = more certain</span></div>
+          <div class="exec-key" aria-label="Tracker color key"><span><i style="background:#0e5a27"></i><i style="background:#1e3a8a"></i>Realized</span><span><i style="background:#188038"></i><i style="background:#2563eb"></i>Active remaining</span><span><i style="background:#a8d5b5"></i><i style="background:#a9c1f5"></i>Proposed remaining</span><span>Green = Savings · Blue = Avoidance</span></div>
         </div>
         <div class="exec-tracker-scroll" id="execTrackerScroll"><div id="execTrackerBody"></div></div>
         <div class="exec-breakdown" id="execBreakdown"></div>
@@ -910,13 +914,14 @@ function togglePillarCollapsed(id){ if(S.collapsedPillars[id])delete S.collapsed
 /* ---------- palette ---------- */
 function pal(){ const d=S.presenting&&S.dark;
   return d?{bg:'#070708',ink:'#f5f5f7',ink2:'#a1a1a6',hair:'rgba(255,255,255,.12)',band:'rgba(255,255,255,.05)',
-    accent:'#2997ff',risk:'#d97a2b',notFill:'#000000',notText:'#ffffff',
-    savings:'#30d158',savingsText:'#071a0b',avoidance:'#64d2ff',avoidanceText:'#07151c'}
+    accent:'#2997ff',risk:'#d97a2b',
+    savings:'#30d158',savingsDark:'#1a9e44',savingsText:'#071a0b',avoidance:'#64d2ff',avoidanceDark:'#2a9fd8',avoidanceText:'#07151c'}
   :{bg:'#ffffff',ink:'#1d1d1f',ink2:'#6e6e73',hair:'rgba(0,0,0,.09)',band:'rgba(0,0,0,.03)',
-    accent:'#0071e3',risk:'#b45309',notFill:'#1d1d1f',notText:'#ffffff',
-    savings:'#188038',savingsText:'#ffffff',avoidance:'#2563eb',avoidanceText:'#ffffff'}; }
-function valueColor(it,P){ if(normStatus(it.status)==='Not Started')return[P.notFill,P.notText];
-  return normValueType(it.valueType)==='Avoidance'?[P.avoidance,P.avoidanceText]:[P.savings,P.savingsText]; }
+    accent:'#0071e3',risk:'#b45309',
+    savings:'#188038',savingsDark:'#0e5a27',savingsText:'#ffffff',avoidance:'#2563eb',avoidanceDark:'#1e3a8a',avoidanceText:'#ffffff'}; }
+/* Roadmap marks: colour is the value type (planned, with a darker realized fill); status is the pill beside the mark. */
+function valueColor(it,P){
+  return normValueType(it.valueType)==='Avoidance'?[P.avoidance,P.avoidanceText,P.avoidanceDark]:[P.savings,P.savingsText,P.savingsDark]; }
 /* roadmapLabel defined near renderTimeline */
 
 /* ---------- screens ---------- */
@@ -1779,10 +1784,16 @@ function bindStructureDnD(root){
 /* ============ TIMELINE ============ */
 const GUTTER=236, AXIS_H=46, PILLAR_H=54, ROW_H=38, BAR_H=24, WS_PAD=7;
 // Packing returns lane numbers without writing temporary fields onto initiatives.
-function packItems(items){ const sorted=items.filter(i=>i.start).sort((a,b)=>a.start-b.start); const ends=[],lanes=new Map();
-  for(const it of sorted){ const s=it.start.getTime(), e=(it.milestone?addDays(it.start,16):(it.end||it.start)).getTime();
+// Lanes reserve room after each mark for its status pill (and a milestone's label start) so pills never collide.
+function packItems(items,pxDay=1){ const sorted=items.filter(i=>i.start).sort((a,b)=>a.start-b.start); const ends=[],lanes=new Map();
+  for(const it of sorted){ const s=it.start.getTime(),reserve=(statusPillWidth(it)+(it.milestone?30:10))/pxDay*MS_DAY,e=(it.milestone?it.start:(it.end||it.start)).getTime()+MS_DAY+reserve;
     let sub=ends.findIndex(x=>x<=s); if(sub===-1){sub=ends.length;ends.push(0);} ends[sub]=e+MS_DAY*5; lanes.set(it.id,sub); }
   return{count:Math.max(1,ends.length),lanes}; }
+function statusPillWidth(it){ return measureTextPx(normStatus(it.status),10,650)+12; }
+function statusPillMarkup(it,x,cy){
+  const st=normStatus(it.status),[fill,ink]=STATUS_PILL[st],w=statusPillWidth(it);
+  return`<g class="status-pill" data-status="${esc(st)}" pointer-events="none"><rect x="${x}" y="${cy-8}" width="${w}" height="16" rx="8" fill="#${fill}"/><text x="${x+w/2}" y="${cy+3.5}" text-anchor="middle" font-size="10" font-weight="650" fill="#${ink}">${esc(st)}</text></g>`;
+}
 const STATUS_COLORS={'Not Started':'#1d1d1f','On Track':'#188038','At Risk':'#b45309','Blocked':'#9a3412','On Hold':'#8e8e93','Complete':'#8e8e93','Cancelled':'#c7c7cc'};
 function healthSummary(){
   const out={}; STATUSES.forEach(s=>out[s]={count:0,value:0});
@@ -1837,18 +1848,21 @@ function timelineAxis(){
 }
 let TL_LAYOUT=null;
 function statusStyle(it,P){
-  const st=normStatus(it.status);
-  return{stroke:isRiskStatus(st)?` stroke="${P.risk}" stroke-width="${st==='Blocked'?3:2}"`:st==='On Hold'?` stroke="${P.ink2}" stroke-width="1.5" stroke-dasharray="4 3"`:'',
-    opacity:st==='Complete'||st==='On Hold'?'.62':st==='Cancelled'?'.3':'1'};
+  return{stroke:isRiskStatus(it.status)?` stroke="${P.risk}" stroke-width="2"`:''};
 }
 function timelineItemMarkup(it,y,P,X,W){
-  const col=valueColor(it,P),style=statusStyle(it,P),label=roadmapLabel(it);
-  if(it.milestone){ const sx=X(it.start),cy=y+BAR_H/2,r=7;
-    return`<g class="bar-grab" data-id="${esc(it.id)}" data-kind="move"><title>${esc(label)}</title><rect x="${sx-r}" y="${cy-r}" width="${r*2}" height="${r*2}" rx="2.5" transform="rotate(45 ${sx} ${cy})" fill="${col[0]}" opacity="${style.opacity}"${style.stroke||` stroke="${col[0]}" stroke-width="1.5"`}/><text x="${sx+13}" y="${cy+4}" font-size="12" fill="${P.ink}" pointer-events="none">${esc(fitSvgText(label,W-sx-20))}</text></g>`;
+  const col=valueColor(it,P),style=statusStyle(it,P),label=roadmapLabel(it),cy=y+BAR_H/2;
+  if(it.milestone){ const sx=X(it.start),r=7,pw=statusPillWidth(it);
+    return`<g class="bar-grab" data-id="${esc(it.id)}" data-kind="move"><title>${esc(label)}</title><rect x="${sx-r}" y="${cy-r}" width="${r*2}" height="${r*2}" rx="2.5" transform="rotate(45 ${sx} ${cy})" fill="${col[0]}"${style.stroke||` stroke="${col[0]}" stroke-width="1.5"`}/>${statusPillMarkup(it,sx+13,cy)}<text x="${sx+19+pw}" y="${cy+4}" font-size="12" fill="${P.ink}" pointer-events="none">${esc(fitSvgText(label,Math.max(0,W-sx-pw-26)))}</text></g>`;
   }
-  const sx=X(it.start),ex=X(addDays(it.end||it.start,1)),w=Math.max(ex-sx,8),fontSize=12,pad=Math.min(11,Math.max(2,w*.1));
-  const maxChars=Math.max(1,Math.floor(Math.max(4,w-pad*2)/(fontSize*.57))),displayLabel=fitSvgText(conciseRoadmapLabel(it,maxChars),w-pad*2,fontSize,500);
-  return`<g data-id="${esc(it.id)}"><rect class="bar-grab" data-id="${esc(it.id)}" data-kind="move" x="${sx}" y="${y}" width="${w}" height="${BAR_H}" rx="7" fill="${col[0]}" opacity="${style.opacity}"${style.stroke}/>`+
+  const sx=X(it.start),ex=X(addDays(it.end||it.start,1)),w=Math.max(ex-sx,8),fontSize=12,pad=Math.min(11,Math.max(2,w*.1)),pw=statusPillWidth(it);
+  // At the right edge of the timeline the pill moves inside the end of the bar instead of being clipped.
+  const pillInside=sx+w+6+pw>W-4&&w>=pw+24,pillX=pillInside?sx+w-pw-4:Math.min(sx+w+6,W-pw-2),textRoom=w-pad*2-(pillInside?pw+6:0);
+  const maxChars=Math.max(1,Math.floor(Math.max(4,textRoom)/(fontSize*.57))),displayLabel=fitSvgText(conciseRoadmapLabel(it,maxChars),textRoom,fontSize,500);
+  const value=itemValue(it),ratio=value?Math.min(1,Math.max(0,realizedItemValue(it,reportingDate()))/value):0,rw=ratio>0?Math.max(4,w*ratio):0;
+  return`<g data-id="${esc(it.id)}"><rect class="bar-grab" data-id="${esc(it.id)}" data-kind="move" x="${sx}" y="${y}" width="${w}" height="${BAR_H}" rx="7" fill="${col[0]}"${style.stroke}/>`+
+    (rw?`<rect class="bar-realized" data-id="${esc(it.id)}" x="${sx}" y="${y}" width="${rw}" height="${BAR_H}" rx="7" fill="${col[2]}"${style.stroke} pointer-events="none"/>`:'')+
+    statusPillMarkup(it,pillX,cy)+
     `<text class="bar-label" data-id="${esc(it.id)}" data-full-label="${esc(label)}" x="${sx+pad}" y="${y+BAR_H/2+4.5}" font-size="${fontSize}" font-weight="500" fill="${col[1]}" pointer-events="none">${esc(displayLabel)}</text>`+
     `<rect class="edge" data-id="${esc(it.id)}" data-kind="start" x="${sx-3}" y="${y}" width="8" height="${BAR_H}" fill="transparent"/><rect class="edge" data-id="${esc(it.id)}" data-kind="end" x="${sx+w-5}" y="${y}" width="8" height="${BAR_H}" fill="transparent"/></g>`;
 }
@@ -1873,7 +1887,7 @@ function renderTimeline(){
       const items=S.items.filter(i=>(i.owner||'Unassigned')===owner);
       const wlanes=[];
       if(!collapsed){
-        const pack=packItems(items);
+        const pack=packItems(items,axis.pxDay);
         const top=H, h=pack.count*ROW_H+WS_PAD; H+=h;
         wlanes.push({w:{name:items.length?countLabel(items.length,'initiative'):'No initiatives'},items,top,h,lanes:pack.lanes});
       }
@@ -1883,7 +1897,7 @@ function renderTimeline(){
     S.structure.forEach(p=>{ const pTop=H; H+=PILLAR_H;
       const collapsed=isPillarCollapsed(p.id), wlanes=[];
       if(!collapsed){
-        p.workstreams.forEach(w=>{ const items=itemsForWs(w.id); const pack=packItems(items);
+        p.workstreams.forEach(w=>{ const items=itemsForWs(w.id); const pack=packItems(items,axis.pxDay);
           const top=H, h=pack.count*ROW_H+WS_PAD; H+=h; wlanes.push({w,items,top,h,lanes:pack.lanes}); });
         if(!p.workstreams.length)H+=ROW_H;
       }

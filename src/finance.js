@@ -39,6 +39,8 @@ function recognizeStatus(v){
   if(/track|green|progress|active|underway|started|ongoing/.test(s))return'On Track';
   return null;
 }
+/* Status pills: [fill, text] used by the web roadmap and every slide, so status never depends on bar colour. */
+const STATUS_PILL={'Not Started':['EEF0F3','4B5058'],'On Track':['E6F4EA','0E5A27'],'At Risk':['FDF1E4','B45309'],'Blocked':['B45309','FFFFFF'],'On Hold':['EEF0F3','4B5058'],'Complete':['E8ECF2','33415C'],'Cancelled':['F4F4F5','8E8E93']};
 function normStatus(v){ return recognizeStatus(v)||'Not Started'; }
 function statusCountsInTotals(status){ return normStatus(status)!=='Cancelled'; }
 function isRiskStatus(status){ return ['At Risk','Blocked'].includes(normStatus(status)); }

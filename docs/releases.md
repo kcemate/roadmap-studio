@@ -14,7 +14,9 @@ and editing, export, and accessibility fixes. The PowerPoint deck is rebuilt on 
 masters as a story (title, summary, bridge to goal, timing, projection, pillar
 contribution, pillar pages, since last review, decisions needed, register appendix)
 with editable native charts. New: sample portfolio, paste rows, initiative commentary,
-Since last review, Review badge, filtered exports, and brand settings.
+Since last review, Review badge, filtered exports, and brand settings. Roadmap marks
+use the value-type colour plus a status pill everywhere (no black Not Started bars), and
+the summary slide uses the web tracker's six-segment bar.
 
 Behavior changes to reported figures are listed in README "Financial Definitions" and
 in the pull request. The project format stays v3; files saved by 1.6.7 open unchanged.
