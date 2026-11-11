@@ -1,7 +1,16 @@
 .DS_Store
 .herenow/
-*.xlsx
-*.roadmap.json
-tasks/test-artifacts/
+.claude/
+.venv/
+node_modules/
 __pycache__/
 release/
+
+# Project data and exports stay on the user's device.
+*.roadmap.json
+*.pptx
+*.pdf
+
+# Test output: results, downloads, renders, and test-only tools (CI uploads these as artifacts).
+tasks/test-artifacts/
+tasks/*-results.json

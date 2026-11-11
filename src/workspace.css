@@ -31,7 +31,6 @@ table.grid td.rownum input,#wsSelectAll{width:16px;height:16px;accent-color:var(
 .workspace-review{min-width:0}
 .ws-review-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:16px 0 13px;border-bottom:1px solid var(--hairline)}
 .ws-review-head h3{font-size:18px;font-weight:650;letter-spacing:0}
-.ws-review-head p{margin-top:3px;color:var(--ink2);font-size:12px}
 .ws-review-tabs{display:flex;padding:2px;background:rgba(0,0,0,.05);border-radius:8px}
 .ws-review-tabs button{min-height:34px;padding:6px 13px;border-radius:6px;color:var(--ink2);font-size:12px;font-weight:600}
 .ws-review-tabs button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
@@ -146,3 +145,29 @@ input::placeholder,textarea::placeholder{color:#6e6e73;opacity:1}
   .drawer-field input,.drawer-field select,.drawer-field textarea{min-height:44px;font-size:16px}
   .drawer-foot .btn,.drawer-head .icon-btn{min-height:44px}
 }
+
+/* 1.7.0: review state, badges, paste rows, drawer hints */
+.grid-toolbar.review-open>:not(#wsReviewToggle){display:none}
+.ws-exception-summary{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ws-exception-summary button:nth-child(3n){border-right:none}.ws-exception-summary button:nth-child(-n+3){border-bottom:1px solid var(--hairline)}
+.seg button[data-badge]::after{content:attr(data-badge);display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;margin-left:6px;padding:0 5px;border-radius:9px;background:#b45309;color:#fff;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;vertical-align:1px}
+.drawer-hint{margin:-4px 0 12px;color:var(--ink2);font-size:12px}
+.paste-preview{margin:12px 0;color:var(--ink2);font-size:13px;line-height:1.5}
+.paste-preview b{color:var(--ink)}
+.paste-errors{margin:8px 0 0 18px;color:#9a3412;font-size:12px}
+.paste-actions{display:flex;justify-content:flex-end;gap:8px}
+#pasteText{width:100%;min-height:150px;padding:10px;border:1px solid var(--hairline);border-radius:7px;font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre;overflow:auto}
+.grid-foot{display:flex;gap:8px}
+@media (max-width:860px){.ws-exception-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.ws-exception-summary button:nth-child(n){border-right:1px solid var(--hairline);border-bottom:1px solid var(--hairline)}}
+.deck-options{position:relative}
+.deck-options>summary{display:flex;align-items:center;min-height:32px;padding:6px 10px;border-radius:7px;color:var(--ink2);font-size:12px;font-weight:600;cursor:pointer;list-style:none;white-space:nowrap}
+.deck-options>summary::-webkit-details-marker{display:none}
+.deck-options>summary:hover,.deck-options[open]>summary{background:#f1f1f3;color:var(--ink)}
+.deck-options-panel{position:absolute;top:calc(100% + 6px);right:0;z-index:30;display:grid;gap:8px;width:320px;padding:12px;background:var(--surface);border:1px solid var(--hairline);border-radius:8px;box-shadow:0 12px 32px rgba(0,0,0,.12);font-size:12px;color:var(--ink)}
+.deck-options-panel label{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.deck-options-panel small{color:var(--ink2)}
+.deck-options-panel hr{border:0;border-top:1px solid var(--hairline);margin:2px 0}
+.deck-options-panel select,.deck-options-panel input[type=color]{min-height:30px}
+@media (max-width:560px){.deck-options-panel{position:fixed;inset:auto 16px 16px;width:auto}}
+#pptScope{max-width:118px}
+.workspace-tools[hidden],.baseline-pill[hidden]{display:none!important}

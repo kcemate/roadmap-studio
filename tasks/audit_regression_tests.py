@@ -8,6 +8,7 @@ import unittest
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 from roadmap_feature_tests import seed_state
+from test_paths import artifact_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -422,6 +423,5 @@ if __name__=='__main__':
     program=unittest.main(verbosity=2,exit=False,testRunner=unittest.TextTestRunner(verbosity=2,resultclass=RecordedResult))
     browser=os.environ.get('ROADMAP_BROWSER','chromium')
     report=json.dumps({'browser':browser,'results':program.result.records,'passed':sum(r['status']=='Passed' for r in program.result.records),'failed':sum(r['status']=='Failed' for r in program.result.records)},indent=2)+'\n'
-    (ROOT/'tasks'/'audit-regression-results.json').write_text(report)
-    (ROOT/'tasks'/f'audit-regression-{browser}-results.json').write_text(report)
+    (artifact_dir('results')/f'audit-regression-{browser}-results.json').write_text(report)
     sys.exit(not program.result.wasSuccessful())

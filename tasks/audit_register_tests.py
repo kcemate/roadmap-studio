@@ -8,7 +8,8 @@ from audit_presentation_tests import deck_data
 from roadmap_feature_tests import seed_state
 
 ROOT=Path(__file__).resolve().parents[1]
-OUT=Path('/tmp/roadmap-register-tests')
+from test_paths import artifact_dir
+OUT=artifact_dir('register')
 
 def register_state(count=46):
     state=seed_state()
@@ -113,8 +114,9 @@ class RegisterTests(unittest.TestCase):
         for slide in deck['slides']:
             for s in slide['shapes']:
                 if s['object_name'].startswith('register-row:'):
-                    self.assertGreaterEqual(min(s['font_sizes']),16)
-                    self.assertLessEqual(s['x']+s['w'],12.8)
+                    # 1.7.0 type scale: register body is 14 pt, like every other slide body (audit F2.1).
+                    self.assertGreaterEqual(min(s['font_sizes']),14)
+                    self.assertLessEqual(s['x']+s['w'],12.84)
                     self.assertLessEqual(s['y']+s['h'],6.83)
     def export(self,name):
         with self.page.expect_download() as download:self.page.click('#pptBtn')

@@ -28,7 +28,9 @@
   .register-row th{grid-column:1/-1;font-size:16px}
   .register-row td:before{content:attr(data-label);display:block;font-size:11px;color:#555960;font-weight:500;margin-bottom:3px}
 }
-@page{size:A4 landscape;margin:12mm}
+/* Landscape applies only to the register's printed pages, not to printing from other views. */
+@page register{size:A4 landscape;margin:12mm}
+@media print{body.register-print #registerStage{page:register}}
 @media print{
   body.register-print{background:#fff!important;height:auto!important;color:#111!important}
   body.register-print> :not(#studio),body.register-print #studio> :not(.stage),body.register-print .stage> :not(#registerStage){display:none!important}

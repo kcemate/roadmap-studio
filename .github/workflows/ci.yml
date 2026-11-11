@@ -1,28 +1,60 @@
 name: CI
 
+# One run per pull-request commit (pushes to other branches are covered by their pull request), plus main.
 on:
-  push:
   pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   audit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    container:
+      # Keep in sync with requirements-dev.txt. Includes browsers and OS libraries.
+      image: mcr.microsoft.com/playwright/python:v1.58.0-noble
+      options: --ipc=host
     timeout-minutes: 30
     env:
       PYTHONUNBUFFERED: "1"
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Install Python test dependencies
+        # The Noble image already contains Python 3.12 and pip.
+        run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
+      - uses: actions/setup-node@v4
         with:
-          python-version: "3.12"
-      - name: Install browser test runtime
+          node-version: '22'
+      - name: Install axe-core (test only)
+        run: npm install --prefix tasks/test-artifacts/tools --no-save axe-core@4.10.3
+      - name: Prepare the container for Firefox and Git verification
         run: |
-          python -m pip install --disable-pip-version-check playwright==1.58.0 Pillow==12.1.1 PyMuPDF==1.27.2.2
-          python -m playwright install --with-deps chromium webkit firefox
-          npm install --prefix /tmp/roadmap-audit-tools --no-save axe-core@4.10.3
+          chown "$(id -u):$(id -g)" "$HOME"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git ls-files --error-unmatch index.html
       - name: Run all release gates
         run: python tasks/verify_all.py
+      - name: Fail if the gate changed tracked files
+        run: |
+          git status --porcelain
+          test -z "$(git status --porcelain)"
+      - name: Upload test results and artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roadmap-test-artifacts
+          path: |
+            tasks/test-artifacts/results/
+            tasks/test-artifacts/exports/
+            tasks/test-artifacts/presentation/
+            tasks/test-artifacts/register/
+            tasks/test-artifacts/downloads/
+          if-no-files-found: warn
+          retention-days: 14
