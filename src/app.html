@@ -2067,7 +2067,7 @@ function gridRowHtml(it,ctx){
   const w=key=>`width:${colW(key)}px;min-width:${colW(key)}px`;
   const status=normStatus(it.status),flag=it.includeInTotals!==false;
   return`<tr data-id="${esc(it.id)}" class="${isIncludedInTotals(it)?'':'excluded-from-totals'}">
-      <td class="rownum">${ctx.index.get(it.id)+1}</td>
+      <td class="rownum"><div class="ws-row-selector"><input type="checkbox" data-ws-select ${workspaceSelection.has(it.id)?'checked':''} aria-label="Select ${esc(it.name||'initiative')}"><span>${ctx.index.get(it.id)+1}</span></div></td>
       <td class="sticky-col" style="${w('name')}"><input class="cell-in" data-f="name"${cellValue('name',it.name)} maxlength="240" aria-label="Initiative"></td>
       <td style="${w('pillar')}"><select class="cell-in" data-f="pillarId" aria-label="Pillar">${selectOptions(ctx.pillarOptions,it.pillarId)}</select></td>
       <td style="${w('ws')}"><select class="cell-in" data-f="wsId" aria-label="Workstream">${selectOptions(ctx.wsOptions.get(it.pillarId)||'',it.wsId)}</select></td>
@@ -2123,14 +2123,14 @@ function renderGrid(){
   }
   const ctx=gridContext();
   const L=COLUMN_LABELS;
-  body.innerHTML=`<div class="grid-wrap"><table class="grid${dense}" id="initGrid">
+  const maxHeight=Math.max(160,innerHeight-body.getBoundingClientRect().top-24);
+  body.innerHTML=`<div class="grid-wrap" style="max-height:${maxHeight}px"><table class="grid${dense}" id="initGrid">
     <thead><tr><th style="width:34px"></th>${th(L.name,'name')}${th(L.pillar,'pillar')}${th(L.ws,'ws')}${th(L.start,'start')}${th(L.end,'end')}${th(L.mile,'mile','text-align:center')}${th(L.status,'status')}${th(L.approval,'approval','text-align:center')}${th(L.valueType,'valueType')}${th(L.value,'value')}${th(L.include,'include','text-align:center')}${th(L.realized,'realized')}${th(L.confidence,'confidence')}${th(L.owner,'owner')}<th></th></tr></thead>
     <tbody>${items.map(it=>gridRowHtml(it,ctx)).join('')}</tbody></table>
     <div class="grid-foot"><button class="btn" id="addRow">Add initiative</button><button class="btn btn-quiet" id="pasteRows" type="button">Paste rows</button></div></div>`;
   bindColumnResize(body);
   enhanceGrid();
-  const wrap=body.querySelector('.grid-wrap');if(wrap){wrap.scrollTop=scroll.top;wrap.scrollLeft=scroll.left;}
-  requestAnimationFrame(fitGridHeight);
+  if(scroll.top||scroll.left){const wrap=body.querySelector('.grid-wrap');wrap.scrollTop=scroll.top;wrap.scrollLeft=scroll.left;}
 }
 function focusGridCell(focus){
   if(focus)document.querySelector(`#gridBody tr[data-id="${CSS.escape(focus.id)}"] [data-f="${CSS.escape(focus.field)}"]`)?.focus();
@@ -2156,7 +2156,14 @@ function bindGridEvents(body){
     }
   });
   // A cell already committed by Enter is removed by the re-render; its trailing change event is ignored.
-  body.addEventListener('change',e=>{const inp=e.target.closest('.cell-in,input[type=checkbox][data-f]');if(inp&&!inp.dataset.committed&&inp.closest('tr[data-id]'))commitGridCell(inp);});
+  body.addEventListener('change',e=>{
+    if(e.target.matches('[data-ws-select]')){
+      const id=e.target.closest('tr').dataset.id;
+      e.target.checked?workspaceSelection.add(id):workspaceSelection.delete(id);
+      enhanceGrid();return;
+    }
+    const inp=e.target.closest('.cell-in,input[type=checkbox][data-f]');if(inp&&!inp.dataset.committed&&inp.closest('tr[data-id]'))commitGridCell(inp);
+  });
   body.addEventListener('click',e=>{
     if(e.target.closest('#addRow'))return addRow();
     if(e.target.closest('#pasteRows'))return openPasteRows();

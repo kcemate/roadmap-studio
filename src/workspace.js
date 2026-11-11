@@ -454,14 +454,9 @@ function enhanceGrid(){
   let selectedVisible=0;
   rows.forEach(row=>{
     hiddenIndexes.forEach(index=>{if(row.children[index])row.children[index].hidden=true;});
-    const cell=row.children[0];
-    if(!cell.querySelector('[data-ws-select]')){
-      const number=cell.textContent.trim();
-      cell.innerHTML=`<div class="ws-row-selector"><input type="checkbox" data-ws-select aria-label="Select ${esc(row.querySelector('[data-f=name]')?.value||'initiative')}"><span>${esc(number)}</span></div>`;
-      cell.querySelector('[data-ws-select]').onchange=event=>{ event.target.checked?workspaceSelection.add(row.dataset.id):workspaceSelection.delete(row.dataset.id); enhanceGrid(); };
-    }
-    const checked=workspaceSelection.has(row.dataset.id);
-    cell.querySelector('[data-ws-select]').checked=checked;if(checked)selectedVisible++;
+    const checkbox=row.cells[0].querySelector('[data-ws-select]'),checked=workspaceSelection.has(row.dataset.id);
+    if(checkbox.checked!==checked)checkbox.checked=checked;
+    if(checked)selectedVisible++;
   });
   if($('wsSelectAll')){
     $('wsSelectAll').checked=!!rows.length&&selectedVisible===rows.length;
